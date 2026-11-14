@@ -4,204 +4,131 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>आन्तरिक नियन्त्रण प्रणाली | बाणगंगा नगरपालिका, कपिलवस्तु</title>
-    <!-- Favicon & Icons -->
+    <!-- FontAwesome 6 & Bootstrap 5.3 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom Theme CSS -->
     <link rel="stylesheet" href="css/epalika-admin.css">
 </head>
 <body>
-    <div id="app-container">
-        <!-- =============================================================
-             Sidebar Navigation (Sticky & Responsive)
-        ============================================================= -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <a href="#" class="brand-wrapper" onclick="window.navigateToModule('dashboard'); return false;">
-                    <div class="brand-logo-img d-flex align-items-center justify-content-center text-primary fw-bold">
-                        <i class="fa-solid fa-building-columns"></i>
-                    </div>
-                    <div>
-                        <div class="brand-title font-devanagari">बाणगंगा नगरपालिका</div>
-                        <div class="brand-subtitle">आन्तरिक नियन्त्रण प्रणाली</div>
-                    </div>
-                </a>
+
+    <!-- =====================================================================
+         1. Official Header (Exact Match to PDF Page 1)
+         ===================================================================== -->
+    <header class="official-header">
+        <div class="official-header-top">
+            <!-- ePalika.com brand box -->
+            <a href="#" class="brand-epalika" onclick="window.switchTab('palika_profile'); return false;">
+                ePalika.com
+            </a>
+
+            <!-- Municipality Identity Bordered Box -->
+            <div class="mun-official-box">
+                <div class="mun-name-text font-devanagari">बाणगंगा नगरपालिका, कपिलवस्तु</div>
+                <div class="mun-sub-text font-devanagari">लुम्बिनी प्रदेश नेपाल</div>
             </div>
 
-            <div class="sidebar-menu">
-                <div class="section-header">मुख्य प्रशासनिक मोड्युल</div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom active" data-module="dashboard">
-                        <i class="fa-solid fa-chart-pie"></i>
-                        <span class="nav-text">ड्यासबोर्ड (Dashboard)</span>
-                    </a>
-                </div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="employees">
-                        <i class="fa-solid fa-users-gear"></i>
-                        <span class="nav-text font-devanagari">कर्मचारी (Employees)</span>
-                    </a>
-                </div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="municipality">
-                        <i class="fa-solid fa-landmark"></i>
-                        <span class="nav-text font-devanagari">पालिका प्रोफाइल (Profile)</span>
-                    </a>
-                </div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="wards">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <span class="nav-text font-devanagari">वडा कार्यालय (Ward Office)</span>
-                    </a>
-                </div>
-
-                <div class="section-header">दर्ता संस्थाहरू (Institutions)</div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="cooperative">
-                        <i class="fa-solid fa-handshake-angle"></i>
-                        <span class="nav-text font-devanagari">सहकारी (Cooperative)</span>
-                    </a>
-                </div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="drinking_water">
-                        <i class="fa-solid fa-faucet-drip"></i>
-                        <span class="nav-text font-devanagari">खानेपानी (Drinking Water)</span>
-                    </a>
-                </div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="forest">
-                        <i class="fa-solid fa-tree"></i>
-                        <span class="nav-text font-devanagari">सामुदायिक वन (Forest)</span>
-                    </a>
-                </div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="organization">
-                        <i class="fa-solid fa-sitemap"></i>
-                        <span class="nav-text font-devanagari">संघसंस्था (Organizations)</span>
-                    </a>
-                </div>
-
-                <div class="section-header">प्रणाली व्यवस्थापन (Settings & Users)</div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="settings">
-                        <i class="fa-solid fa-sliders"></i>
-                        <span class="nav-text font-devanagari">सेटिङ (Master Dropdowns)</span>
-                    </a>
-                </div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="users">
-                        <i class="fa-solid fa-key"></i>
-                        <span class="nav-text font-devanagari">प्रयोगकर्ता / पासवर्ड वितरण</span>
-                    </a>
-                </div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="reports">
-                        <i class="fa-solid fa-file-invoice"></i>
-                        <span class="nav-text font-devanagari">प्रतिवेदन (Reports)</span>
-                    </a>
-                </div>
-
-                <div class="nav-item">
-                    <a class="nav-link-custom" data-module="audit">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <span class="nav-text font-devanagari">अडिट लग (Audit Logs)</span>
-                    </a>
+            <!-- Role Switcher & User Pill -->
+            <div class="d-flex align-items-center gap-2">
+                <div class="bg-light border rounded px-2 py-1 small">
+                    <span class="text-muted fw-bold">प्रयोगकर्ता भूमिका:</span>
+                    <select id="header-role-switcher" class="form-select form-select-sm d-inline-block w-auto border-0 bg-transparent fw-bold text-primary py-0">
+                        <option value="Super Admin">सुपर एडमिन (Super Admin)</option>
+                        <option value="Admin">प्रशासक (Admin - CAO)</option>
+                        <option value="Employee">कर्मचारी (Internal Staff)</option>
+                        <option value="Ward User">वडा प्रयोगकर्ता (Ward User)</option>
+                        <option value="Institution User">संस्था प्रयोगकर्ता (Institution)</option>
+                        <option value="Public">बाहिरी / सार्वजनिक (Public View)</option>
+                    </select>
                 </div>
             </div>
-
-            <!-- Sidebar Footer Brand info -->
-            <div class="p-3 border-top border-secondary-subtle text-muted small" style="background: rgba(0,0,0,0.15);">
-                <div class="fw-bold text-white-50">ePalika.com Enterprise</div>
-                <div style="font-size: 0.7rem;">संस्करण २.५.० | नेपाल सरकार</div>
-            </div>
-        </aside>
-
-        <!-- =============================================================
-             Main Content Area Wrapper
-        ============================================================= -->
-        <div class="main-wrapper" id="main-wrapper">
-            <!-- Topbar Header -->
-            <header class="topbar">
-                <div class="topbar-left">
-                    <button class="btn-sidebar-toggle" id="btn-toggle-sidebar" title="मेनु टगल">
-                        <i class="fa-solid fa-bars"></i>
-                    </button>
-                    <div>
-                        <div class="municipality-tagline font-devanagari">
-                            बाणगंगा नगरपालिका, कपिलवस्तु — लुम्बिनी प्रदेश नेपाल
-                        </div>
-                        <div class="text-muted" style="font-size: 0.75rem;" id="page-title-text">
-                            प्रशासनिक ड्यासबोर्ड (Dashboard Overview)
-                        </div>
-                    </div>
-                </div>
-
-                <div class="topbar-right">
-                    <!-- Live Role Switcher (RBAC Tester) -->
-                    <div class="d-flex align-items-center gap-1 border rounded px-2 py-1 bg-light">
-                        <span class="small fw-bold text-muted d-none d-md-inline">भूमिका:</span>
-                        <select id="role-switcher-select" class="form-select form-select-sm border-0 bg-transparent py-0 fw-semibold text-primary" style="font-size: 0.82rem; cursor:pointer;">
-                            <option value="Super Admin">Super Admin (सुपर एडमिन)</option>
-                            <option value="Admin">Admin (प्रशासक - CAO)</option>
-                            <option value="Employee">Employee (कर्मचारी)</option>
-                            <option value="Ward User">Ward User (वडा प्रयोगकर्ता)</option>
-                            <option value="Institution User">Institution User (संस्था)</option>
-                        </select>
-                    </div>
-
-                    <!-- User Profile Dropdown Pill -->
-                    <div class="user-badge" id="user-badge-btn">
-                        <div class="user-avatar font-devanagari" id="user-avatar-text">प्र</div>
-                        <div class="d-none d-lg-block text-start">
-                            <div class="fw-bold text-dark" style="font-size: 0.85rem;" id="current-user-name">प्रणाली प्रशासक</div>
-                            <div class="text-muted" style="font-size: 0.7rem;" id="current-role-badge">Super Admin</div>
-                        </div>
-                    </div>
-
-                    <!-- Logout / Exit Button -->
-                    <button class="btn btn-sm btn-outline-danger" onclick="if(confirm('प्रणालीबाट बाहिरिन चाहनुहुन्छ?')) alert('सफलतापूर्वक लगआउट भयो।');" title="बाहिर (Logout)">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
-                </div>
-            </header>
-
-            <!-- Dynamic Body Content Injected Here -->
-            <main class="content-area" id="main-content-area">
-                <!-- Javascript will render views here -->
-            </main>
-
-            <!-- Footer -->
-            <footer class="py-3 px-4 bg-white border-top text-center text-muted small mt-auto">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div>
-                        © २०८३ बाणगंगा नगरपालिका नगर कार्यपालिकाको कार्यालय, कपिलवस्तु, नेपाल। सर्वाधिकार सुरक्षित।
-                    </div>
-                    <div>
-                        प्राविधिक सहयोग: <strong>ePalika.com</strong> आन्तरिक नियन्त्रण प्रणाली
-                    </div>
-                </div>
-            </footer>
         </div>
-    </div>
+
+        <!-- Center Pill: आन्तरिक नियन्त्रण प्रणाली -->
+        <div class="system-title-box">
+            <span class="system-title-pill font-devanagari">
+                आन्तरिक नियन्त्रण प्रणाली
+            </span>
+        </div>
+    </header>
+
+    <!-- =====================================================================
+         2. Official 8 Top Tabs Navigation (Exact Match to PDF Page 1)
+         ===================================================================== -->
+    <nav class="official-nav-bar">
+        <ul class="official-tabs">
+            <li>
+                <button class="official-tab-btn" data-tab="settings">
+                    <i class="fa-solid fa-sliders"></i> सेटिङ
+                </button>
+            </li>
+            <li>
+                <button class="official-tab-btn active" data-tab="employees">
+                    <i class="fa-solid fa-users"></i> कर्मचारी
+                </button>
+            </li>
+            <li>
+                <button class="official-tab-btn" data-tab="palika_profile">
+                    <i class="fa-solid fa-landmark"></i> पालिका प्रोफाइल
+                </button>
+            </li>
+            <li>
+                <button class="official-tab-btn" data-tab="wards">
+                    <i class="fa-solid fa-map-location-dot"></i> वडा कार्यालय
+                </button>
+            </li>
+            <li>
+                <button class="official-tab-btn" data-tab="cooperative">
+                    <i class="fa-solid fa-handshake-angle"></i> सहकारी
+                </button>
+            </li>
+            <li>
+                <button class="official-tab-btn" data-tab="drinking_water">
+                    <i class="fa-solid fa-faucet-drip"></i> खानेपानी
+                </button>
+            </li>
+            <li>
+                <button class="official-tab-btn" data-tab="forest">
+                    <i class="fa-solid fa-tree"></i> वन
+                </button>
+            </li>
+            <li>
+                <button class="official-tab-btn" data-tab="organization">
+                    <i class="fa-solid fa-sitemap"></i> संघसंस्था
+                </button>
+            </li>
+        </ul>
+
+        <div class="nav-actions-right">
+            <button class="btn btn-sm btn-outline-danger font-devanagari fw-bold" onclick="alert('लगआउट गरियो।');">
+                <i class="fa-solid fa-power-off me-1"></i> बाहिर
+            </button>
+        </div>
+    </nav>
+
+    <!-- =====================================================================
+         3. Dynamic Main Content Area
+         ===================================================================== -->
+    <main class="content-wrapper" id="main-content-display">
+        <!-- Injected dynamically via JS based on selected tab -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-3 text-center text-muted small bg-white border-top mt-5">
+        <div>© २०८३ बाणगंगा नगरपालिका नगर कार्यपालिकाको कार्यालय, जीतपुर, कपिलवस्तु।</div>
+        <div class="text-secondary">प्राविधिक विकास: <strong>ePalika.com</strong> आन्तरिक नियन्त्रण प्रणाली</div>
+    </footer>
 
     <!-- Toast Notification Container -->
-    <div class="toast-container-custom" id="toast-container"></div>
+    <div id="toast-mount"></div>
 
-    <!-- Bootstrap 5 Bundle JS -->
+    <!-- Master Dropdown Quick-Add Modal -->
+    <div id="master-quick-modal-mount"></div>
+
+    <!-- Multi-Selection Filter Modal -->
+    <div id="multifilter-modal-mount"></div>
+
+    <!-- Core Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- App Engine Database & Controllers -->
     <script src="js/epalika-db.js"></script>
     <script src="js/epalika-app.js"></script>
 </body>
