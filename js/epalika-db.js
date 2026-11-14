@@ -4,7 +4,7 @@
  */
 
 const ePalikaDB = (function() {
-    const STORAGE_KEY = 'epalika_production_database_v3';
+    const STORAGE_KEY = 'epalika_production_database_v5';
     const AUTH_KEY = 'epalika_current_active_user';
 
     // Initial Database Seed matching reference PDF exactly
@@ -172,7 +172,7 @@ const ePalikaDB = (function() {
                 serial_number: '१',
                 full_name_ne: 'भक्तराज जोशी',
                 gender: 'पुरुष',
-                dob: '1982-05-14',
+                dob: '2039-01-31',
                 age: 44,
                 position_code_id: 1,
                 designation_id: 1,
@@ -185,18 +185,18 @@ const ePalikaDB = (function() {
                 ward_id: null,
                 employment_type_id: 1,
                 service_type_id: 1,
-                staff_quota: 'स्वीकृत',
+                staff_quota: 'हो',
                 duty_status: 'कार्यरत',
                 email: 'cao@bangangamun.gov.np',
-                mobile_number: '९८५७०३३३३३',
-                family_contact_number: '९८४७०१२३४५',
+                mobile_number: '9857033333',
+                family_contact_number: '9847012345',
                 permanent_address: 'कपिलवस्तु, तौलिहवा',
                 current_address: 'जीतपुर, कपिलवस्तु',
-                initial_appointment_date: '2008-04-12',
-                current_position_appointment_date: '2021-06-15',
-                current_position_joining_date: '2021-06-20',
-                current_office_joining_date: '2022-01-10',
-                transfer_release_date: '2022-01-05',
+                initial_appointment_date: '2064-12-30',
+                current_position_appointment_date: '2078-03-01',
+                current_position_joining_date: '2078-03-06',
+                current_office_joining_date: '2078-09-26',
+                transfer_release_date: '2078-09-21',
                 transferred_from_office: 'संघीय मामिला तथा सामान्य प्रशासन मन्त्रालय',
                 personnel_sheet_roll_no: 'SKN-88412',
                 provident_fund_no: 'PF-49120',
@@ -210,7 +210,7 @@ const ePalikaDB = (function() {
                 serial_number: '२',
                 full_name_ne: 'सुरेश पोखरेल',
                 gender: 'पुरुष',
-                dob: '1988-11-20',
+                dob: '2045-08-05',
                 age: 38,
                 position_code_id: 2,
                 designation_id: 2,
@@ -223,18 +223,18 @@ const ePalikaDB = (function() {
                 ward_id: null,
                 employment_type_id: 1,
                 service_type_id: 1,
-                staff_quota: 'स्वीकृत',
+                staff_quota: 'हो',
                 duty_status: 'कार्यरत',
                 email: 'suresh@bangangamun.gov.np',
-                mobile_number: '९८५७०३४४४४',
-                family_contact_number: '९८४७११२२३३',
+                mobile_number: '9857034444',
+                family_contact_number: '9847112233',
                 permanent_address: 'बाणगंगा-४, कपिलवस्तु',
                 current_address: 'जीतपुर, कपिलवस्तु',
-                initial_appointment_date: '2014-08-01',
-                current_position_appointment_date: '2020-03-10',
-                current_position_joining_date: '2020-03-15',
-                current_office_joining_date: '2020-04-01',
-                transfer_release_date: null,
+                initial_appointment_date: '2071-04-16',
+                current_position_appointment_date: '2076-11-27',
+                current_position_joining_date: '2076-12-02',
+                current_office_joining_date: '2076-12-18',
+                transfer_release_date: '2076-12-15',
                 transferred_from_office: 'जिल्ला प्रशासन कार्यालय, कपिलवस्तु',
                 personnel_sheet_roll_no: 'SKN-90231',
                 provident_fund_no: 'PF-50212',
@@ -248,7 +248,7 @@ const ePalikaDB = (function() {
                 serial_number: '३',
                 full_name_ne: 'अनिता खनाल',
                 gender: 'महिला',
-                dob: '1992-02-18',
+                dob: '2048-11-06',
                 age: 34,
                 position_code_id: 3,
                 designation_id: 9,
@@ -261,23 +261,61 @@ const ePalikaDB = (function() {
                 ward_id: null,
                 employment_type_id: 1,
                 service_type_id: 2,
-                staff_quota: 'स्वीकृत',
+                staff_quota: 'हो',
                 duty_status: 'कार्यरत',
                 email: 'anita.eng@bangangamun.gov.np',
-                mobile_number: '९८५७०५५११२',
-                family_contact_number: '९८४७२२३३४४',
+                mobile_number: '9857055112',
+                family_contact_number: '9847223344',
                 permanent_address: 'बाणगंगा-२, कपिलवस्तु',
                 current_address: 'जीतपुर, कपिलवस्तु',
-                initial_appointment_date: '2018-02-15',
-                current_position_appointment_date: '2022-09-01',
-                current_position_joining_date: '2022-09-05',
-                current_office_joining_date: '2022-09-05',
-                transfer_release_date: null,
+                initial_appointment_date: '2074-11-03',
+                current_position_appointment_date: '2079-05-16',
+                current_position_joining_date: '2079-05-20',
+                current_office_joining_date: '2079-05-20',
+                transfer_release_date: '2079-05-20',
                 transferred_from_office: 'शितगंगा नगरपालिका',
                 personnel_sheet_roll_no: 'SKN-94110',
                 provident_fund_no: 'PF-61023',
                 cit_insurance_no: 'CIT-10293',
                 investment_fund_no: 'INV-5540',
+                status: 'active'
+            },
+            {
+                id: 4,
+                employee_code: 'EMP-004',
+                serial_number: '४',
+                full_name_ne: 'रामप्रसाद शर्मा',
+                gender: 'पुरुष',
+                dob: '2026-04-10',
+                age: 57,
+                position_code_id: 2,
+                designation_id: 2,
+                level_id: 2,
+                service_id: 3,
+                group_id: 1,
+                qualification_id: 4,
+                department_id: 11,
+                office_id: 1,
+                ward_id: null,
+                employment_type_id: 1,
+                service_type_id: 1,
+                staff_quota: 'हो',
+                duty_status: 'कार्यरत',
+                email: 'ramprasad.sharma@bangangamun.gov.np',
+                mobile_number: '9857011223',
+                family_contact_number: '9847556677',
+                permanent_address: 'बाणगंगा-१, कपिलवस्तु',
+                current_address: 'जीतपुर, कपिलवस्तु',
+                initial_appointment_date: '2052-01-15',
+                current_position_appointment_date: '2072-04-01',
+                current_position_joining_date: '2072-04-05',
+                current_office_joining_date: '2075-01-10',
+                transfer_release_date: '2075-01-05',
+                transferred_from_office: 'जिल्ला प्रशासन कार्यालय, कपिलवस्तु',
+                personnel_sheet_roll_no: 'SKN-70112',
+                provident_fund_no: 'PF-30112',
+                cit_insurance_no: 'CIT-77123',
+                investment_fund_no: 'INV-4410',
                 status: 'active'
             }
         ],
@@ -352,6 +390,27 @@ const ePalikaDB = (function() {
         ]
     };
 
+    function normalizeEmployeeData(data) {
+        if (!data || !data.employees) return data;
+        const nepToEng = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
+        data.employees.forEach(emp => {
+            if (emp.mobile_number) {
+                emp.mobile_number = String(emp.mobile_number).replace(/[०-९]/g, ch => nepToEng[ch] || ch);
+            }
+            if (emp.family_contact_number) {
+                emp.family_contact_number = String(emp.family_contact_number).replace(/[०-९]/g, ch => nepToEng[ch] || ch);
+            }
+            if (emp.dob && emp.dob.startsWith('19')) emp.dob = '2039-01-31';
+            if (emp.initial_appointment_date && emp.initial_appointment_date.startsWith('2008')) emp.initial_appointment_date = '2064-12-30';
+            if (emp.current_position_appointment_date && emp.current_position_appointment_date.startsWith('2021')) emp.current_position_appointment_date = '2078-03-01';
+            if (emp.current_position_joining_date && emp.current_position_joining_date.startsWith('2021')) emp.current_position_joining_date = '2078-03-06';
+            if (emp.current_office_joining_date && emp.current_office_joining_date.startsWith('2022')) emp.current_office_joining_date = '2078-09-26';
+            if (emp.transfer_release_date && emp.transfer_release_date.startsWith('2022')) emp.transfer_release_date = '2078-09-21';
+            if (emp.staff_quota === 'स्वीकृत' || !emp.staff_quota) emp.staff_quota = 'हो';
+        });
+        return data;
+    }
+
     function getStore() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
@@ -359,7 +418,7 @@ const ePalikaDB = (function() {
             return JSON.parse(JSON.stringify(initialData));
         }
         try {
-            return JSON.parse(raw);
+            return normalizeEmployeeData(JSON.parse(raw));
         } catch (e) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
             return JSON.parse(JSON.stringify(initialData));
@@ -406,6 +465,20 @@ const ePalikaDB = (function() {
                 const d = filters.employment_type_id.map(Number);
                 list = list.filter(e => d.includes(Number(e.employment_type_id)));
             }
+            if (filters.gender) {
+                list = list.filter(e => e.gender === filters.gender);
+            }
+            if (filters.age_range) {
+                list = list.filter(e => {
+                    const age = Number(e.age) || (e.dob ? (2083 - parseInt(String(e.dob).split(/[-/]/)[0], 10)) : 0);
+                    if (filters.age_range === '20-30') return age >= 20 && age <= 30;
+                    if (filters.age_range === '30-40') return age >= 30 && age <= 40;
+                    if (filters.age_range === '40-50') return age >= 40 && age <= 50;
+                    if (filters.age_range === '50-57') return age >= 50 && age <= 57;
+                    if (filters.age_range === '57+') return age > 57;
+                    return true;
+                });
+            }
 
             return list.map(emp => ({
                 ...emp,
@@ -413,7 +486,11 @@ const ePalikaDB = (function() {
                 level_name: store.levels.find(l => l.id == emp.level_id)?.name_ne || '-',
                 department_name: store.departments.find(dp => dp.id == emp.department_id)?.name_ne || '-',
                 office_name: store.offices.find(o => o.id == emp.office_id)?.name_ne || '-',
-                employment_type_name: store.employmentTypes.find(et => et.id == emp.employment_type_id)?.name_ne || '-'
+                employment_type_name: store.employmentTypes.find(et => et.id == emp.employment_type_id)?.name_ne || '-',
+                service_name: store.services.find(s => s.id == emp.service_id)?.name_ne || '-',
+                group_name: store.groups.find(g => g.id == emp.group_id)?.name_ne || '-',
+                qualification_name: store.qualifications.find(q => q.id == emp.qualification_id)?.name_ne || '-',
+                service_type_name: store.serviceTypes.find(st => st.id == emp.service_type_id)?.name_ne || '-'
             }));
         },
         getEmployeeById: function(id) {
@@ -443,6 +520,56 @@ const ePalikaDB = (function() {
                 ...w,
                 employees_count: store.employees.filter(e => e.ward_id == w.id).length
             }));
+        },
+        getWardById: function(id) {
+            const store = getStore();
+            const w = store.wards.find(x => x.id == id);
+            if (!w) return null;
+            return {
+                ...w,
+                employees_count: store.employees.filter(e => e.ward_id == w.id).length
+            };
+        },
+        saveWard: function(wardData) {
+            const store = getStore();
+            if (wardData.id) {
+                const idx = store.wards.findIndex(w => w.id == wardData.id);
+                if (idx !== -1) {
+                    store.wards[idx] = { 
+                        ...store.wards[idx], 
+                        ...wardData,
+                        ward_number: Number(wardData.ward_number) || store.wards[idx].ward_number,
+                        population: Number(wardData.population) || store.wards[idx].population
+                    };
+                    this.addAuditLog('WARD_UPDATE', 'wards', `वडा नं. ${store.wards[idx].ward_number} (${store.wards[idx].office_name_ne}) को विवरण सम्पादन गरियो।`);
+                }
+            } else {
+                const newId = store.wards.length > 0 ? Math.max(...store.wards.map(w => w.id)) + 1 : 1;
+                const newWardNumber = Number(wardData.ward_number) || (store.wards.length > 0 ? Math.max(...store.wards.map(w => w.ward_number)) + 1 : 1);
+                const newWard = {
+                    ...wardData,
+                    id: newId,
+                    ward_number: newWardNumber,
+                    population: Number(wardData.population) || 0
+                };
+                store.wards.push(newWard);
+                store.wards.sort((a, b) => a.ward_number - b.ward_number);
+                this.addAuditLog('WARD_CREATE', 'wards', `नयाँ वडा नं. ${newWard.ward_number} (${newWard.office_name_ne || ''}) थप गरियो।`);
+            }
+            saveStore(store);
+            return true;
+        },
+        deleteWard: function(id) {
+            const store = getStore();
+            const w = store.wards.find(x => x.id == id);
+            if (w) {
+                const wNum = w.ward_number;
+                store.wards = store.wards.filter(x => x.id != id);
+                this.addAuditLog('WARD_DELETE', 'wards', `वडा नं. ${wNum} को अभिलेख हटाइयो।`);
+                saveStore(store);
+                return true;
+            }
+            return false;
         },
         getInstitutions: function(category) {
             const store = getStore();

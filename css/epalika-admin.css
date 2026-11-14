@@ -48,60 +48,74 @@ body {
 .official-header-top {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 0.75rem;
-}
-
-.brand-epalika {
-    font-size: 1.65rem;
-    font-weight: 700;
-    color: #1e3a8a;
-    border: 2px solid #3b82f6;
-    border-radius: 8px;
-    padding: 0.2rem 1rem;
-    display: inline-block;
-    background: #eff6ff;
-    letter-spacing: -0.5px;
-    text-decoration: none;
+    justify-content: center;
+    min-height: 105px;
+    margin-bottom: 0.35rem;
+    width: 100%;
 }
 
 .mun-official-box {
-    border: 2px solid #1e3a8a;
-    padding: 0.35rem 1.25rem;
+    border: none;
+    padding: 0.2rem 0.5rem;
     text-align: center;
-    background: #f8fafc;
-    border-radius: 4px;
+    background: transparent;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.8rem;
+    margin: 0 auto;
+}
+
+.mun-header-logo {
+    height: 100px;
+    width: 100px;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+}
+
+.mun-header-logo:hover {
+    transform: scale(1.05);
+}
+
+.mun-text-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .mun-name-text {
-    font-size: 1.25rem;
+    font-size: 1.7rem;
     font-weight: 700;
-    color: #0f172a;
-    line-height: 1.2;
+    color: #b91c1c;
+    line-height: 1.25;
+    letter-spacing: 0.3px;
 }
 
 .mun-sub-text {
-    font-size: 0.95rem;
-    color: #334155;
-    font-weight: 500;
+    font-size: 1.05rem;
+    color: #1e3a8a;
+    font-weight: 600;
+    margin-top: 2px;
 }
 
 .system-title-box {
     text-align: center;
-    margin: 0.25rem 0 0.5rem;
+    margin: 0.35rem 0 0.25rem;
 }
 
 .system-title-pill {
     display: inline-block;
-    border: 1.5px solid #0f3460;
-    border-radius: 6px;
-    padding: 0.25rem 1.5rem;
-    font-size: 1.15rem;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    font-size: 1.25rem;
     font-weight: 700;
     color: #0f3460;
-    background: #f1f5f9;
+    background: transparent;
+    letter-spacing: 0.5px;
 }
 
 /* -------------------------------------------------------------
@@ -111,28 +125,31 @@ body {
     background: #ffffff;
     border-top: 1px solid #cbd5e1;
     border-bottom: 2px solid #0f3460;
-    padding: 0 1rem;
+    padding: 0 0.75rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.5rem;
     overflow-x: auto;
+    scrollbar-width: thin;
 }
 
 .official-tabs {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.15rem;
     list-style: none;
     margin: 0;
     padding: 0;
+    flex-shrink: 1;
 }
 
 .official-tab-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.65rem 1.15rem;
-    font-size: 1rem;
+    gap: 0.35rem;
+    padding: 0.52rem 0.75rem;
+    font-size: 0.91rem;
     font-weight: 600;
     color: #1e293b;
     text-decoration: none;
@@ -160,7 +177,82 @@ body {
 .nav-actions-right {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.nav-user-identity {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0.22rem 0.55rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.nav-user-identity:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.user-role-symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+}
+
+#btn-header-logout {
+    padding: 0.26rem 0.65rem;
+    font-size: 0.88rem;
+    white-space: nowrap;
+    border-radius: 5px;
+}
+
+/* Nepali Unicode Transliteration Badge */
+.unicode-badge-indicator {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 2px 7px;
+    cursor: pointer;
+    z-index: 5;
+    user-select: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+.unicode-badge-indicator.active {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.unicode-badge-indicator.active:hover {
+    background: #bbf7d0;
+}
+
+.unicode-badge-indicator.inactive {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+}
+
+.unicode-badge-indicator.inactive:hover {
+    background: #e2e8f0;
 }
 
 /* -------------------------------------------------------------
@@ -410,34 +502,107 @@ body {
 }
 
 /* -------------------------------------------------------------
-   Data Tables
+   Data Tables (32-Column Full Administrative Horizontal Scroll)
 ------------------------------------------------------------- */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin-bottom: 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 10px;
+}
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 5px;
+}
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
 .table-gov {
     width: 100%;
-    border-collapse: collapse;
+    min-width: 3200px;
+    border-collapse: separate;
+    border-spacing: 0;
     background: #fff;
-    border: 1px solid #cbd5e1;
-    font-size: 0.9rem;
+    font-size: 0.86rem;
+    white-space: nowrap;
 }
 
 .table-gov th {
     background: #f1f5f9;
     color: #0f172a;
     font-weight: 700;
-    padding: 0.65rem 0.75rem;
-    border: 1px solid #cbd5e1;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
     white-space: nowrap;
 }
 
 .table-gov td {
-    padding: 0.6rem 0.75rem;
-    border: 1px solid #e2e8f0;
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
     color: #334155;
     vertical-align: middle;
+    white-space: nowrap;
 }
 
-.table-gov tr:hover {
+.table-gov tr:hover td {
+    background-color: #f1f5f9;
+}
+
+/* Sticky First 3 Columns (SN, Code, Name) for easy tracking during horizontal scroll */
+.table-gov th.sticky-col-sn,
+.table-gov td.sticky-col-sn {
+    position: sticky;
+    left: 0;
+    z-index: 3;
     background: #f8fafc;
+    width: 55px;
+    min-width: 55px;
+    text-align: center;
+}
+
+.table-gov th.sticky-col-code,
+.table-gov td.sticky-col-code {
+    position: sticky;
+    left: 55px;
+    z-index: 3;
+    background: #f8fafc;
+    width: 105px;
+    min-width: 105px;
+}
+
+.table-gov th.sticky-col-name,
+.table-gov td.sticky-col-name {
+    position: sticky;
+    left: 160px;
+    z-index: 3;
+    background: #f8fafc;
+    width: 180px;
+    min-width: 180px;
+    box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.12);
+}
+
+.table-gov tr.table-row-57-alert td.sticky-col-sn,
+.table-gov tr.table-row-57-alert td.sticky-col-code,
+.table-gov tr.table-row-57-alert td.sticky-col-name {
+    background-color: #fee2e2 !important;
+}
+
+.table-gov tr.table-row-57-alert:hover td.sticky-col-sn,
+.table-gov tr.table-row-57-alert:hover td.sticky-col-code,
+.table-gov tr.table-row-57-alert:hover td.sticky-col-name {
+    background-color: #fecaca !important;
 }
 
 /* -------------------------------------------------------------
@@ -462,6 +627,129 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Nepali Calendar Datepicker Popup */
+.nepali-date-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.nepali-date-wrapper .form-field-input {
+    padding-right: 28px;
+}
+
+.nepali-date-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #0284c7;
+    font-size: 0.9rem;
+    padding: 2px 4px;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.nepali-date-btn:hover {
+    color: #0369a1;
+    transform: translateY(-50%) scale(1.15);
+}
+
+.nepali-calendar-popup {
+    position: absolute;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    width: 290px;
+    padding: 0;
+    box-shadow: 0 10px 25px rgba(15, 52, 96, 0.18);
+    font-family: 'Noto Sans Devanagari', 'Mukta', sans-serif;
+    overflow: hidden;
+}
+
+.nepali-cal-header {
+    background: #0f3460;
+    color: #ffffff;
+    padding: 0.65rem 0.75rem;
+}
+
+.nepali-cal-header .text-navy {
+    color: #ffffff !important;
+}
+
+.nepali-cal-header .btn-close {
+    filter: invert(1);
+}
+
+.nepali-cal-body {
+    padding: 0.5rem;
+}
+
+.cal-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 0.4rem;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 0.25rem;
+}
+
+.cal-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+}
+
+.cal-day-cell {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 4px;
+    padding: 5px 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1e293b;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cal-day-cell:hover {
+    background: #e0f2fe;
+    border-color: #38bdf8;
+    color: #0369a1;
+}
+
+.cal-day-cell.active {
+    background: #0f3460;
+    border-color: #0f3460;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* 57+ Years Retirement Warning Alert Row (Red Signal) */
+.table-gov tr.table-row-57-alert {
+    background-color: #fee2e2 !important;
+    border-left: 5px solid #dc2626 !important;
+}
+
+.table-gov tr.table-row-57-alert td {
+    background-color: #fee2e2 !important;
+    color: #7f1d1d !important;
+}
+
+.table-gov tr.table-row-57-alert td.emp-name-cell {
+    color: #b91c1c !important;
+    font-weight: 700;
+}
+
+.table-gov tr.table-row-57-alert:hover td {
+    background-color: #fecaca !important;
+}
+
 /* Print Rules */
 @media print {
     .official-nav-bar, .emp-action-bar, .no-print {
@@ -469,4 +757,40 @@ body {
     }
     body { background: #fff; }
     .emp-ref-form-container { border: none; box-shadow: none; }
+}
+
+/* Mobile & Tablet Responsiveness for Official Header */
+@media (max-width: 991px) {
+    .official-header-top {
+        min-height: auto;
+    }
+    .official-nav-bar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+    }
+    .nav-actions-right {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 768px) {
+    .mun-official-box {
+        gap: 0.6rem;
+    }
+    .mun-header-logo {
+        height: 50px;
+        width: 50px;
+    }
+    .mun-name-text {
+        font-size: 1.25rem;
+    }
+    .mun-sub-text {
+        font-size: 0.85rem;
+    }
+    .nav-actions-right {
+        justify-content: space-between;
+    }
 }

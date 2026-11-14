@@ -28,9 +28,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateHeaderUserDisplay() {
         currentUser = ePalikaDB.getCurrentUser();
+        const avatarSymbol = document.getElementById('current-user-avatar-symbol');
+        if (avatarSymbol) {
+            if (currentUser.role === 'Super Admin') {
+                avatarSymbol.innerHTML = '<i class="fa-solid fa-user-shield text-danger fs-5" title="Super Admin"></i>';
+            } else if (currentUser.role === 'Admin') {
+                avatarSymbol.innerHTML = '<i class="fa-solid fa-user-tie text-primary fs-5" title="Admin"></i>';
+            } else if (currentUser.role === 'Ward User') {
+                avatarSymbol.innerHTML = '<i class="fa-solid fa-landmark text-warning fs-5" title="वडा प्रयोगकर्ता"></i>';
+            } else if (currentUser.role === 'Institution User') {
+                avatarSymbol.innerHTML = '<i class="fa-solid fa-building-columns text-info fs-5" title="संस्था"></i>';
+            } else {
+                avatarSymbol.innerHTML = '<i class="fa-solid fa-circle-user text-success fs-5" title="कर्मचारी"></i>';
+            }
+        }
         if (userRoleBadge) {
             userRoleBadge.textContent = currentUser.role || 'Super Admin';
             userRoleBadge.className = currentUser.role === 'Super Admin' ? 'badge bg-danger font-devanagari' : 'badge bg-primary font-devanagari';
+        }
+        const loginBtn = document.getElementById('btn-open-login-modal');
+        if (loginBtn) {
+            loginBtn.title = `${currentUser.name || 'प्रणाली प्रशासक'} (${currentUser.user_code || 'ADMIN001'}) - खाता परिवर्तन वा लगईन गर्न थिच्नुहोस्`;
         }
         if (userDisplayName) userDisplayName.textContent = currentUser.name || 'प्रणाली प्रशासक';
         if (userCodeDisplay) userCodeDisplay.textContent = `(${currentUser.user_code || 'ADMIN001'})`;
@@ -211,24 +229,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const masters = ePalikaDB.getMasters();
         const employees = ePalikaDB.getEmployees(filterState);
         const totalCount = employees.length;
+        const activeFilterCount = Object.keys(filterState).filter(k => k !== 'search' && filterState[k] && (!Array.isArray(filterState[k]) || filterState[k].length > 0)).length;
 
         const emp = selectedEmployeeId ? (ePalikaDB.getEmployeeById(selectedEmployeeId) || {}) : (employees[0] || {});
         const isPublic = currentUser.role === 'Public';
 
         mainContainer.innerHTML = `
-            <div class="alert alert-secondary py-2 px-3 small border d-flex justify-content-between align-items-center mb-3 bg-white">
-                <div>
-                    <span class="badge bg-primary me-2">कर्मचारी मोड्युल</span>
-                    ${isPublic ? 
-                        `<strong>सार्वजनिक अवलोकन मोड:</strong> कर्मचारीको वर्गको आधारमा संख्या मात्र हेर्न सकिनेछ।` : 
-                        `<strong>भित्री प्रशासनिक मोड:</strong> कार्यालयगत, समूहगत रुपमा फिल्टर गरेर हेर्न र सम्पर्क नम्बरहरु हेर्न सकिनेछ।`
-                    }
-                </div>
-                <div class="small text-muted font-devanagari">
-                    Admin ले निम्नानुसार सबै सेटिङ गर्न सक्ने व्यवस्था।
-                </div>
-            </div>
-
             <div class="emp-ref-form-container ${isPublic ? 'd-none' : ''}">
                 <form id="ref-employee-form">
                     <table class="form-grid-table">
@@ -254,7 +260,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             </td>
                             <td class="form-field-label">हालको पदमा नियुक्ति:</td>
                             <td style="width: 25%;">
-                                <input type="date" id="f-curr-app-date" class="form-field-input" value="${emp.current_position_appointment_date || ''}">
+                                <div class="nepali-date-wrapper">
+                                    <input type="text" id="f-curr-app-date" class="form-field-input nepali-date-input" value="${emp.current_position_appointment_date || ''}">
+                                    <span class="nepali-date-btn" title="पात्रो खोल्नुहोस्"><i class="fa-solid fa-calendar-days"></i></span>
+                                </div>
                             </td>
                         </tr>
 
@@ -283,7 +292,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             </td>
                             <td class="form-field-label">हालको पदमा हाजिर:</td>
                             <td>
-                                <input type="date" id="f-curr-join-date" class="form-field-input" value="${emp.current_position_joining_date || ''}">
+                                <div class="nepali-date-wrapper">
+                                    <input type="text" id="f-curr-join-date" class="form-field-input nepali-date-input" value="${emp.current_position_joining_date || ''}">
+                                    <span class="nepali-date-btn" title="पात्रो खोल्नुहोस्"><i class="fa-solid fa-calendar-days"></i></span>
+                                </div>
                             </td>
                         </tr>
 
@@ -291,7 +303,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <tr>
                             <td class="form-field-label">कर्मचारीको नाम:</td>
                             <td>
-                                <input type="text" id="f-name-ne" class="form-field-input fw-bold text-primary" value="${emp.full_name_ne || ''}" placeholder="पूरा नाम...">
+                                <div class="position-relative d-flex align-items-center">
+                                    <input type="text" id="f-name-ne" class="form-field-input fw-bold text-primary pe-5" value="${emp.full_name_ne || ''}" placeholder="पूरा नाम टाइप गर्नुहोस् (e.g. bhaktaraj joshi)..." autocomplete="off">
+                                    <span class="unicode-badge-indicator active" id="badge-toggle-unicode" title="नेपाली युनिकोड स्वतः सुचारु छ (क्लिक गरेर वा Ctrl+G थिचेर अन/अफ गर्नुहोस्)">
+                                        <i class="fa-solid fa-keyboard me-1"></i>क
+                                    </span>
+                                </div>
                             </td>
                             <td class="form-field-label">सेवाको किसिम:</td>
                             <td>
@@ -304,7 +321,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             </td>
                             <td class="form-field-label">यस कार्यालयमा हाजिर:</td>
                             <td>
-                                <input type="date" id="f-office-join-date" class="form-field-input" value="${emp.current_office_joining_date || ''}">
+                                <div class="nepali-date-wrapper">
+                                    <input type="text" id="f-office-join-date" class="form-field-input nepali-date-input" value="${emp.current_office_joining_date || ''}">
+                                    <span class="nepali-date-btn" title="पात्रो खोल्नुहोस्"><i class="fa-solid fa-calendar-days"></i></span>
+                                </div>
                             </td>
                         </tr>
 
@@ -324,11 +344,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             </td>
                             <td class="form-field-label">दरबन्दी:</td>
                             <td>
-                                <input type="text" id="f-staff-quota" class="form-field-input" value="${emp.staff_quota || 'स्वीकृत'}">
+                                <select id="f-staff-quota" class="form-field-select">
+                                    <option value="हो" ${emp.staff_quota === 'हो' || emp.staff_quota === 'स्वीकृत' || !emp.staff_quota ? 'selected' : ''}>हो</option>
+                                    <option value="होइन" ${emp.staff_quota === 'होइन' ? 'selected' : ''}>होइन</option>
+                                </select>
                             </td>
                             <td class="form-field-label">रमानाभई आएको मिति:</td>
                             <td>
-                                <input type="date" id="f-transfer-date" class="form-field-input" value="${emp.transfer_release_date || ''}">
+                                <div class="nepali-date-wrapper">
+                                    <input type="text" id="f-transfer-date" class="form-field-input nepali-date-input" value="${emp.transfer_release_date || ''}">
+                                    <span class="nepali-date-btn" title="पात्रो खोल्नुहोस्"><i class="fa-solid fa-calendar-days"></i></span>
+                                </div>
                             </td>
                         </tr>
 
@@ -392,7 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </td>
                             <td class="form-field-label">मोबाईल नं:</td>
                             <td>
-                                <input type="text" id="f-mobile" class="form-field-input" value="${emp.mobile_number || ''}">
+                                <input type="text" id="f-mobile" class="form-field-input" value="${emp.mobile_number || ''}" placeholder="98XXXXXXXX" maxlength="10" inputmode="numeric">
                             </td>
                             <td class="form-field-label">ना.जि.वि.ना नं:</td>
                             <td>
@@ -434,11 +460,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             </td>
                             <td class="form-field-label">परिवारको सम्पर्क नं:</td>
                             <td>
-                                <input type="text" id="f-family-contact" class="form-field-input" value="${emp.family_contact_number || ''}">
+                                <input type="text" id="f-family-contact" class="form-field-input" value="${emp.family_contact_number || ''}" placeholder="98XXXXXXXX" maxlength="10" inputmode="numeric">
                             </td>
                             <td class="form-field-label">सुरु नियुक्ती:</td>
                             <td>
-                                <input type="date" id="f-initial-app" class="form-field-input" value="${emp.initial_appointment_date || ''}">
+                                <div class="nepali-date-wrapper">
+                                    <input type="text" id="f-initial-app" class="form-field-input nepali-date-input" value="${emp.initial_appointment_date || ''}">
+                                    <span class="nepali-date-btn" title="पात्रो खोल्नुहोस्"><i class="fa-solid fa-calendar-days"></i></span>
+                                </div>
                             </td>
                         </tr>
 
@@ -455,11 +484,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             </td>
                             <td class="form-field-label">जन्म मिति:</td>
                             <td>
-                                <input type="date" id="f-dob" class="form-field-input" value="${emp.dob || ''}">
+                                <div class="nepali-date-wrapper">
+                                    <input type="text" id="f-dob" class="form-field-input nepali-date-input" value="${emp.dob || ''}">
+                                    <span class="nepali-date-btn" title="पात्रो खोल्नुहोस्"><i class="fa-solid fa-calendar-days"></i></span>
+                                </div>
                             </td>
                             <td class="form-field-label">उमेर:</td>
                             <td>
-                                <span id="f-age-text" class="fw-bold text-dark font-devanagari ps-2">${emp.age ? emp.age + ' वर्ष' : '........'}</span>
+                                <span id="f-age-text" class="fw-bold ${emp.age >= 57 ? 'text-danger' : 'text-dark'} font-devanagari ps-2">
+                                    ${emp.age ? emp.age + ' वर्ष' : '........'}
+                                    ${emp.age >= 57 ? `<span class="badge bg-danger ms-1 font-devanagari" style="font-size:0.7rem;"><i class="fa-solid fa-triangle-exclamation me-1"></i>५७+ पुगेको</span>` : ''}
+                                </span>
                             </td>
                         </tr>
                     </table>
@@ -475,7 +510,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <button type="button" class="btn btn-ref-search" id="btn-ref-search">Search</button>
                             </div>
 
-                            <button type="button" class="btn-ref btn-ref-multi" id="btn-ref-multifilter">Filterby MultiSelection</button>
+                            <button type="button" class="btn-ref btn-ref-multi ${activeFilterCount > 0 ? 'border border-warning' : ''}" id="btn-ref-multifilter">
+                                Filterby MultiSelection ${activeFilterCount > 0 ? `<span class="badge bg-warning text-dark ms-1">${activeFilterCount}</span>` : ''}
+                            </button>
                             <button type="button" class="btn-ref btn-ref-excel" id="btn-ref-excel">Excel</button>
                             <button type="button" class="btn-ref btn-ref-new" id="btn-ref-new">New</button>
                             <button type="button" class="btn-ref btn-ref-save" id="btn-ref-save">Save</button>
@@ -489,10 +526,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <!-- Employee List Table Below -->
             <div class="gov-panel mt-4">
-                <div class="gov-panel-header">
-                    <span class="gov-panel-title">
-                        <i class="fa-solid fa-list me-1"></i> कर्मचारी अभिलेख सूची (तलको कुनै पनि कर्मचारीमा क्लिक गरी माथिको फारममा सम्पादन गर्न सकिन्छ)
-                    </span>
+                <div class="gov-panel-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <span class="gov-panel-title">
+                            <i class="fa-solid fa-list me-1"></i> कर्मचारी अभिलेख सूची (तलको कुनै पनि कर्मचारीमा क्लिक गरी माथिको फारममा सम्पादन गर्न सकिन्छ)
+                        </span>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-2 font-devanagari" style="font-size:0.75rem;">
+                            <i class="fa-solid fa-circle text-danger me-1"></i>रातो पङ्क्ति (Red Signal): ५७ वर्ष पुगिसकेका कर्मचारी
+                        </span>
+                    </div>
                     <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
                         <i class="fa-solid fa-print"></i> प्रिन्ट
                     </button>
@@ -501,35 +543,99 @@ document.addEventListener('DOMContentLoaded', function() {
                     <table class="table-gov">
                         <thead>
                             <tr>
-                                <th>क्र.सं.</th>
-                                <th>कोड</th>
-                                <th>कर्मचारीको नाम</th>
+                                <th class="sticky-col-sn">क्र.सं.</th>
+                                <th class="sticky-col-code">कर्मचारी कोड</th>
+                                <th class="sticky-col-name">कर्मचारीको नाम</th>
+                                <th>उमेर</th>
                                 <th>लिङ्ग</th>
+                                <th>पदको कोड</th>
                                 <th>पद</th>
                                 <th>तह</th>
+                                <th>सेवा</th>
+                                <th>समूह</th>
+                                <th>शैक्षिक योग्यता</th>
                                 <th>शाखा</th>
                                 <th>कार्यालय</th>
-                                <th>प्रकार</th>
-                                ${!isPublic ? `<th>मोबाईल नं</th>` : ''}
+                                <th>स्थायी/करार</th>
+                                <th>सेवाको किसिम</th>
+                                <th>दरबन्दी</th>
+                                <th>बहाल विदा वा अन्य</th>
+                                <th>ई-मेल</th>
+                                <th>मोबाईल नं</th>
+                                <th>यस कार्यालयमा आएको कार्यालय</th>
+                                <th>परिवारको सम्पर्क नं</th>
+                                <th>सुरु नियुक्ती</th>
+                                <th>हालको पदमा नियुक्ति</th>
+                                <th>हालको पदमा हाजिर</th>
+                                <th>यस कार्यालयमा हाजिर</th>
+                                <th>रमानाभई आएको मिति</th>
+                                <th>कर्मचारी संकेत नं</th>
+                                <th>संचयकोष नं</th>
+                                <th>सा.जि.विमा नं</th>
+                                <th>लगानीकोष नं</th>
+                                <th>जन्म मिति</th>
                                 <th>स्थिति</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${employees.map((e, idx) => `
-                                <tr style="cursor:pointer;" class="emp-row-select ${emp.id == e.id ? 'table-primary':''}" data-id="${e.id}">
-                                    <td>${idx + 1}</td>
-                                    <td><span class="badge bg-light text-dark border">${e.employee_code}</span></td>
-                                    <td class="fw-bold text-primary">${e.full_name_ne}</td>
-                                    <td>${e.gender}</td>
-                                    <td>${e.designation_name}</td>
-                                    <td>${e.level_name}</td>
-                                    <td>${e.department_name}</td>
-                                    <td>${e.office_name}</td>
-                                    <td><span class="badge bg-info-subtle text-dark">${e.employment_type_name}</span></td>
-                                    ${!isPublic ? `<td>${e.mobile_number}</td>` : ''}
-                                    <td><span class="badge bg-success-subtle text-success">कार्यरत</span></td>
-                                </tr>
-                            `).join('')}
+                            ${employees.map((e, idx) => {
+                                const currentBsYear = 2083;
+                                let empAge = Number(e.age) || 0;
+                                if (!empAge && e.dob) {
+                                    const cleanDob = String(e.dob).replace(/[०-९]/g, ch => ({'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'}[ch] || ch));
+                                    const yr = parseInt(cleanDob.split(/[-/]/)[0], 10);
+                                    if (yr > 1990 && yr <= 2095) {
+                                        empAge = currentBsYear - yr;
+                                    }
+                                }
+                                const is57Plus = empAge >= 57;
+                                const rowClass = is57Plus ? 'table-row-57-alert' : (emp.id == e.id ? 'table-primary':'');
+
+                                return `
+                                    <tr style="cursor:pointer;" class="emp-row-select ${rowClass}" data-id="${e.id}" title="${is57Plus ? 'चेतावनी: ५७ वर्ष पुगिसकेको (अनिवार्य अवकाश निकट)' : 'विवरण सम्पादन गर्न क्लिक गर्नुहोस्'}">
+                                        <td class="sticky-col-sn">${idx + 1}</td>
+                                        <td class="sticky-col-code"><span class="badge bg-light text-dark border">${e.employee_code}</span></td>
+                                        <td class="sticky-col-name emp-name-cell">
+                                            <span class="fw-bold ${is57Plus ? 'text-danger' : 'text-primary'}">${e.full_name_ne}</span>
+                                            ${is57Plus ? `<span class="badge bg-danger text-white ms-1 font-devanagari" style="font-size:0.68rem;"><i class="fa-solid fa-triangle-exclamation me-1"></i>५७+ वर्ष</span>` : ''}
+                                        </td>
+                                        <td>${empAge > 0 ? `<span class="${is57Plus ? 'fw-bold text-danger' : ''}">${empAge} वर्ष</span>` : '-'}</td>
+                                        <td>${e.gender || '-'}</td>
+                                        <td><span class="badge bg-secondary-subtle text-dark">${e.position_code || 'POS-001'}</span></td>
+                                        <td>${e.designation_name || '-'}</td>
+                                        <td>${e.level_name || '-'}</td>
+                                        <td>${e.service_name || '-'}</td>
+                                        <td>${e.group_name || '-'}</td>
+                                        <td>${e.qualification_name || '-'}</td>
+                                        <td>${e.department_name || '-'}</td>
+                                        <td>${e.office_name || '-'}</td>
+                                        <td><span class="badge bg-info-subtle text-dark">${e.employment_type_name || '-'}</span></td>
+                                        <td>${e.service_type_name || '-'}</td>
+                                        <td><span class="badge ${e.staff_quota === 'हो' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-dark'}">${e.staff_quota || 'हो'}</span></td>
+                                        <td><span class="badge bg-primary-subtle text-primary">${e.duty_status || 'कार्यरत'}</span></td>
+                                        <td>${e.email ? `<a href="mailto:${e.email}" class="text-decoration-none text-muted">${e.email}</a>` : '-'}</td>
+                                        <td><span class="font-monospace">${e.mobile_number || '-'}</span></td>
+                                        <td>${e.transferred_from_office || '-'}</td>
+                                        <td><span class="font-monospace">${e.family_contact_number || '-'}</span></td>
+                                        <td><span class="badge bg-light text-dark border font-monospace">${e.initial_appointment_date || '-'}</span></td>
+                                        <td><span class="badge bg-light text-dark border font-monospace">${e.current_position_appointment_date || '-'}</span></td>
+                                        <td><span class="badge bg-light text-dark border font-monospace">${e.current_position_joining_date || '-'}</span></td>
+                                        <td><span class="badge bg-light text-dark border font-monospace">${e.current_office_joining_date || '-'}</span></td>
+                                        <td><span class="badge bg-light text-dark border font-monospace">${e.transfer_release_date || '-'}</span></td>
+                                        <td><span class="font-monospace">${e.personnel_sheet_roll_no || '-'}</span></td>
+                                        <td><span class="font-monospace">${e.provident_fund_no || '-'}</span></td>
+                                        <td><span class="font-monospace">${e.cit_insurance_no || '-'}</span></td>
+                                        <td><span class="font-monospace">${e.investment_fund_no || '-'}</span></td>
+                                        <td><span class="badge bg-light text-dark border font-monospace">${e.dob || '-'}</span></td>
+                                        <td>
+                                            ${is57Plus 
+                                                ? `<span class="badge bg-danger font-devanagari"><i class="fa-solid fa-bell me-1"></i>५७+ (अवकाश निकट)</span>` 
+                                                : `<span class="badge bg-success-subtle text-success">कार्यरत</span>`
+                                            }
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -540,17 +646,84 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function attachEmployeeRefEvents() {
+        // Live Smart Nepali Unicode Transliteration for Employee Name
+        const nameInput = document.getElementById('f-name-ne');
+        const badgeToggle = document.getElementById('badge-toggle-unicode');
+        if (nameInput && window.NepaliUnicode) {
+            const unicodeCtrl = NepaliUnicode.attach(nameInput, {
+                showToggle: false,
+                enabled: true
+            });
+            if (badgeToggle && unicodeCtrl) {
+                badgeToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isEn = unicodeCtrl.toggle();
+                    badgeToggle.className = `unicode-badge-indicator ${isEn ? 'active' : 'inactive'}`;
+                    badgeToggle.innerHTML = isEn ? '<i class="fa-solid fa-keyboard me-1"></i>क' : '<i class="fa-solid fa-font me-1"></i>En';
+                    badgeToggle.title = isEn ? 'नेपाली युनिकोड चालू छ (क्लिक गर्दा English हुन्छ)' : 'English चालू छ (क्लिक गर्दा नेपाली युनिकोड हुन्छ)';
+                    nameInput.focus();
+                });
+            }
+        }
+
+        // Live Smart Nepali Unicode for Transferred-from Office
+        const prevOfficeInput = document.getElementById('f-transferred-from');
+        if (prevOfficeInput && window.NepaliUnicode) {
+            NepaliUnicode.attach(prevOfficeInput, { showToggle: false, enabled: true });
+        }
+
+        // Attach Nepali Bikram Sambat Date Pickers
+        const dateInputIds = ['f-curr-app-date', 'f-curr-join-date', 'f-office-join-date', 'f-transfer-date', 'f-initial-app', 'f-dob'];
+        dateInputIds.forEach(id => {
+            const inp = document.getElementById(id);
+            if (inp && window.NepaliDatePicker) {
+                NepaliDatePicker.attach(inp);
+            }
+        });
+
+        // Age auto-calculation from BS birthdate
         const dobInput = document.getElementById('f-dob');
         const ageText = document.getElementById('f-age-text');
-        if (dobInput) {
-            dobInput.addEventListener('change', function() {
-                if (this.value) {
-                    const yr = new Date(this.value).getFullYear();
-                    const age = new Date().getFullYear() - yr;
-                    ageText.textContent = (age > 0 ? age : 0) + ' वर्ष';
+        if (dobInput && ageText) {
+            const calcAge = () => {
+                if (dobInput.value) {
+                    const nepToEng = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
+                    const clean = dobInput.value.replace(/[०-९]/g, ch => nepToEng[ch] || ch);
+                    const parts = clean.split(/[-/]/);
+                    const yr = parseInt(parts[0], 10);
+                    if (yr >= 1990 && yr <= 2095) {
+                        const currentBsYear = 2083;
+                        const age = currentBsYear - yr;
+                        if (age >= 57) {
+                            ageText.className = 'fw-bold text-danger font-devanagari ps-2';
+                            ageText.innerHTML = `${age} वर्ष <span class="badge bg-danger ms-1 font-devanagari" style="font-size:0.7rem;"><i class="fa-solid fa-triangle-exclamation me-1"></i>५७+ पुगेको</span>`;
+                        } else {
+                            ageText.className = 'fw-bold text-dark font-devanagari ps-2';
+                            ageText.textContent = (age > 0 ? age : 0) + ' वर्ष';
+                        }
+                    }
                 }
-            });
+            };
+            dobInput.addEventListener('input', calcAge);
+            dobInput.addEventListener('change', calcAge);
         }
+
+        // Enforce English Numerals for Phone Numbers
+        const enforcePhone = (id) => {
+            const inp = document.getElementById(id);
+            if (!inp) return;
+            const nepToEng = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
+            inp.addEventListener('input', function() {
+                let val = this.value;
+                val = val.replace(/[०-९]/g, ch => nepToEng[ch] || ch);
+                val = val.replace(/[^0-9]/g, '');
+                if (val.length > 10) val = val.slice(0, 10);
+                this.value = val;
+            });
+        };
+        enforcePhone('f-mobile');
+        enforcePhone('f-family-contact');
 
         const btnShowAll = document.getElementById('btn-show-all-records');
         if (btnShowAll) {
@@ -589,11 +762,35 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnNew) {
             btnNew.addEventListener('click', () => {
                 selectedEmployeeId = null;
-                document.getElementById('ref-employee-form').reset();
-                const newCode = 'EMP-' + String(Math.floor(100 + Math.random() * 900));
-                document.getElementById('f-emp-code').value = newCode;
-                document.getElementById('f-age-text').textContent = '........';
-                showToast('नयाँ कर्मचारी फारम तयार भयो। विवरण भरेर Save थिच्नुहोस्।', 'info');
+                const form = document.getElementById('ref-employee-form');
+                if (form) {
+                    // Blank out all text, date, and email input fields completely
+                    form.querySelectorAll('input').forEach(inp => {
+                        if (inp.id === 'f-emp-code') {
+                            inp.value = 'EMP-' + String(Math.floor(100 + Math.random() * 900));
+                        } else {
+                            inp.value = '';
+                        }
+                    });
+
+                    // Reset all dropdown selects to their initial option
+                    form.querySelectorAll('select').forEach(sel => {
+                        sel.selectedIndex = 0;
+                    });
+
+                    // Reset age text display
+                    const ageText = document.getElementById('f-age-text');
+                    if (ageText) ageText.textContent = '........';
+
+                    // Remove active highlight from any selected row in table
+                    document.querySelectorAll('.emp-row-select').forEach(r => r.classList.remove('table-primary', 'table-active'));
+
+                    // Focus on Employee Name input for instant typing
+                    const nameInput = document.getElementById('f-name-ne');
+                    if (nameInput) nameInput.focus();
+
+                    showToast('नयाँ कर्मचारी फारम तयार भयो। सबै फिल्डहरू खाली गरिएको छ।', 'info');
+                }
             });
         }
 
@@ -1231,38 +1428,204 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================================
     // 4. वडा कार्यालय (WARD OFFICES)
     // =========================================================================
+    // 4. WARDS MODULE (वडा कार्यालयहरू - पूर्ण सम्पादन, हटाउने र नयाँ थप्ने सुविधा)
+    // =========================================================================
     function renderWardsTab() {
         const wards = ePalikaDB.getWards();
 
         mainContainer.innerHTML = `
-            <div class="gov-panel p-3 mb-3 d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold text-navy m-0"><i class="fa-solid fa-map-location-dot me-2"></i> बाणगंगा नगरपालिकाका वडा कार्यालयहरू (Wards 1-11)</h5>
-                <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="fa-solid fa-print"></i> प्रिन्ट</button>
+            <div class="gov-panel p-3 mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold text-navy m-0">
+                    <i class="fa-solid fa-map-location-dot me-2"></i> बाणगंगा नगरपालिकाका वडा कार्यालयहरू (${wards.length > 0 ? `वडा १-${wards.length}` : 'सूची'})
+                </h5>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-success fw-bold font-devanagari px-3" onclick="window.openWardModal()">
+                        <i class="fa-solid fa-plus me-1"></i> नयाँ वडा थप्नुहोस् (New Ward)
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary font-devanagari" onclick="window.print()">
+                        <i class="fa-solid fa-print me-1"></i> प्रिन्ट
+                    </button>
+                </div>
             </div>
 
             <div class="row g-3">
                 ${wards.map(w => `
                     <div class="col-md-4">
-                        <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="badge bg-primary">वडा नं. ${w.ward_number}</span>
-                                <span class="text-muted small">जनसंख्या: ${w.population}</span>
+                        <div class="p-3 border rounded bg-white h-100 shadow-sm d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-primary font-devanagari">वडा नं. ${w.ward_number}</span>
+                                    <span class="text-muted small">जनसंख्या: ${w.population ? Number(w.population).toLocaleString('ne-NP') : '-'}</span>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-2">${w.office_name_ne}</h6>
+                                <div class="small text-muted mb-2"><i class="fa-solid fa-location-dot text-danger me-1"></i> ${w.address || '-'}</div>
+                                <div class="small p-2 bg-light rounded mb-2">
+                                    <div><strong>अध्यक्ष:</strong> ${w.chairperson_name || '-'} <span class="font-monospace">(${w.chairperson_phone || '-'})</span></div>
+                                    <div><strong>सचिव:</strong> ${w.secretary_name || '-'} <span class="font-monospace">(${w.secretary_phone || '-'})</span></div>
+                                    ${w.contact_number ? `<div class="mt-1 text-muted"><strong>कार्यालय सम्पर्क:</strong> <span class="font-monospace">${w.contact_number}</span></div>` : ''}
+                                </div>
+                                <div class="small fw-semibold text-primary">
+                                    <i class="fa-solid fa-users me-1"></i> कर्मचारी संख्या: ${w.employees_count || 0}
+                                </div>
                             </div>
-                            <h6 class="fw-bold text-dark mb-2">${w.office_name_ne}</h6>
-                            <div class="small text-muted mb-2"><i class="fa-solid fa-location-dot text-danger me-1"></i> ${w.address}</div>
-                            <div class="small p-2 bg-light rounded mb-2">
-                                <div><strong>अध्यक्ष:</strong> ${w.chairperson_name} (${w.chairperson_phone})</div>
-                                <div><strong>सचिव:</strong> ${w.secretary_name} (${w.secretary_phone})</div>
-                            </div>
-                            <div class="small fw-semibold text-primary">
-                                कर्मचारी संख्या: ${w.employees_count}
+                            <div class="border-top pt-2 mt-3 d-flex justify-content-end gap-2">
+                                <button class="btn btn-sm btn-outline-primary py-1 px-2 font-devanagari" onclick="window.openWardModal(${w.id})" title="वडा विवरण सम्पादन गर्नुहोस्">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i> सम्पादन (Edit)
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger py-1 px-2 font-devanagari" onclick="window.deleteWardItem(${w.id}, ${w.ward_number})" title="वडा हटाउनुहोस्">
+                                    <i class="fa-solid fa-trash me-1"></i> हटाउनुहोस् (Delete)
+                                </button>
                             </div>
                         </div>
                     </div>
                 `).join('')}
+                ${wards.length === 0 ? `
+                    <div class="col-12 text-center py-5 text-muted">
+                        <i class="fa-solid fa-inbox fa-3x mb-3 text-secondary"></i>
+                        <p class="font-devanagari">हाल कुनै पनि वडा दर्ता गरिएको छैन। "नयाँ वडा थप्नुहोस्" बटन थिची वडा दर्ता गर्नुहोस्।</p>
+                    </div>
+                ` : ''}
             </div>
         `;
     }
+
+    // Ward Add/Edit Modal
+    window.openWardModal = function(wardId = null) {
+        const mount = document.getElementById('ward-modal-mount');
+        if (!mount) return;
+
+        const ward = wardId ? ePalikaDB.getWardById(wardId) : null;
+        const isEdit = !!ward;
+
+        // Suggested next ward number
+        const allWards = ePalikaDB.getWards();
+        const nextWardNum = allWards.length > 0 ? Math.max(...allWards.map(w => w.ward_number)) + 1 : 1;
+
+        mount.innerHTML = `
+            <div class="modal fade show d-block" style="background:rgba(0,0,0,0.55);" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header ${isEdit ? 'bg-primary' : 'bg-success'} text-white py-2 px-3">
+                            <h5 class="modal-title font-devanagari text-white m-0 fs-6">
+                                <i class="fa-solid ${isEdit ? 'fa-pen-to-square' : 'fa-plus'} me-2"></i>
+                                ${isEdit ? `वडा नं. ${ward.ward_number} कार्यालय विवरण सम्पादन (Edit Ward)` : 'नयाँ वडा कार्यालय दर्ता (Add New Ward)'}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('ward-modal-mount').innerHTML='';"></button>
+                        </div>
+                        <form id="ward-edit-form">
+                            <input type="hidden" name="id" value="${ward ? ward.id : ''}">
+                            <div class="modal-body p-4 bg-light">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label font-devanagari small fw-bold text-dark">वडा नं. (Ward No): <span class="text-danger">*</span></label>
+                                        <input type="number" name="ward_number" class="form-control form-control-sm" value="${ward ? ward.ward_number : nextWardNum}" required min="1" max="99">
+                                    </div>
+                                    <div class="col-md-9">
+                                        <label class="form-label font-devanagari small fw-bold text-dark">वडा कार्यालयको नाम: <span class="text-danger">*</span></label>
+                                        <input type="text" name="office_name_ne" id="ward_office_name_ne" class="form-control form-control-sm font-devanagari" value="${ward ? ward.office_name_ne : `वडा नं. ${nextWardNum} कार्यालय`}" required placeholder="उदा: वडा नं. १ कार्यालय">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label font-devanagari small fw-bold text-dark"><i class="fa-solid fa-location-dot text-danger me-1"></i> ठेगाना / स्थान (Address):</label>
+                                        <input type="text" name="address" id="ward_address" class="form-control form-control-sm font-devanagari" value="${ward && ward.address ? ward.address : ''}" placeholder="उदा: उत्तमनगर">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label font-devanagari small fw-bold text-dark">जनसंख्या (Population):</label>
+                                        <input type="number" name="population" class="form-control form-control-sm" value="${ward && ward.population ? ward.population : ''}" placeholder="उदा: 6850">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label font-devanagari small fw-bold text-dark">कार्यालय फोन नं:</label>
+                                        <input type="text" name="contact_number" class="form-control form-control-sm font-monospace" value="${ward && ward.contact_number ? ward.contact_number : ''}" placeholder="उदा: ०७६-५५१००१">
+                                    </div>
+
+                                    <div class="col-12"><hr class="my-1 text-muted"></div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label font-devanagari small fw-bold text-dark"><i class="fa-solid fa-user-tie text-primary me-1"></i> वडा अध्यक्षको नाम:</label>
+                                        <input type="text" name="chairperson_name" id="ward_chairperson_name" class="form-control form-control-sm font-devanagari" value="${ward && ward.chairperson_name ? ward.chairperson_name : ''}" placeholder="अध्यक्षको नाम (उदा: संजु थारु)">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label font-devanagari small fw-bold text-dark"><i class="fa-solid fa-phone text-primary me-1"></i> अध्यक्षको मोबाईल नं:</label>
+                                        <input type="text" name="chairperson_phone" class="form-control form-control-sm font-monospace" value="${ward && ward.chairperson_phone ? ward.chairperson_phone : ''}" placeholder="उदा: 9857010001">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label font-devanagari small fw-bold text-dark"><i class="fa-solid fa-user-pen text-secondary me-1"></i> वडा सचिवको नाम:</label>
+                                        <input type="text" name="secretary_name" id="ward_secretary_name" class="form-control form-control-sm font-devanagari" value="${ward && ward.secretary_name ? ward.secretary_name : ''}" placeholder="सचिवको नाम (उदा: रामचन्द्र भुसाल)">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label font-devanagari small fw-bold text-dark"><i class="fa-solid fa-phone text-secondary me-1"></i> सचिवको मोबाईल नं:</label>
+                                        <input type="text" name="secretary_phone" class="form-control form-control-sm font-monospace" value="${ward && ward.secretary_phone ? ward.secretary_phone : ''}" placeholder="उदा: 9857020001">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-white py-2 px-3 d-flex justify-content-between">
+                                <div>
+                                    ${isEdit ? `
+                                        <button type="button" class="btn btn-sm btn-outline-danger font-devanagari" onclick="window.deleteWardItem(${ward.id}, ${ward.ward_number})">
+                                            <i class="fa-solid fa-trash me-1"></i> यो वडा हटाउनुहोस् (Delete)
+                                        </button>
+                                    ` : ''}
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-secondary font-devanagari" onclick="document.getElementById('ward-modal-mount').innerHTML='';">
+                                        रद्द गर्नुहोस्
+                                    </button>
+                                    <button type="submit" class="btn btn-sm btn-primary font-devanagari fw-bold px-3">
+                                        <i class="fa-solid fa-floppy-disk me-1"></i> सुरक्षित गर्नुहोस् (Save)
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Attach live Nepali Unicode transliteration to Nepali fields
+        if (window.ePalikaUnicode) {
+            ['ward_office_name_ne', 'ward_address', 'ward_chairperson_name', 'ward_secretary_name'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) window.ePalikaUnicode.attach(el);
+            });
+        }
+
+        // Form submit handler
+        const form = document.getElementById('ward-edit-form');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const data = {
+                id: formData.get('id') ? Number(formData.get('id')) : null,
+                ward_number: Number(formData.get('ward_number')),
+                office_name_ne: formData.get('office_name_ne') ? formData.get('office_name_ne').trim() : '',
+                address: formData.get('address') ? formData.get('address').trim() : '',
+                population: Number(formData.get('population')) || 0,
+                contact_number: formData.get('contact_number') ? formData.get('contact_number').trim() : '',
+                chairperson_name: formData.get('chairperson_name') ? formData.get('chairperson_name').trim() : '',
+                chairperson_phone: formData.get('chairperson_phone') ? formData.get('chairperson_phone').trim() : '',
+                secretary_name: formData.get('secretary_name') ? formData.get('secretary_name').trim() : '',
+                secretary_phone: formData.get('secretary_phone') ? formData.get('secretary_phone').trim() : ''
+            };
+
+            ePalikaDB.saveWard(data);
+            mount.innerHTML = '';
+            showToast(`वडा नं. ${data.ward_number} को विवरण सफलतापूर्वक सुरक्षित गरियो।`, 'success');
+            renderWardsTab();
+        });
+    };
+
+    window.deleteWardItem = function(wardId, wardNumber) {
+        if (confirm(`के तपाईं निश्चित रूपमा वडा नं. ${wardNumber} को सम्पूर्ण अभिलेख हटाउन (Delete गर्न) चाहनुहुन्छ?`)) {
+            const success = ePalikaDB.deleteWard(wardId);
+            if (success) {
+                const mount = document.getElementById('ward-modal-mount');
+                if (mount) mount.innerHTML = '';
+                showToast(`वडा नं. ${wardNumber} सफलतापूर्वक हटाइयो।`, 'info');
+                renderWardsTab();
+            }
+        }
+    };
 
     // =========================================================================
     // 5. INSTITUTIONS (सहकारी, खानेपानी, वन, संघसंस्था)
@@ -1339,35 +1702,70 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="modal-body p-4 bg-light">
                             <div class="row g-3">
+                                <!-- 1. शाखा (Departments) -->
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small">शाखा (Departments):</label>
-                                    <select class="form-select form-select-sm" id="mf-dept" multiple size="4">
-                                        ${masters.departments.map(d => `<option value="${d.id}">${d.name_ne}</option>`).join('')}
+                                    <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-sitemap text-primary me-1"></i>शाखा (Departments):</label>
+                                    <select class="form-select form-select-sm font-devanagari" id="mf-dept">
+                                        <option value="">-- सबै शाखा (All Departments) --</option>
+                                        ${masters.departments.map(d => `<option value="${d.id}" ${filterState.department_id && filterState.department_id.includes(d.id) ? 'selected':''}>${d.name_ne}</option>`).join('')}
                                     </select>
                                 </div>
+
+                                <!-- 2. पद (Designations) -->
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small">पद (Designations):</label>
-                                    <select class="form-select form-select-sm" id="mf-des" multiple size="4">
-                                        ${masters.designations.map(d => `<option value="${d.id}">${d.name_ne}</option>`).join('')}
+                                    <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-user-tag text-primary me-1"></i>पद (Designations):</label>
+                                    <select class="form-select form-select-sm font-devanagari" id="mf-des">
+                                        <option value="">-- सबै पद (All Designations) --</option>
+                                        ${masters.designations.map(d => `<option value="${d.id}" ${filterState.designation_id && filterState.designation_id.includes(d.id) ? 'selected':''}>${d.name_ne}</option>`).join('')}
                                     </select>
                                 </div>
+
+                                <!-- 3. तह (Level) -->
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small">तह (Level):</label>
-                                    <select class="form-select form-select-sm" id="mf-lev" multiple size="3">
-                                        ${masters.levels.map(l => `<option value="${l.id}">${l.name_ne}</option>`).join('')}
+                                    <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-layer-group text-primary me-1"></i>तह (Level):</label>
+                                    <select class="form-select form-select-sm font-devanagari" id="mf-lev">
+                                        <option value="">-- सबै तह (All Levels) --</option>
+                                        ${masters.levels.map(l => `<option value="${l.id}" ${filterState.level_id && filterState.level_id.includes(l.id) ? 'selected':''}>${l.name_ne}</option>`).join('')}
                                     </select>
                                 </div>
+
+                                <!-- 4. रोजगार प्रकार (Type) -->
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small">रोजगार प्रकार (Type):</label>
-                                    <select class="form-select form-select-sm" id="mf-typ" multiple size="3">
-                                        ${masters.employmentTypes.map(t => `<option value="${t.id}">${t.name_ne}</option>`).join('')}
+                                    <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-id-badge text-primary me-1"></i>रोजगार प्रकार (Type):</label>
+                                    <select class="form-select form-select-sm font-devanagari" id="mf-typ">
+                                        <option value="">-- सबै प्रकार (All Types) --</option>
+                                        ${masters.employmentTypes.map(t => `<option value="${t.id}" ${filterState.employment_type_id && filterState.employment_type_id.includes(t.id) ? 'selected':''}>${t.name_ne}</option>`).join('')}
+                                    </select>
+                                </div>
+
+                                <!-- 5. उमेर समूह (Age) -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-hourglass-half text-primary me-1"></i>उमेर समूह (Age):</label>
+                                    <select class="form-select form-select-sm font-devanagari" id="mf-age">
+                                        <option value="">-- सबै उमेर (All Ages) --</option>
+                                        <option value="20-30" ${filterState.age_range === '20-30' ? 'selected':''}>२० देखि ३० वर्ष (20 - 30)</option>
+                                        <option value="30-40" ${filterState.age_range === '30-40' ? 'selected':''}>३० देखि ४० वर्ष (30 - 40)</option>
+                                        <option value="40-50" ${filterState.age_range === '40-50' ? 'selected':''}>४० देखि ५० वर्ष (40 - 50)</option>
+                                        <option value="50-57" ${filterState.age_range === '50-57' ? 'selected':''}>५० देखि ५७ वर्ष (50 - 57)</option>
+                                        <option value="57+" ${filterState.age_range === '57+' ? 'selected':''}>५७ वर्ष भन्दा माथि (57 - Above)</option>
+                                    </select>
+                                </div>
+
+                                <!-- 6. लिङ्ग (Gender) -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-venus-mars text-primary me-1"></i>लिङ्ग (Gender):</label>
+                                    <select class="form-select form-select-sm font-devanagari" id="mf-gender">
+                                        <option value="">-- सबै लिङ्ग (All Genders) --</option>
+                                        <option value="पुरुष" ${filterState.gender === 'पुरुष' ? 'selected':''}>पुरुष (Male)</option>
+                                        <option value="महिला" ${filterState.gender === 'महिला' ? 'selected':''}>महिला (Female)</option>
+                                        <option value="अन्य" ${filterState.gender === 'अन्य' ? 'selected':''}>अन्य (Other)</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="filterState={}; document.getElementById('multifilter-modal-mount').innerHTML=''; renderEmployeesTab();">सबै हटाउनुहोस्</button>
-                            <button type="button" class="btn btn-primary btn-sm" id="btn-apply-mf">फिल्टर लागु गर्नुहोस्</button>
+                            <button type="button" class="btn btn-secondary btn-sm font-devanagari" onclick="filterState={}; document.getElementById('multifilter-modal-mount').innerHTML=''; renderEmployeesTab(); showToast('सबै फिल्टरहरू हटाइयो।', 'info');">सबै हटाउनुहोस्</button>
+                            <button type="button" class="btn btn-primary btn-sm font-devanagari fw-bold" id="btn-apply-mf"><i class="fa-solid fa-check me-1"></i>फिल्टर लागु गर्नुहोस्</button>
                         </div>
                     </div>
                 </div>
@@ -1375,17 +1773,20 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         document.getElementById('btn-apply-mf').addEventListener('click', () => {
-            const getVals = (id) => Array.from(document.getElementById(id).selectedOptions).map(o => Number(o.value));
-            const dept = getVals('mf-dept');
-            const des = getVals('mf-des');
-            const lev = getVals('mf-lev');
-            const typ = getVals('mf-typ');
+            const dept = document.getElementById('mf-dept').value;
+            const des = document.getElementById('mf-des').value;
+            const lev = document.getElementById('mf-lev').value;
+            const typ = document.getElementById('mf-typ').value;
+            const age = document.getElementById('mf-age').value;
+            const gender = document.getElementById('mf-gender').value;
 
             filterState = {};
-            if (dept.length > 0) filterState.department_id = dept;
-            if (des.length > 0) filterState.designation_id = des;
-            if (lev.length > 0) filterState.level_id = lev;
-            if (typ.length > 0) filterState.employment_type_id = typ;
+            if (dept) filterState.department_id = [Number(dept)];
+            if (des) filterState.designation_id = [Number(des)];
+            if (lev) filterState.level_id = [Number(lev)];
+            if (typ) filterState.employment_type_id = [Number(typ)];
+            if (age) filterState.age_range = age;
+            if (gender) filterState.gender = gender;
 
             mount.innerHTML = '';
             renderEmployeesTab();
@@ -1395,16 +1796,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function exportEmployeesToCSV() {
         const list = ePalikaDB.getEmployees(filterState);
-        let csv = "\uFEFFक्र.सं.,कर्मचारी कोड,नाम,लिङ्ग,पद,तह,शाखा,कार्यालय,सेवा प्रकार,मोबाईल नं\n";
+        let csv = "\uFEFFक्र.सं.,कर्मचारी कोड,नाम,उमेर,लिङ्ग,पदको कोड,पद,तह,सेवा,समूह,शैक्षिक योग्यता,शाखा,कार्यालय,स्थायी/करार,सेवाको किसिम,दरबन्दी,बहाल विदा वा अन्य,ई-मेल,मोबाईल नं,यस कार्यालयमा आएको कार्यालय,परिवारको सम्पर्क नं,सुरु नियुक्ती,हालको पदमा नियुक्ति,हालको पदमा हाजिर,यस कार्यालयमा हाजिर,रमानाभई आएको मिति,कर्मचारी संकेत नं,संचयकोष नं,सा.जि.विमा नं,लगानीकोष नं,जन्म मिति,स्थिति\n";
         list.forEach((e, idx) => {
-            csv += `${idx + 1},"${e.employee_code}","${e.full_name_ne}","${e.gender}","${e.designation_name}","${e.level_name}","${e.department_name}","${e.office_name}","${e.employment_type_name}","${e.mobile_number}"\n`;
+            csv += `${idx + 1},"${e.employee_code || ''}","${e.full_name_ne || ''}","${e.age || ''}","${e.gender || ''}","${e.position_code || 'POS-001'}","${e.designation_name || ''}","${e.level_name || ''}","${e.service_name || ''}","${e.group_name || ''}","${e.qualification_name || ''}","${e.department_name || ''}","${e.office_name || ''}","${e.employment_type_name || ''}","${e.service_type_name || ''}","${e.staff_quota || 'हो'}","${e.duty_status || 'कार्यरत'}","${e.email || ''}","${e.mobile_number || ''}","${e.transferred_from_office || ''}","${e.family_contact_number || ''}","${e.initial_appointment_date || ''}","${e.current_position_appointment_date || ''}","${e.current_position_joining_date || ''}","${e.current_office_joining_date || ''}","${e.transfer_release_date || ''}","${e.personnel_sheet_roll_no || ''}","${e.provident_fund_no || ''}","${e.cit_insurance_no || ''}","${e.investment_fund_no || ''}","${e.dob || ''}","${e.age >= 57 ? '५७+ अवकाश निकट' : 'कार्यरत'}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `banganga_employees_${new Date().toISOString().slice(0,10)}.csv`;
+        link.download = `banganga_employees_full_records_${new Date().toISOString().slice(0,10)}.csv`;
         link.click();
-        showToast('Excel/CSV फाइल डाउनलोड भयो।', 'success');
+        showToast('सबै ३२ वटै विवरणहरू सहितको Excel/CSV फाइल डाउनलोड भयो।', 'success');
     }
 
     function showToast(msg, type = 'info') {
