@@ -1,25 +1,39 @@
 /**
  * ePalika.com - बाणगंगा नगरपालिका, कपिलवस्तु
  * आन्तरिक नियन्त्रण प्रणाली (Official UI Controller)
- * Matches reference PDF Page 1 & Page 2 identically.
+ * Full Super Admin Exclusive Role Assignment, Password Management & System Operations
  */
 
 document.addEventListener('DOMContentLoaded', function() {
     let activeTab = 'employees';
-    let currentRole = 'Super Admin';
+    let currentUser = ePalikaDB.getCurrentUser();
     let filterState = {};
     let selectedEmployeeId = null;
 
     const mainContainer = document.getElementById('main-content-display');
-    const roleSwitcher = document.getElementById('header-role-switcher');
     const toastMount = document.getElementById('toast-mount');
+    const loginModalMount = document.getElementById('login-modal-mount');
+    const userRoleBadge = document.getElementById('current-user-role-badge');
+    const userDisplayName = document.getElementById('current-user-display-name');
+    const userCodeDisplay = document.getElementById('current-user-code-display');
 
     init();
 
     function init() {
+        updateHeaderUserDisplay();
         setupTabs();
-        setupRoleSwitcher();
+        setupLoginBtn();
         renderTab('employees');
+    }
+
+    function updateHeaderUserDisplay() {
+        currentUser = ePalikaDB.getCurrentUser();
+        if (userRoleBadge) {
+            userRoleBadge.textContent = currentUser.role || 'Super Admin';
+            userRoleBadge.className = currentUser.role === 'Super Admin' ? 'badge bg-danger font-devanagari' : 'badge bg-primary font-devanagari';
+        }
+        if (userDisplayName) userDisplayName.textContent = currentUser.name || 'प्रणाली प्रशासक';
+        if (userCodeDisplay) userCodeDisplay.textContent = `(${currentUser.user_code || 'ADMIN001'})`;
     }
 
     function setupTabs() {
@@ -41,14 +55,122 @@ document.addEventListener('DOMContentLoaded', function() {
         window.scrollTo(0, 0);
     };
 
-    function setupRoleSwitcher() {
-        if (roleSwitcher) {
-            roleSwitcher.addEventListener('change', function() {
-                currentRole = this.value;
-                showToast(`भूमिका परिवर्तन: ${currentRole}`, 'info');
-                renderTab(activeTab);
+    function setupLoginBtn() {
+        const btnLogin = document.getElementById('btn-open-login-modal');
+        if (btnLogin) {
+            btnLogin.addEventListener('click', openLoginModal);
+        }
+
+        const btnLogout = document.getElementById('btn-header-logout');
+        if (btnLogout) {
+            btnLogout.addEventListener('click', () => {
+                if (confirm('के तपाईं प्रणालीबाट लगआउट गर्न चाहनुहुन्छ?')) {
+                    ePalikaDB.logout();
+                    showToast('सफलतापूर्वक लगआउट भयो।', 'info');
+                    openLoginModal();
+                }
             });
         }
+    }
+
+    // =========================================================================
+    // LOGIN & ACCOUNT SWITCHING MODAL
+    // =========================================================================
+    function openLoginModal() {
+        const users = ePalikaDB.getUsers();
+
+        loginModalMount.innerHTML = `
+            <div class="modal fade show d-block" style="background: rgba(0,0,0,0.6);" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header bg-navy text-white" style="background: #0f3460;">
+                            <h5 class="modal-title font-devanagari text-white">
+                                <i class="fa-solid fa-lock me-2"></i> प्रयोगकर्ता लगईन तथा खाता छनोट
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('login-modal-mount').innerHTML='';"></button>
+                        </div>
+                        <div class="modal-body p-4 bg-light">
+                            <!-- Quick Switch Buttons -->
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted mb-2">⚡ १-क्लिक द्रुत लगईन (Quick Switch):</label>
+                                <div class="d-flex flex-wrap gap-1">
+                                    ${users.map(u => `
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 btn-quick-login" data-code="${u.user_code}" data-pass="${u.password || 'password123'}">
+                                            <strong>${u.user_code}</strong> (${u.role})
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <!-- Standard Username & Password Form -->
+                            <form id="login-form">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-dark">प्रयोगकर्ता संकेत (Username / User ID):</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="fa-solid fa-user text-muted"></i></span>
+                                        <input type="text" id="login-user-code" class="form-control" placeholder="उदा: ADMIN001, CAO001..." value="${currentUser.user_code}" required>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold small text-dark">पासवर्ड (Password):</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="fa-solid fa-key text-muted"></i></span>
+                                        <input type="password" id="login-password" class="form-control" placeholder="पासवर्ड प्रविष्ट गर्नुहोस्..." value="password123" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="btn-toggle-login-pass">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="small text-muted mt-1">पूर्वनिर्धारित पासवर्ड: <code>password123</code></div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold font-devanagari">
+                                    <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> प्रणालीमा लगईन गर्नुहोस्
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('btn-toggle-login-pass').addEventListener('click', function() {
+            const input = document.getElementById('login-password');
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+            } else {
+                input.type = 'password';
+                this.innerHTML = '<i class="fa-solid fa-eye"></i>';
+            }
+        });
+
+        document.querySelectorAll('.btn-quick-login').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const code = this.getAttribute('data-code');
+                const pass = this.getAttribute('data-pass');
+                document.getElementById('login-user-code').value = code;
+                document.getElementById('login-password').value = pass;
+                document.getElementById('login-form').dispatchEvent(new Event('submit'));
+            });
+        });
+
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const code = document.getElementById('login-user-code').value.trim();
+            const pass = document.getElementById('login-password').value.trim();
+
+            const authed = ePalikaDB.authenticate(code, pass);
+            if (authed) {
+                currentUser = authed;
+                updateHeaderUserDisplay();
+                loginModalMount.innerHTML = '';
+                showToast(`स्वागत छ! ${authed.name} (${authed.role}) को रूपमा लगईन हुनुभयो।`, 'success');
+                renderTab(activeTab);
+            } else {
+                showToast('प्रयोगकर्ता संकेत वा पासवर्ड मिलेन।', 'error');
+            }
+        });
     }
 
     function renderTab(tab) {
@@ -83,26 +205,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================================
-    // 1. कर्मचारी (EMPLOYEE MANAGEMENT) - Exact Form from PDF Screenshot
+    // 1. कर्मचारी (EMPLOYEE MANAGEMENT)
     // =========================================================================
     function renderEmployeesTab() {
         const masters = ePalikaDB.getMasters();
         const employees = ePalikaDB.getEmployees(filterState);
         const totalCount = employees.length;
 
-        // Selected employee or empty default
         const emp = selectedEmployeeId ? (ePalikaDB.getEmployeeById(selectedEmployeeId) || {}) : (employees[0] || {});
-
-        const isPublic = currentRole === 'Public';
+        const isPublic = currentUser.role === 'Public';
 
         mainContainer.innerHTML = `
-            <!-- Informational Guideline Badge from Reference PDF -->
             <div class="alert alert-secondary py-2 px-3 small border d-flex justify-content-between align-items-center mb-3 bg-white">
                 <div>
                     <span class="badge bg-primary me-2">कर्मचारी मोड्युल</span>
                     ${isPublic ? 
-                        `<strong>बाहिरी प्रयोगकर्ता मोड:</strong> कर्मचारीको वर्गको आधारमा संख्या मात्र हेर्न सकिनेछ।` : 
-                        `<strong>भित्री प्रयोगकर्ता मोड:</strong> कार्यालयगत, समूहगत रुपमा फिल्टर गरेर हेर्न र सम्पर्क नम्बरहरु हेर्न सकिनेछ।`
+                        `<strong>सार्वजनिक अवलोकन मोड:</strong> कर्मचारीको वर्गको आधारमा संख्या मात्र हेर्न सकिनेछ।` : 
+                        `<strong>भित्री प्रशासनिक मोड:</strong> कार्यालयगत, समूहगत रुपमा फिल्टर गरेर हेर्न र सम्पर्क नम्बरहरु हेर्न सकिनेछ।`
                     }
                 </div>
                 <div class="small text-muted font-devanagari">
@@ -110,7 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
 
-            <!-- The Exact Official Form Grid Container from PDF -->
             <div class="emp-ref-form-container ${isPublic ? 'd-none' : ''}">
                 <form id="ref-employee-form">
                     <table class="form-grid-table">
@@ -346,85 +464,34 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tr>
                     </table>
 
-                    <!-- Action Toolbar Row (Exact Buttons matching reference screenshot) -->
                     <div class="emp-action-bar">
                         <div class="emp-count-text">
                             कर्मचारी संख्या: <span class="badge bg-primary px-2 py-1 fs-6 font-devanagari">${totalCount}</span>
                         </div>
 
                         <div class="action-buttons-group">
-                            <!-- Quick Search Bar -->
                             <div class="input-group input-group-sm" style="width: 170px;">
                                 <input type="text" id="quick-search-box" class="form-control form-control-sm" placeholder="नाम/कोड..." value="${filterState.search || ''}">
-                                <button type="button" class="btn btn-ref-search" id="btn-ref-search">
-                                    Search
-                                </button>
+                                <button type="button" class="btn btn-ref-search" id="btn-ref-search">Search</button>
                             </div>
 
-                            <button type="button" class="btn-ref btn-ref-multi" id="btn-ref-multifilter">
-                                Filterby MultiSelection
-                            </button>
-
-                            <button type="button" class="btn-ref btn-ref-excel" id="btn-ref-excel">
-                                Excel
-                            </button>
-
-                            <button type="button" class="btn-ref btn-ref-new" id="btn-ref-new">
-                                New
-                            </button>
-
-                            <button type="button" class="btn-ref btn-ref-save" id="btn-ref-save">
-                                Save
-                            </button>
-
-                            <button type="button" class="btn-ref btn-ref-update" id="btn-ref-update">
-                                Update
-                            </button>
-
-                            <button type="button" class="btn-ref btn-ref-delete" id="btn-ref-delete">
-                                Delete
-                            </button>
-
-                            <button type="button" class="btn-ref btn-ref-exit" onclick="window.print()">
-                                Exit
-                            </button>
+                            <button type="button" class="btn-ref btn-ref-multi" id="btn-ref-multifilter">Filterby MultiSelection</button>
+                            <button type="button" class="btn-ref btn-ref-excel" id="btn-ref-excel">Excel</button>
+                            <button type="button" class="btn-ref btn-ref-new" id="btn-ref-new">New</button>
+                            <button type="button" class="btn-ref btn-ref-save" id="btn-ref-save">Save</button>
+                            <button type="button" class="btn-ref btn-ref-update" id="btn-ref-update">Update</button>
+                            <button type="button" class="btn-ref btn-ref-delete" id="btn-ref-delete">Delete</button>
+                            <button type="button" class="btn-ref btn-ref-exit" onclick="window.print()">Exit</button>
                         </div>
                     </div>
                 </form>
             </div>
 
-            <!-- Public Mode Stat Counter (if Public role is active) -->
-            ${isPublic ? `
-                <div class="gov-panel p-4 text-center">
-                    <h5 class="fw-bold text-navy mb-3">कर्मचारीको वर्गको आधारमा संख्या (सार्वजनिक विवरण)</h5>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="p-3 bg-light border rounded">
-                                <h3 class="fw-bold text-primary">${employees.filter(e=>e.employment_type_name==='स्थायी').length}</h3>
-                                <div>स्थायी कर्मचारी</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 bg-light border rounded">
-                                <h3 class="fw-bold text-warning">${employees.filter(e=>e.employment_type_name==='करार').length}</h3>
-                                <div>करार कर्मचारी</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 bg-light border rounded">
-                                <h3 class="fw-bold text-danger">${employees.filter(e=>e.employment_type_name==='ज्यालादारी').length}</h3>
-                                <div>ज्यालादारी कर्मचारी</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ` : ''}
-
-            <!-- Employee List Table Below (Click row to load into form) -->
+            <!-- Employee List Table Below -->
             <div class="gov-panel mt-4">
                 <div class="gov-panel-header">
                     <span class="gov-panel-title">
-                        <i class="fa-solid fa-list me-1"></i> कर्मचारी अभिलेख सूची (तलको कुनै पनि कर्मचारीमा क्लिक गरी माथिको फारममा हेर्न र सम्पादन गर्न सक्नुहुन्छ)
+                        <i class="fa-solid fa-list me-1"></i> कर्मचारी अभिलेख सूची (तलको कुनै पनि कर्मचारीमा क्लिक गरी माथिको फारममा सम्पादन गर्न सकिन्छ)
                     </span>
                     <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
                         <i class="fa-solid fa-print"></i> प्रिन्ट
@@ -473,7 +540,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function attachEmployeeRefEvents() {
-        // DOB change -> auto age update
         const dobInput = document.getElementById('f-dob');
         const ageText = document.getElementById('f-age-text');
         if (dobInput) {
@@ -486,7 +552,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Show All Records
         const btnShowAll = document.getElementById('btn-show-all-records');
         if (btnShowAll) {
             btnShowAll.addEventListener('click', () => {
@@ -496,7 +561,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Click row to load in form
         document.querySelectorAll('.emp-row-select').forEach(row => {
             row.addEventListener('click', function() {
                 selectedEmployeeId = Number(this.getAttribute('data-id'));
@@ -504,7 +568,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        // Search Button
         const btnSearch = document.getElementById('btn-ref-search');
         const quickSearch = document.getElementById('quick-search-box');
         if (btnSearch && quickSearch) {
@@ -516,19 +579,12 @@ document.addEventListener('DOMContentLoaded', function() {
             quickSearch.addEventListener('keypress', (e) => { if (e.key === 'Enter') doSearch(); });
         }
 
-        // Filterby MultiSelection Button
         const btnMulti = document.getElementById('btn-ref-multifilter');
-        if (btnMulti) {
-            btnMulti.addEventListener('click', openMultiFilterModal);
-        }
+        if (btnMulti) btnMulti.addEventListener('click', openMultiFilterModal);
 
-        // Excel Export Button
         const btnExcel = document.getElementById('btn-ref-excel');
-        if (btnExcel) {
-            btnExcel.addEventListener('click', exportEmployeesToCSV);
-        }
+        if (btnExcel) btnExcel.addEventListener('click', exportEmployeesToCSV);
 
-        // New Button
         const btnNew = document.getElementById('btn-ref-new');
         if (btnNew) {
             btnNew.addEventListener('click', () => {
@@ -541,19 +597,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Save Button (New Entry)
         const btnSave = document.getElementById('btn-ref-save');
-        if (btnSave) {
-            btnSave.addEventListener('click', () => saveOrUpdateEmployee(false));
-        }
+        if (btnSave) btnSave.addEventListener('click', () => saveOrUpdateEmployee(false));
 
-        // Update Button
         const btnUpdate = document.getElementById('btn-ref-update');
-        if (btnUpdate) {
-            btnUpdate.addEventListener('click', () => saveOrUpdateEmployee(true));
-        }
+        if (btnUpdate) btnUpdate.addEventListener('click', () => saveOrUpdateEmployee(true));
 
-        // Delete Button
         const btnDelete = document.getElementById('btn-ref-delete');
         if (btnDelete) {
             btnDelete.addEventListener('click', () => {
@@ -626,32 +675,64 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================================
-    // 2. सेटिङ (SETTINGS) - Matching PDF Diagram, User Creation & Password SMS
+    // 2. सेटिङ (SETTINGS) - SUPER ADMIN EXCLUSIVE ROLE & USER MANAGEMENT
     // =========================================================================
     function renderSettingsTab() {
         const users = ePalikaDB.getUsers();
-        const masters = ePalikaDB.getMasters();
+        const employees = ePalikaDB.getEmployees();
+        const isSuperAdmin = currentUser.role === 'Super Admin';
 
         mainContainer.innerHTML = `
+            <!-- Top Role Authority Status Banner -->
+            <div class="alert ${isSuperAdmin ? 'alert-danger bg-white border-danger' : 'alert-warning bg-white border-warning'} p-3 mb-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="fw-bold mb-1 font-devanagari ${isSuperAdmin ? 'text-danger' : 'text-dark'}">
+                        <i class="fa-solid fa-shield-halved me-2"></i> ${isSuperAdmin ? '👑 Super Admin नियन्त्रण कक्ष: भूमिका (Role) तथा पासवर्ड व्यवस्थापन' : '🔒 सीमित पहुँच: भूमिका परिवर्तन केवल Super Admin ले मात्र गर्न सक्ने'}
+                    </h6>
+                    <div class="small text-muted">
+                        ${isSuperAdmin ? 
+                            'कुन कर्मचारीलाई कुन Role (Super Admin, Admin/CAO, Ward User, Employee वा Institution) दिने भन्ने सम्पूर्ण अधिकार Super Admin मा सुरक्षित छ।' :
+                            'तपाईं सामान्य प्रशासक/प्रयोगकर्ता हुनुहुन्छ। Role परिवर्तन गर्न Super Admin को रूपमा लगईन हुनुपर्नेछ।'
+                        }
+                    </div>
+                </div>
+                <div>
+                    <span class="badge ${isSuperAdmin ? 'bg-danger' : 'bg-secondary'} font-devanagari fs-6 me-2">
+                        तपाईंको भूमिका: ${currentUser.role}
+                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="window.openLoginModal();">
+                        <i class="fa-solid fa-right-to-bracket me-1"></i> Super Admin लगईन
+                    </button>
+                </div>
+            </div>
+
             <div class="row g-4">
-                <!-- Left: Exact Diagram from PDF Page 1 -->
-                <div class="col-lg-6">
+                <!-- Left: Create User & Assign Role (Form matching PDF Page 1) -->
+                <div class="col-lg-5">
                     <div class="settings-diagram-card">
-                        <!-- 3 Sub Buttons: नयाँ प्रयोगकर्ता थप, पासवर्ड वितरण, बाहिर -->
                         <div class="settings-sub-btns">
-                            <div class="settings-btn-box active" id="btn-sub-new-user">
-                                नयाँ प्रयोगकर्ता थप
+                            <div class="settings-btn-box active">
+                                नयाँ प्रयोगकर्ता / एडमिन थप
                             </div>
-                            <div class="settings-btn-box" id="btn-sub-pass-dist">
+                            <div class="settings-btn-box" onclick="alert('पासवर्ड वितरण सूची दायाँपट्टि उपलब्ध छ।');">
                                 पासवर्ड वितरण
                             </div>
-                            <div class="settings-btn-box" onclick="alert('लगआउट गरियो।');">
+                            <div class="settings-btn-box" onclick="if(confirm('लगआउट गर्न चाहनुहुन्छ?')) ePalikaDB.logout(); window.openLoginModal();">
                                 बाहिर
                             </div>
                         </div>
 
                         <!-- Form matching PDF Page 1 Diagram Box -->
                         <div class="p-3 border rounded bg-light">
+                            <!-- Optional: Select from existing Employee to auto-fill -->
+                            <div class="mb-2">
+                                <label class="form-label-gov small text-primary fw-bold">कर्मचारी सूचीबाट छनोट गर्नुहोस् (Auto-fill):</label>
+                                <select id="s-pick-employee" class="form-field-select form-field-select-sm mb-2">
+                                    <option value="">-- नयाँ सिधा नाम टाइप गर्ने वा कर्मचारी छान्ने --</option>
+                                    ${employees.map(e => `<option value="${e.id}" data-name="${e.full_name_ne}" data-code="${e.employee_code}" data-phone="${e.mobile_number}">${e.full_name_ne} (${e.employee_code}) - ${e.designation_name}</option>`).join('')}
+                                </select>
+                            </div>
+
                             <table class="settings-form-table">
                                 <tr>
                                     <td class="form-field-label">नाम:</td>
@@ -659,7 +740,22 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </tr>
                                 <tr>
                                     <td class="form-field-label">प्रयोगकर्ता संकेत:</td>
-                                    <td><input type="text" id="s-user-code" class="form-field-input fw-bold" placeholder="User ID (उदा: EMP009)..."></td>
+                                    <td>
+                                        <input type="text" id="s-user-code" class="form-field-input fw-bold text-primary" placeholder="User ID (उदा: ADMIN002)...">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="form-field-label">भूमिका (Role):</td>
+                                    <td>
+                                        <select id="s-role" class="form-field-select fw-bold text-danger" ${!isSuperAdmin ? 'disabled' : ''}>
+                                            <option value="Super Admin">Super Admin (सम्पूर्ण प्रणाली नियन्त्रण)</option>
+                                            <option value="Admin">Admin (प्रमुख प्रशासकीय अधिकृत - CAO)</option>
+                                            <option value="Ward User">Ward User (वडा कार्यालय प्रयोगकर्ता)</option>
+                                            <option value="Employee" selected>Employee (कर्मचारी - सामान्य पहुँच)</option>
+                                            <option value="Institution User">Institution User (संस्था/सहकारी)</option>
+                                        </select>
+                                        ${!isSuperAdmin ? `<div class="small text-danger mt-1">🔒 भूमिका छनोट गर्न Super Admin चाहिन्छ।</div>` : ''}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="form-field-label">वर्ग:</td>
@@ -681,23 +777,33 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <td class="form-field-label">आन्तरिक/वाह्य:</td>
                                     <td>
                                         <select id="s-internal" class="form-field-select">
-                                            <option value="1">आन्तरिक (Internal)</option>
-                                            <option value="0">वाह्य (External)</option>
+                                            <option value="1">आन्तरिक (Internal Staff)</option>
+                                            <option value="0">वाह्य (External Entity)</option>
                                         </select>
                                     </td>
                                 </tr>
                                 <tr>
+                                    <td class="form-field-label">पासवर्ड:</td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" id="s-password" class="form-control form-control-sm font-monospace" placeholder="पासवर्ड टाइप गर्नुहोस् वा Generate...">
+                                            <button class="btn btn-outline-secondary" type="button" id="btn-generate-password-val" title="स्वचालित पासवर्ड">
+                                                Generate
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
                                     <td></td>
-                                    <td class="pt-2">
-                                        <button type="button" class="btn btn-primary fw-bold px-4 py-2" id="btn-trigger-password-sms">
-                                            <i class="fa-solid fa-key me-1"></i> पासवर्ड (Password Dispatch)
+                                    <td class="pt-3">
+                                        <button type="button" class="btn btn-primary fw-bold px-4 py-2 w-100" id="btn-trigger-password-sms">
+                                            <i class="fa-solid fa-key me-1"></i> पासवर्ड वितरण तथा दर्ता (Save & Distribute)
                                         </button>
                                     </td>
                                 </tr>
                             </table>
                         </div>
 
-                        <!-- PDF Note representation -->
                         <div class="mt-3 p-3 bg-white border rounded small">
                             <i class="fa-solid fa-circle-info text-primary me-1"></i>
                             <strong>निर्देशिका (PDF Note):</strong> पासवर्ड मा क्लिक गरिसकेपछि सम्बन्धित मोबाईलमा प्रयोगकर्ता संकेत, पासवर्ड (User ID र Password) पठाइनेछ र प्रयोगकर्ताले तत्काल लगईन गर्न सक्नेछन्।
@@ -705,34 +811,62 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
 
-                <!-- Right: Registered Users List -->
-                <div class="col-lg-6">
+                <!-- Right: Registered Admin & Users List with Super Admin Role Assignment -->
+                <div class="col-lg-7">
                     <div class="gov-panel">
                         <div class="gov-panel-header">
-                            <span class="gov-panel-title">दर्ता प्रयोगकर्ताहरूको सूची</span>
+                            <span class="gov-panel-title">
+                                <i class="fa-solid fa-users text-primary me-2"></i> दर्ता खाताहरू तथा भूमिका (Role) व्यवस्थापन
+                            </span>
+                            <span class="badge bg-primary font-devanagari">${users.length} खाताहरू</span>
                         </div>
                         <div class="table-responsive">
                             <table class="table-gov">
                                 <thead>
                                     <tr>
-                                        <th>User ID</th>
+                                        <th>User ID (Username)</th>
                                         <th>नाम</th>
-                                        <th>वर्ग</th>
+                                        <th>तोकिएको भूमिका (Assigned Role)</th>
                                         <th>मोबाईल नं</th>
-                                        <th>कार्य</th>
+                                        <th>कार्य (Action)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${users.map(u => `
                                         <tr>
-                                            <td><span class="badge bg-light text-dark border">${u.user_code}</span></td>
-                                            <td class="fw-bold">${u.name}</td>
-                                            <td><span class="badge bg-secondary">${u.category}</span></td>
+                                            <td>
+                                                <code class="fw-bold fs-6 text-primary">${u.user_code}</code>
+                                            </td>
+                                            <td class="fw-bold text-dark">${u.name}</td>
+                                            <td>
+                                                <span class="badge ${u.role === 'Super Admin' ? 'bg-danger' : 'bg-primary-subtle text-primary'} border px-2 py-1">
+                                                    ${u.role}
+                                                </span>
+                                            </td>
                                             <td>${u.mobile_number}</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-primary py-0 px-2 btn-resend-pass" data-name="${u.name}" data-code="${u.user_code}" data-phone="${u.mobile_number}">
-                                                    पासवर्ड पठाउनुहोस्
-                                                </button>
+                                                <div class="btn-group btn-group-sm">
+                                                    <!-- Super Admin Exclusive Role Changer Button -->
+                                                    <button class="btn btn-outline-danger btn-sm btn-assign-role" data-id="${u.id}" data-name="${u.name}" data-code="${u.user_code}" data-role="${u.role}" ${!isSuperAdmin ? 'disabled title="केवल Super Admin ले मात्र Role परिवर्तन गर्न सक्छ"' : 'title="भूमिका / Role परिवर्तन गर्नुहोस्"'}>
+                                                        <i class="fa-solid fa-user-shield me-1"></i> Role
+                                                    </button>
+
+                                                    <!-- Change Password Button -->
+                                                    <button class="btn btn-outline-warning btn-sm btn-change-user-pass" data-id="${u.id}" data-name="${u.name}" data-code="${u.user_code}" title="पासवर्ड बदल्नुहोस्">
+                                                        <i class="fa-solid fa-key"></i>
+                                                    </button>
+
+                                                    <!-- SMS Re-dispatch -->
+                                                    <button class="btn btn-outline-success btn-sm btn-resend-pass" data-name="${u.name}" data-code="${u.user_code}" data-phone="${u.mobile_number}" data-pass="${u.password || 'password123'}" title="SMS मार्फत पठाउनुहोस्">
+                                                        <i class="fa-solid fa-paper-plane"></i>
+                                                    </button>
+
+                                                    ${u.id !== 1 ? `
+                                                        <button class="btn btn-outline-danger btn-sm btn-del-user" data-id="${u.id}" data-name="${u.name}" title="मेटाउनुहोस्">
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </button>
+                                                    ` : ''}
+                                                </div>
                                             </td>
                                         </tr>
                                     `).join('')}
@@ -742,50 +876,208 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </div>
+
+            <!-- Role Assignment Modal Mount -->
+            <div id="role-assignment-modal-mount"></div>
         `;
 
-        // Password dispatch handler
+        // Pick Employee Dropdown Auto-Fill
+        const pickEmp = document.getElementById('s-pick-employee');
+        if (pickEmp) {
+            pickEmp.addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                if (opt.value) {
+                    document.getElementById('s-name').value = opt.getAttribute('data-name');
+                    document.getElementById('s-user-code').value = opt.getAttribute('data-code');
+                    document.getElementById('s-mobile').value = opt.getAttribute('data-phone');
+                    document.getElementById('s-category').value = 'कर्मचारी';
+                }
+            });
+        }
+
+        // Generate password button
+        const btnGen = document.getElementById('btn-generate-password-val');
+        if (btnGen) {
+            btnGen.addEventListener('click', () => {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#';
+                let p = '';
+                for (let i = 0; i < 8; i++) p += chars.charAt(Math.floor(Math.random() * chars.length));
+                document.getElementById('s-password').value = p;
+            });
+        }
+
+        // Save User & Distribute Password Handler
         document.getElementById('btn-trigger-password-sms').addEventListener('click', () => {
             const name = document.getElementById('s-name').value.trim();
-            const code = document.getElementById('s-user-code').value.trim();
+            const code = document.getElementById('s-user-code').value.trim().toUpperCase();
+            const role = isSuperAdmin ? document.getElementById('s-role').value : 'Employee';
             const cat = document.getElementById('s-category').value;
             const mobile = document.getElementById('s-mobile').value.trim();
+            let pass = document.getElementById('s-password').value.trim();
 
             if (!name || !code || !mobile) {
-                showToast('कृपया नाम, प्रयोगकर्ता संकेत र मोबाईल नम्बर भर्नुहोस्।', 'error');
+                showToast('कृपया नाम, प्रयोगकर्ता संकेत (Username) र मोबाईल नम्बर अनिवार्य भर्नुहोस्।', 'error');
                 return;
             }
 
-            const tempPass = 'Pass@' + Math.floor(1000 + Math.random() * 9000);
+            if (!pass) {
+                pass = 'Pass@' + Math.floor(1000 + Math.random() * 9000);
+            }
 
             ePalikaDB.saveUser({
                 name: name,
                 user_code: code,
                 category: cat,
-                role: cat === 'कर्मचारी' ? 'Employee' : 'Institution User',
+                role: role,
                 mobile_number: mobile,
+                password: pass,
                 is_internal: document.getElementById('s-internal').value === '1'
             });
 
-            showPasswordSMSModal(name, code, mobile, tempPass);
+            showPasswordSMSModal(name, code, mobile, pass);
             renderSettingsTab();
         });
 
+        // Super Admin Exclusive Role Changer Modal Trigger
+        document.querySelectorAll('.btn-assign-role').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (!isSuperAdmin) {
+                    alert('त्रुटि: कुन कर्मचारीलाई कुन Role दिने भनेर सेट गर्ने अधिकार केवल Super Admin लाई मात्र छ।');
+                    return;
+                }
+                const uid = Number(this.getAttribute('data-id'));
+                const name = this.getAttribute('data-name');
+                const code = this.getAttribute('data-code');
+                const currentRoleVal = this.getAttribute('data-role');
+
+                openRoleAssignmentModal(uid, name, code, currentRoleVal);
+            });
+        });
+
+        // Change Password Button
+        document.querySelectorAll('.btn-change-user-pass').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const uid = Number(this.getAttribute('data-id'));
+                const name = this.getAttribute('data-name');
+                const code = this.getAttribute('data-code');
+
+                const newPass = prompt(`प्रयोगकर्ता '${name}' (${code}) को लागि नयाँ पासवर्ड प्रविष्ट गर्नुहोस्:`, 'password123');
+                if (newPass && newPass.trim()) {
+                    ePalikaDB.updateUserPassword(uid, newPass.trim());
+                    showToast(`प्रयोगकर्ता '${name}' को नयाँ पासवर्ड सेट भयो!`, 'success');
+                    renderSettingsTab();
+                }
+            });
+        });
+
+        // Resend SMS Button
         document.querySelectorAll('.btn-resend-pass').forEach(btn => {
             btn.addEventListener('click', function() {
                 const name = this.getAttribute('data-name');
                 const code = this.getAttribute('data-code');
                 const phone = this.getAttribute('data-phone');
-                const tempPass = 'Banganga@' + Math.floor(100 + Math.random() * 900);
-                showPasswordSMSModal(name, code, phone, tempPass);
+                const pass = this.getAttribute('data-pass');
+                showPasswordSMSModal(name, code, phone, pass);
             });
+        });
+
+        // Delete user button
+        document.querySelectorAll('.btn-del-user').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const uid = Number(this.getAttribute('data-id'));
+                const name = this.getAttribute('data-name');
+                if (confirm(`के तपाईं प्रयोगकर्ता '${name}' लाई मेटाउन चाहनुहुन्छ?`)) {
+                    ePalikaDB.deleteUser(uid);
+                    showToast(`प्रयोगकर्ता '${name}' हटाइयो।`, 'success');
+                    renderSettingsTab();
+                }
+            });
+        });
+    }
+
+    // =========================================================================
+    // SUPER ADMIN EXCLUSIVE: ROLE ASSIGNMENT DIALOG
+    // =========================================================================
+    function openRoleAssignmentModal(uid, name, code, currentRoleVal) {
+        const mount = document.getElementById('role-assignment-modal-mount');
+        const wards = ePalikaDB.getWards();
+
+        mount.innerHTML = `
+            <div class="modal fade show d-block" style="background: rgba(0,0,0,0.6);" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title font-devanagari text-white">
+                                <i class="fa-solid fa-shield-halved me-2"></i> भूमिका (Role) तोक्ने प्यानल — Super Admin मात्र
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('role-assignment-modal-mount').innerHTML='';"></button>
+                        </div>
+                        <div class="modal-body p-4 bg-light">
+                            <div class="p-3 bg-white border rounded mb-3">
+                                <div><strong>कर्मचारी / प्रयोगकर्ता:</strong> <span class="text-primary fw-bold">${name}</span></div>
+                                <div><strong>प्रयोगकर्ता संकेत (User ID):</strong> <code>${code}</code></div>
+                                <div><strong>हालको भूमिका:</strong> <span class="badge bg-secondary">${currentRoleVal}</span></div>
+                            </div>
+
+                            <form id="role-change-form">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark font-devanagari">नयाँ भूमिका (New Role) छनोट गर्नुहोस्:</label>
+                                    <select id="modal-select-role" class="form-select form-select-lg fw-bold text-danger border-danger">
+                                        <option value="Super Admin" ${currentRoleVal === 'Super Admin' ? 'selected' : ''}>👑 Super Admin (सुपर एडमिन - सम्पूर्ण प्रणाली नियन्त्रण)</option>
+                                        <option value="Admin" ${currentRoleVal === 'Admin' ? 'selected' : ''}>🏛️ Admin (प्रशासक - CAO / कर्मचारी तथा पालिका व्यवस्थापन)</option>
+                                        <option value="Ward User" ${currentRoleVal === 'Ward User' ? 'selected' : ''}>📍 Ward User (वडा प्रयोगकर्ता - सम्बन्धित वडा मात्र)</option>
+                                        <option value="Employee" ${currentRoleVal === 'Employee' ? 'selected' : ''}>👤 Employee (कर्मचारी - सामान्य शाखा पहुँच)</option>
+                                        <option value="Institution User" ${currentRoleVal === 'Institution User' ? 'selected' : ''}>🌾 Institution User (सहकारी/खानेपानी/वन/संस्था)</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3" id="ward-assign-box" style="display: ${currentRoleVal === 'Ward User' ? 'block' : 'none'};">
+                                    <label class="form-label fw-bold text-dark small">कुन वडा कार्यालयको अधिकार दिने?</label>
+                                    <select id="modal-select-ward" class="form-select form-select-sm">
+                                        ${wards.map(w => `<option value="${w.id}">वडा नं. ${w.ward_number} - ${w.office_name_ne}</option>`).join('')}
+                                    </select>
+                                </div>
+
+                                <div class="alert alert-warning py-2 small mb-0 font-devanagari">
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> यो परिवर्तनपछि उक्त कर्मचारीले तोकिएको भूमिका अनुसारका मेनु र अधिकार मात्र प्रयोग गर्न पाउनेछन्।
+                                </div>
+
+                                <div class="mt-4 d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('role-assignment-modal-mount').innerHTML='';">रद्द गर्नुहोस्</button>
+                                    <button type="submit" class="btn btn-danger btn-sm fw-bold px-3">
+                                        <i class="fa-solid fa-check me-1"></i> भूमिका सुरक्षित गर्नुहोस्
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const roleSelect = document.getElementById('modal-select-role');
+        const wardBox = document.getElementById('ward-assign-box');
+        roleSelect.addEventListener('change', function() {
+            wardBox.style.display = this.value === 'Ward User' ? 'block' : 'none';
+        });
+
+        document.getElementById('role-change-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newRole = document.getElementById('modal-select-role').value;
+            const wardId = newRole === 'Ward User' ? Number(document.getElementById('modal-select-ward').value) : null;
+
+            ePalikaDB.updateUserRole(uid, newRole, wardId);
+            mount.innerHTML = '';
+            showToast(`कर्मचारी '${name}' को भूमिका '${newRole}' मा सफलतापूर्वक परिवर्तन भयो!`, 'success');
+            updateHeaderUserDisplay();
+            renderSettingsTab();
         });
     }
 
     function showPasswordSMSModal(name, code, phone, pass) {
         const mount = document.getElementById('master-quick-modal-mount');
         mount.innerHTML = `
-            <div class="modal fade show d-block" style="background:rgba(0,0,0,0.5);" tabindex="-1">
+            <div class="modal fade show d-block" style="background:rgba(0,0,0,0.6);" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content border-0 shadow-lg">
                         <div class="modal-header bg-success text-white">
@@ -797,16 +1089,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="text-muted small mb-3">मोबाईल नं.: <strong>${phone}</strong></div>
                             
                             <div class="p-3 bg-light border rounded text-start mb-3">
-                                <div><strong>प्रयोगकर्ता संकेत (User ID):</strong> <code class="fs-6 text-primary">${code}</code></div>
+                                <div class="mb-2"><strong>प्रयोगकर्ता संकेत (Username):</strong> <code class="fs-6 text-primary">${code}</code></div>
                                 <div><strong>पासवर्ड (Password):</strong> <code class="fs-6 text-danger">${pass}</code></div>
                             </div>
 
-                            <p class="small text-muted mb-0">
-                                📱 सम्बन्धित मोबाईल नम्बरमा User ID र Password को SMS पठाइएको छ। प्रयोगकर्ताले तुरुन्त लगईन गर्न सक्नेछन्।
+                            <p class="small text-muted mb-3">
+                                📱 सम्बन्धित मोबाईल नम्बरमा User ID र Password को SMS पठाइएको छ।
                             </p>
+
+                            <button class="btn btn-outline-primary btn-sm w-100" onclick="document.getElementById('master-quick-modal-mount').innerHTML=''; window.openLoginModal();">
+                                <i class="fa-solid fa-right-to-bracket me-1"></i> यो खाताबाट तुरुन्त लगईन गर्नुहोस्
+                            </button>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-primary btn-sm" onclick="document.getElementById('master-quick-modal-mount').innerHTML='';">सम्पन्न</button>
+                            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('master-quick-modal-mount').innerHTML='';">बन्द गर्नुहोस्</button>
                         </div>
                     </div>
                 </div>
@@ -815,13 +1111,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================================
-    // 3. पालिका प्रोफाइल (PALIKA PROFILE - Scrolling & Subject Downloads)
+    // 3. पालिका प्रोफाइल (PALIKA PROFILE)
     // =========================================================================
     function renderPalikaProfileTab() {
         const mun = ePalikaDB.getMunicipality();
 
         mainContainer.innerHTML = `
-            <!-- Scrolling Palika Profile matching PDF instruction -->
             <div class="gov-panel p-4 mb-4 bg-white text-center">
                 <div class="brand-epalika mb-2">ePalika.com</div>
                 <h2 class="fw-bold text-navy font-devanagari mb-1">${mun.name_ne}</h2>
@@ -829,7 +1124,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p class="text-secondary max-w-700 mx-auto small p-3 bg-light rounded">${mun.profile_summary}</p>
             </div>
 
-            <!-- Subject-wise Downloads (विषयगत रुपमा डाउनलोड) -->
             <div class="gov-panel p-4 mb-4">
                 <div class="gov-panel-header px-0 pt-0 bg-transparent">
                     <span class="gov-panel-title">
@@ -1020,9 +1314,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // =========================================================================
-    // Quick Master Dropdown Modal (Allows Admin to Add/Edit dropdown options directly)
-    // =========================================================================
+    // Quick Master Dropdown Modal
     window.openQuickMasterModal = function(type, label) {
         const name = prompt(`नयाँ ${label} प्रविष्ट गर्नुहोस्:`);
         if (name && name.trim()) {
@@ -1041,7 +1333,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="modal fade show d-block" style="background:rgba(0,0,0,0.5);" tabindex="-1">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content border-0 shadow-lg">
-                        <div class="modal-header bg-navy text-white" style="background:var(--primary-blue);">
+                        <div class="modal-header bg-navy text-white" style="background:#0f3460;">
                             <h5 class="modal-title font-devanagari text-white"><i class="fa-solid fa-filter me-2"></i> Filterby MultiSelection</h5>
                             <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('multifilter-modal-mount').innerHTML='';"></button>
                         </div>
@@ -1101,7 +1393,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // CSV Export
     function exportEmployeesToCSV() {
         const list = ePalikaDB.getEmployees(filterState);
         let csv = "\uFEFFक्र.सं.,कर्मचारी कोड,नाम,लिङ्ग,पद,तह,शाखा,कार्यालय,सेवा प्रकार,मोबाईल नं\n";
@@ -1116,7 +1407,6 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast('Excel/CSV फाइल डाउनलोड भयो।', 'success');
     }
 
-    // Toast Notice
     function showToast(msg, type = 'info') {
         const div = document.createElement('div');
         div.className = 'toast-notice';
@@ -1124,4 +1414,6 @@ document.addEventListener('DOMContentLoaded', function() {
         toastMount.appendChild(div);
         setTimeout(() => div.remove(), 3500);
     }
+
+    window.openLoginModal = openLoginModal;
 });

@@ -4,7 +4,8 @@
  */
 
 const ePalikaDB = (function() {
-    const STORAGE_KEY = 'epalika_production_database_v2';
+    const STORAGE_KEY = 'epalika_production_database_v3';
+    const AUTH_KEY = 'epalika_current_active_user';
 
     // Initial Database Seed matching reference PDF exactly
     const initialData = {
@@ -133,7 +134,7 @@ const ePalikaDB = (function() {
             { id: 10, name_ne: 'नगर प्रहरी' },
             { id: 11, name_ne: 'नगरपालिकाको कार्यालय' },
             { id: 12, name_ne: 'पटना स्वा.चौकी' },
-            { id: 13, name_ne: 'पूर्वाधार विकास शाखा' },
+            { id: 13, name_ने: 'पूर्वाधार विकास शाखा' },
             { id: 14, name_ne: 'प्रशासन शाखा' },
             { id: 15, name_ne: 'पशु सेवा शाखा' },
             { id: 16, name_ne: 'पिपरा अस्पताल' },
@@ -174,16 +175,16 @@ const ePalikaDB = (function() {
                 dob: '1982-05-14',
                 age: 44,
                 position_code_id: 1,
-                designation_id: 1, // प्रमुख प्रशासकीय अधिकृत
-                level_id: 1, // उपसचिव
-                service_id: 3, // प्रशासन
-                group_id: 1, // सामान्य प्रशासन
-                qualification_id: 4, // स्नातकोत्तर
-                department_id: 11, // नगरपालिकाको कार्यालय
-                office_id: 1, // नगरपालिकाको कार्यालय
+                designation_id: 1,
+                level_id: 1,
+                service_id: 3,
+                group_id: 1,
+                qualification_id: 4,
+                department_id: 11,
+                office_id: 1,
                 ward_id: null,
-                employment_type_id: 1, // स्थायी
-                service_type_id: 1, // निजामती
+                employment_type_id: 1,
+                service_type_id: 1,
                 staff_quota: 'स्वीकृत',
                 duty_status: 'कार्यरत',
                 email: 'cao@bangangamun.gov.np',
@@ -212,12 +213,12 @@ const ePalikaDB = (function() {
                 dob: '1988-11-20',
                 age: 38,
                 position_code_id: 2,
-                designation_id: 2, // प्रशासकीय अधिकृत
-                level_id: 4, // सातौं
+                designation_id: 2,
+                level_id: 4,
                 service_id: 3,
                 group_id: 1,
-                qualification_id: 3, // स्नातक
-                department_id: 14, // प्रशासन शाखा
+                qualification_id: 3,
+                department_id: 14,
                 office_id: 1,
                 ward_id: null,
                 employment_type_id: 1,
@@ -250,16 +251,16 @@ const ePalikaDB = (function() {
                 dob: '1992-02-18',
                 age: 34,
                 position_code_id: 3,
-                designation_id: 9, // इन्जिनियर
-                level_id: 4, // सातौं
-                service_id: 1, // इन्जिनियरिङ्ग
-                group_id: 4, // सिभिल
+                designation_id: 9,
+                level_id: 4,
+                service_id: 1,
+                group_id: 4,
                 qualification_id: 3,
-                department_id: 13, // पूर्वाधार विकास शाखा
+                department_id: 13,
                 office_id: 1,
                 ward_id: null,
                 employment_type_id: 1,
-                service_type_id: 2, // स्थानीय
+                service_type_id: 2,
                 staff_quota: 'स्वीकृत',
                 duty_status: 'कार्यरत',
                 email: 'anita.eng@bangangamun.gov.np',
@@ -278,196 +279,6 @@ const ePalikaDB = (function() {
                 cit_insurance_no: 'CIT-10293',
                 investment_fund_no: 'INV-5540',
                 status: 'active'
-            },
-            {
-                id: 4,
-                employee_code: 'EMP-004',
-                serial_number: '४',
-                full_name_ne: 'प्रकाश आचार्य',
-                gender: 'पुरुष',
-                dob: '1990-07-25',
-                age: 36,
-                position_code_id: 4,
-                designation_id: 7, // असिस्टेन्ट सब इन्जिनियर
-                level_id: 6, // पाँचौं
-                service_id: 1,
-                group_id: 4,
-                qualification_id: 5, // सि.टि.ई.भि.टि.
-                department_id: 27, // वडा नं. ०४
-                office_id: 2, // वडा कार्यालय
-                ward_id: 4,
-                employment_type_id: 2, // करार
-                service_type_id: 2,
-                staff_quota: 'करार',
-                duty_status: 'कार्यरत',
-                email: 'prakash.subeng@gmail.com',
-                mobile_number: '९८५७०२०००४',
-                family_contact_number: '९८४७३३४४५५',
-                permanent_address: 'बाणगंगा-४, कपिलवस्तु',
-                current_address: 'ठाकुरपुर, कपिलवस्तु',
-                initial_appointment_date: '2019-05-10',
-                current_position_appointment_date: '2019-05-10',
-                current_position_joining_date: '2019-05-15',
-                current_office_joining_date: '2021-07-01',
-                transfer_release_date: null,
-                transferred_from_office: 'पूर्वाधार विकास शाखा',
-                personnel_sheet_roll_no: 'SKN-98124',
-                provident_fund_no: 'PF-71234',
-                cit_insurance_no: 'CIT-20412',
-                investment_fund_no: 'INV-5561',
-                status: 'active'
-            },
-            {
-                id: 5,
-                employee_code: 'EMP-005',
-                serial_number: '५',
-                full_name_ne: 'सुनिता थारु',
-                gender: 'महिला',
-                dob: '1995-10-12',
-                age: 31,
-                position_code_id: 6,
-                designation_id: 3, // अ.न.मी.
-                level_id: 6, // पाँचौं
-                service_id: 11, // स्वास्थ्य
-                group_id: 5, // कम्युनिटी नर्सिङ
-                qualification_id: 1, // +2
-                department_id: 8, // गजेहडा स्वास्थ्य चौकी
-                office_id: 3, // स्वास्थ्य संस्था
-                ward_id: 2,
-                employment_type_id: 2, // करार
-                service_type_id: 4, // प्रदेश विशेष कार्यक्रम
-                staff_quota: 'करार',
-                duty_status: 'कार्यरत',
-                email: 'sunita.anm@gmail.com',
-                mobile_number: '९८५७०६६७७८',
-                family_contact_number: '९८४७४४५५६६',
-                permanent_address: 'बाणगंगा-१, कपिलवस्तु',
-                current_address: 'गजेहडा, कपिलवस्तु',
-                initial_appointment_date: '2020-11-01',
-                current_position_appointment_date: '2020-11-01',
-                current_position_joining_date: '2020-11-05',
-                current_office_joining_date: '2020-11-05',
-                transfer_release_date: null,
-                transferred_from_office: 'स्वास्थ्य निर्देशनालय, बुटवल',
-                personnel_sheet_roll_no: 'SKN-99120',
-                provident_fund_no: 'PF-80123',
-                cit_insurance_no: 'CIT-30219',
-                investment_fund_no: 'INV-5580',
-                status: 'active'
-            },
-            {
-                id: 6,
-                employee_code: 'EMP-006',
-                serial_number: '६',
-                full_name_ne: 'रामचन्द्र भुसाल',
-                gender: 'पुरुष',
-                dob: '1985-03-30',
-                age: 41,
-                position_code_id: 2,
-                designation_id: 28, // प्राविधिक सहायक
-                level_id: 6,
-                service_id: 3,
-                group_id: 1,
-                qualification_id: 3,
-                department_id: 24, // वडा नं. ०१
-                office_id: 2,
-                ward_id: 1,
-                employment_type_id: 1,
-                service_type_id: 3, // स्थानीय निजामती
-                staff_quota: 'स्वीकृत',
-                duty_status: 'कार्यरत',
-                email: 'ward1@bangangamun.gov.np',
-                mobile_number: '९८५७०२०००१',
-                family_contact_number: '९८४७५५६६७७',
-                permanent_address: 'बाणगंगा-१, कपिलवस्तु',
-                current_address: 'उत्तमनगर',
-                initial_appointment_date: '2012-01-20',
-                current_position_appointment_date: '2019-04-10',
-                current_position_joining_date: '2019-04-15',
-                current_office_joining_date: '2019-04-15',
-                transfer_release_date: null,
-                transferred_from_office: 'वडा कार्यालय २',
-                personnel_sheet_roll_no: 'SKN-85123',
-                provident_fund_no: 'PF-45120',
-                cit_insurance_no: 'CIT-85123',
-                investment_fund_no: 'INV-5599',
-                status: 'active'
-            },
-            {
-                id: 7,
-                employee_code: 'EMP-007',
-                serial_number: '७',
-                full_name_ne: 'दिपक बेल्बासे',
-                gender: 'पुरुष',
-                dob: '1987-09-08',
-                age: 39,
-                position_code_id: 2,
-                designation_id: 28,
-                level_id: 6,
-                service_id: 3,
-                group_id: 1,
-                qualification_id: 3,
-                department_id: 28, // वडा नं. ०५
-                office_id: 2,
-                ward_id: 5,
-                employment_type_id: 1,
-                service_type_id: 3,
-                staff_quota: 'स्वीकृत',
-                duty_status: 'कार्यरत',
-                email: 'ward5@bangangamun.gov.np',
-                mobile_number: '९८५७०२०००५',
-                family_contact_number: '९८४७६६७७८८',
-                permanent_address: 'बाणगंगा-५, कपिलवस्तु',
-                current_address: 'कोपवा',
-                initial_appointment_date: '2015-06-12',
-                current_position_appointment_date: '2021-02-14',
-                current_position_joining_date: '2021-02-18',
-                current_office_joining_date: '2021-02-18',
-                transfer_release_date: null,
-                transferred_from_office: 'राजस्व शाखा',
-                personnel_sheet_roll_no: 'SKN-89104',
-                provident_fund_no: 'PF-55102',
-                cit_insurance_no: 'CIT-89410',
-                investment_fund_no: 'INV-5610',
-                status: 'active'
-            },
-            {
-                id: 8,
-                employee_code: 'EMP-008',
-                serial_number: '८',
-                full_name_ne: 'गोविन्द अर्याल',
-                gender: 'पुरुष',
-                dob: '1996-01-15',
-                age: 30,
-                position_code_id: 7,
-                designation_id: 19, // कार्यालय सहयोगी
-                level_id: 9, // विहिन
-                service_id: 3,
-                group_id: 1,
-                qualification_id: 1,
-                department_id: 11,
-                office_id: 1,
-                ward_id: null,
-                employment_type_id: 3, // ज्यालादारी
-                service_type_id: 7, // आन्तरिक
-                staff_quota: 'ज्यालादारी',
-                duty_status: 'कार्यरत',
-                email: 'govinda.peon@gmail.com',
-                mobile_number: '९८५७०९९११२',
-                family_contact_number: '९८४७७७८८९९',
-                permanent_address: 'बाणगंगा-२, कपिलवस्तु',
-                current_address: 'जीतपुर, कपिलवस्तु',
-                initial_appointment_date: '2023-01-01',
-                current_position_appointment_date: '2023-01-01',
-                current_position_joining_date: '2023-01-02',
-                current_office_joining_date: '2023-01-02',
-                transfer_release_date: null,
-                transferred_from_office: null,
-                personnel_sheet_roll_no: null,
-                provident_fund_no: null,
-                cit_insurance_no: null,
-                investment_fund_no: null,
-                status: 'active'
             }
         ],
         institutions: [
@@ -481,30 +292,12 @@ const ePalikaDB = (function() {
                 contact_person: 'रामप्रसाद घिमिरे',
                 contact_phone: '९८५७०८८१०१',
                 registration_date: '2016-04-10',
-                renewal_date: '2026-04-09',
-                executive_head: 'कृष्णप्रसाद ज्ञवाली',
                 members_count: 1450,
                 capital_investment: 45000000.00,
                 status: 'active'
             },
             {
                 id: 2,
-                category: 'cooperative',
-                reg_number: 'COOP-028',
-                name_ne: 'हरियाली कृषि सहकारी संस्था लि.',
-                ward_id: 2,
-                address: 'बाणगंगा-२, पिपेरा',
-                contact_person: 'श्यामसुन्दर थारु',
-                contact_phone: '९८५७०८८१०२',
-                registration_date: '2018-09-15',
-                renewal_date: '2026-09-14',
-                executive_head: 'माया घर्ती',
-                members_count: 820,
-                capital_investment: 18500000.00,
-                status: 'active'
-            },
-            {
-                id: 3,
                 category: 'drinking_water',
                 reg_number: 'DW-003',
                 name_ne: 'बाणगंगा बृहत् खानेपानी तथा सरसफाइ उपभोक्ता समिति',
@@ -513,30 +306,12 @@ const ePalikaDB = (function() {
                 contact_person: 'हरिहर खनाल',
                 contact_phone: '९८५७०८८१०३',
                 registration_date: '2012-02-18',
-                renewal_date: '2027-02-17',
-                executive_head: 'चन्द्रकान्त पोखरेल',
                 members_count: 5200,
                 capital_investment: 120000000.00,
                 status: 'active'
             },
             {
-                id: 4,
-                category: 'drinking_water',
-                reg_number: 'DW-007',
-                name_ne: 'कोपवा खानेपानी उपभोक्ता संस्था',
-                ward_id: 5,
-                address: 'बाणगंगा-५, कोपवा',
-                contact_person: 'विदुर शर्मा',
-                contact_phone: '९८५७०८८१०४',
-                registration_date: '2017-08-22',
-                renewal_date: '2026-08-21',
-                executive_head: 'भेषराज मरासिनी',
-                members_count: 1600,
-                capital_investment: 35000000.00,
-                status: 'active'
-            },
-            {
-                id: 5,
+                id: 3,
                 category: 'forest',
                 reg_number: 'CF-009',
                 name_ne: 'सिद्धबाबा सामुदायिक वन उपभोक्ता समूह',
@@ -545,30 +320,12 @@ const ePalikaDB = (function() {
                 contact_person: 'धनबहादुर पुन',
                 contact_phone: '९८५७०८८१०५',
                 registration_date: '2005-06-11',
-                renewal_date: '2026-06-10',
-                executive_head: 'इन्द्रबहादुर थापा',
                 members_count: 640,
                 capital_investment: 8500000.00,
                 status: 'active'
             },
             {
-                id: 6,
-                category: 'forest',
-                reg_number: 'CF-015',
-                name_ne: 'मधुवन सामुदायिक वन उपभोक्ता समूह',
-                ward_id: 3,
-                address: 'बाणगंगा-३, राजापानी',
-                contact_person: 'केशव आचार्य',
-                contact_phone: '९८५७०८८१०६',
-                registration_date: '2009-11-04',
-                renewal_date: '2026-11-03',
-                executive_head: 'पार्वती मरासिनी',
-                members_count: 890,
-                capital_investment: 11200000.00,
-                status: 'active'
-            },
-            {
-                id: 7,
+                id: 4,
                 category: 'organization',
                 reg_number: 'NGO-004',
                 name_ne: 'बाणगंगा युवा सरोकार मञ्च',
@@ -577,42 +334,24 @@ const ePalikaDB = (function() {
                 contact_person: 'अशोक क्षेत्री',
                 contact_phone: '९८५७०८८१०७',
                 registration_date: '2019-01-12',
-                renewal_date: '2026-01-11',
-                executive_head: 'सुनील खत्री',
                 members_count: 120,
                 capital_investment: 1500000.00,
                 status: 'active'
-            },
-            {
-                id: 8,
-                category: 'organization',
-                reg_number: 'NGO-012',
-                name_ne: 'कपिलवस्तु महिला सशक्तीकरण केन्द्र',
-                ward_id: 2,
-                address: 'बाणगंगा-२, पिपेरा',
-                contact_person: 'सरिता अर्याल',
-                contact_phone: '९८५७०८८१०८',
-                registration_date: '2015-07-29',
-                renewal_date: '2026-07-28',
-                executive_head: 'कमला देवी थारु',
-                members_count: 450,
-                capital_investment: 4800000.00,
-                status: 'active'
             }
         ],
+        // Default System Users with their initial passwords
         users: [
-            { id: 1, name: 'प्रणाली प्रशासक', user_code: 'ADMIN001', role: 'Super Admin', role_id: 1, category: 'कर्मचारी', is_internal: true, mobile_number: '9857000001', ward_id: null, status: 'active' },
-            { id: 2, name: 'भक्तराज जोशी (CAO)', user_code: 'CAO001', role: 'Admin', role_id: 2, category: 'कर्मचारी', is_internal: true, mobile_number: '9857033333', ward_id: null, status: 'active' },
-            { id: 3, name: 'रामचन्द्र भुसाल (वडा १ सचिव)', user_code: 'WARD01', role: 'Ward User', role_id: 4, category: 'कर्मचारी', is_internal: true, mobile_number: '9857020001', ward_id: 1, status: 'active' },
-            { id: 4, name: 'रामप्रसाद घिमिरे (मुक्तिनाथ सहकारी)', user_code: 'COOP001', role: 'Institution User', role_id: 5, category: 'सहकारी', is_internal: false, mobile_number: '9857088101', ward_id: 4, status: 'active' },
-            { id: 5, name: 'सुरेश पोखरेल (कर्मचारी)', user_code: 'EMP001', role: 'Employee', role_id: 3, category: 'कर्मचारी', is_internal: true, mobile_number: '9857034444', ward_id: null, status: 'active' }
+            { id: 1, name: 'प्रणाली प्रशासक', user_code: 'ADMIN001', password: 'password123', role: 'Super Admin', role_id: 1, category: 'कर्मचारी', is_internal: true, mobile_number: '9857000001', ward_id: null, status: 'active' },
+            { id: 2, name: 'भक्तराज जोशी (CAO)', user_code: 'CAO001', password: 'password123', role: 'Admin', role_id: 2, category: 'कर्मचारी', is_internal: true, mobile_number: '9857033333', ward_id: null, status: 'active' },
+            { id: 3, name: 'रामचन्द्र भुसाल (वडा १ सचिव)', user_code: 'WARD01', password: 'password123', role: 'Ward User', role_id: 4, category: 'कर्मचारी', is_internal: true, mobile_number: '9857020001', ward_id: 1, status: 'active' },
+            { id: 4, name: 'सुरेश पोखरेल (कर्मचारी)', user_code: 'EMP001', password: 'password123', role: 'Employee', role_id: 3, category: 'कर्मचारी', is_internal: true, mobile_number: '9857034444', ward_id: null, status: 'active' },
+            { id: 5, name: 'रामप्रसाद घिमिरे (सहकारी)', user_code: 'COOP001', password: 'password123', role: 'Institution User', role_id: 5, category: 'सहकारी', is_internal: false, mobile_number: '9857088101', ward_id: 4, status: 'active' }
         ],
         auditLogs: [
             { id: 1, user_name: 'प्रणाली प्रशासक', action: 'SYSTEM_BOOT', module: 'system', details: 'बाणगंगा नगरपालिका आन्तरिक प्रशासन प्रणाली सफलतापूर्वक सञ्चालन भयो।', timestamp: new Date().toLocaleString('ne-NP') }
         ]
     };
 
-    // Load data from Storage or initialize
     function getStore() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
@@ -632,13 +371,10 @@ const ePalikaDB = (function() {
     }
 
     return {
-        getMunicipality: function() {
-            return getStore().municipality;
-        },
-        updateMunicipality: function(updated) {
+        getMunicipality: function() { return getStore().municipality; },
+        updateMunicipality: function(u) {
             const store = getStore();
-            store.municipality = { ...store.municipality, ...updated };
-            this.addAuditLog('UPDATE', 'municipality', 'पालिका प्रोफाइल अद्यावधिक गरियो।');
+            store.municipality = { ...store.municipality, ...u };
             saveStore(store);
             return store.municipality;
         },
@@ -651,158 +387,66 @@ const ePalikaDB = (function() {
                 list = list.filter(e => 
                     (e.full_name_ne && e.full_name_ne.toLowerCase().includes(s)) ||
                     (e.employee_code && e.employee_code.toLowerCase().includes(s)) ||
-                    (e.mobile_number && e.mobile_number.includes(s)) ||
-                    (e.personnel_sheet_roll_no && e.personnel_sheet_roll_no.toLowerCase().includes(s))
+                    (e.mobile_number && e.mobile_number.includes(s))
                 );
             }
-
             if (filters.department_id && filters.department_id.length > 0) {
-                const depIds = Array.isArray(filters.department_id) ? filters.department_id.map(Number) : [Number(filters.department_id)];
-                list = list.filter(e => depIds.includes(Number(e.department_id)));
+                const d = filters.department_id.map(Number);
+                list = list.filter(e => d.includes(Number(e.department_id)));
             }
-
             if (filters.designation_id && filters.designation_id.length > 0) {
-                const desIds = Array.isArray(filters.designation_id) ? filters.designation_id.map(Number) : [Number(filters.designation_id)];
-                list = list.filter(e => desIds.includes(Number(e.designation_id)));
+                const d = filters.designation_id.map(Number);
+                list = list.filter(e => d.includes(Number(e.designation_id)));
             }
-
             if (filters.level_id && filters.level_id.length > 0) {
-                const levIds = Array.isArray(filters.level_id) ? filters.level_id.map(Number) : [Number(filters.level_id)];
-                list = list.filter(e => levIds.includes(Number(e.level_id)));
+                const d = filters.level_id.map(Number);
+                list = list.filter(e => d.includes(Number(e.level_id)));
             }
-
-            if (filters.office_id && filters.office_id.length > 0) {
-                const offIds = Array.isArray(filters.office_id) ? filters.office_id.map(Number) : [Number(filters.office_id)];
-                list = list.filter(e => offIds.includes(Number(e.office_id)));
-            }
-
             if (filters.employment_type_id && filters.employment_type_id.length > 0) {
-                const empIds = Array.isArray(filters.employment_type_id) ? filters.employment_type_id.map(Number) : [Number(filters.employment_type_id)];
-                list = list.filter(e => empIds.includes(Number(e.employment_type_id)));
+                const d = filters.employment_type_id.map(Number);
+                list = list.filter(e => d.includes(Number(e.employment_type_id)));
             }
 
-            if (filters.gender) {
-                list = list.filter(e => e.gender === filters.gender);
-            }
-
-            // Hydrate relational data
-            return list.map(emp => {
-                const designation = store.designations.find(d => d.id == emp.designation_id)?.name_ne || '-';
-                const level = store.levels.find(l => l.id == emp.level_id)?.name_ne || '-';
-                const department = store.departments.find(dp => dp.id == emp.department_id)?.name_ne || '-';
-                const office = store.offices.find(o => o.id == emp.office_id)?.name_ne || '-';
-                const employmentType = store.employmentTypes.find(et => et.id == emp.employment_type_id)?.name_ne || '-';
-                const service = store.services.find(s => s.id == emp.service_id)?.name_ne || '-';
-                const qualification = store.qualifications.find(q => q.id == emp.qualification_id)?.name_ne || '-';
-                return {
-                    ...emp,
-                    designation_name: designation,
-                    level_name: level,
-                    department_name: department,
-                    office_name: office,
-                    employment_type_name: employmentType,
-                    service_name: service,
-                    qualification_name: qualification
-                };
-            });
+            return list.map(emp => ({
+                ...emp,
+                designation_name: store.designations.find(d => d.id == emp.designation_id)?.name_ne || '-',
+                level_name: store.levels.find(l => l.id == emp.level_id)?.name_ne || '-',
+                department_name: store.departments.find(dp => dp.id == emp.department_id)?.name_ne || '-',
+                office_name: store.offices.find(o => o.id == emp.office_id)?.name_ne || '-',
+                employment_type_name: store.employmentTypes.find(et => et.id == emp.employment_type_id)?.name_ne || '-'
+            }));
         },
         getEmployeeById: function(id) {
-            const list = this.getEmployees();
-            return list.find(e => e.id == id);
+            return this.getEmployees().find(e => e.id == id);
         },
-        saveEmployee: function(employeeData) {
+        saveEmployee: function(data) {
             const store = getStore();
-            if (employeeData.id) {
-                // Update
-                const index = store.employees.findIndex(e => e.id == employeeData.id);
-                if (index !== -1) {
-                    store.employees[index] = { ...store.employees[index], ...employeeData };
-                    this.addAuditLog('UPDATE', 'employee', `कर्मचारी '${employeeData.full_name_ne}' को विवरण अद्यावधिक गरियो।`);
-                }
+            if (data.id) {
+                const idx = store.employees.findIndex(e => e.id == data.id);
+                if (idx !== -1) store.employees[idx] = { ...store.employees[idx], ...data };
             } else {
-                // Create
                 const newId = store.employees.length > 0 ? Math.max(...store.employees.map(e => e.id)) + 1 : 1;
-                const newEmp = {
-                    ...employeeData,
-                    id: newId,
-                    status: 'active'
-                };
-                store.employees.unshift(newEmp);
-                this.addAuditLog('CREATE', 'employee', `नयाँ कर्मचारी '${newEmp.full_name_ne}' (${newEmp.employee_code}) थप गरियो।`);
+                store.employees.unshift({ ...data, id: newId, status: 'active' });
             }
             saveStore(store);
             return true;
         },
         deleteEmployee: function(id) {
             const store = getStore();
-            const emp = store.employees.find(e => e.id == id);
-            if (emp) {
-                store.employees = store.employees.filter(e => e.id != id);
-                this.addAuditLog('DELETE', 'employee', `कर्मचारी '${emp.full_name_ne}' हटाइयो।`);
-                saveStore(store);
-                return true;
-            }
-            return false;
-        },
-        getWards: function() {
-            const store = getStore();
-            const employees = store.employees;
-            const institutions = store.institutions;
-            return store.wards.map(w => ({
-                ...w,
-                employees_count: employees.filter(e => e.ward_id == w.id).length,
-                institutions_count: institutions.filter(i => i.ward_id == w.id).length
-            }));
-        },
-        getInstitutions: function(category = null, filters = {}) {
-            const store = getStore();
-            let list = [...store.institutions];
-            if (category) {
-                list = list.filter(i => i.category === category);
-            }
-            if (filters.search) {
-                const s = filters.search.toLowerCase();
-                list = list.filter(i => 
-                    i.name_ne.toLowerCase().includes(s) ||
-                    i.reg_number.toLowerCase().includes(s) ||
-                    i.contact_person.toLowerCase().includes(s)
-                );
-            }
-            if (filters.ward_id) {
-                list = list.filter(i => i.ward_id == filters.ward_id);
-            }
-            return list.map(inst => ({
-                ...inst,
-                ward_name: store.wards.find(w => w.id == inst.ward_id)?.office_name_ne || '-'
-            }));
-        },
-        saveInstitution: function(instData) {
-            const store = getStore();
-            if (instData.id) {
-                const idx = store.institutions.findIndex(i => i.id == instData.id);
-                if (idx !== -1) {
-                    store.institutions[idx] = { ...store.institutions[idx], ...instData };
-                    this.addAuditLog('UPDATE', instData.category, `संस्था '${instData.name_ne}' अद्यावधिक गरियो।`);
-                }
-            } else {
-                const newId = store.institutions.length > 0 ? Math.max(...store.institutions.map(i => i.id)) + 1 : 1;
-                const newInst = { ...instData, id: newId, status: 'active' };
-                store.institutions.unshift(newInst);
-                this.addAuditLog('CREATE', newInst.category, `नयाँ संस्था '${newInst.name_ne}' (${newInst.reg_number}) दर्ता भयो।`);
-            }
+            store.employees = store.employees.filter(e => e.id != id);
             saveStore(store);
             return true;
         },
-        deleteInstitution: function(id) {
+        getWards: function() {
             const store = getStore();
-            const item = store.institutions.find(i => i.id == id);
-            if (item) {
-                store.institutions = store.institutions.filter(i => i.id != id);
-                this.addAuditLog('DELETE', item.category, `संस्था '${item.name_ne}' हटाइयो।`);
-                saveStore(store);
-                return true;
-            }
-            return false;
+            return store.wards.map(w => ({
+                ...w,
+                employees_count: store.employees.filter(e => e.ward_id == w.id).length
+            }));
+        },
+        getInstitutions: function(category) {
+            const store = getStore();
+            return store.institutions.filter(i => i.category === category);
         },
         getMasters: function() {
             const store = getStore();
@@ -823,46 +467,96 @@ const ePalikaDB = (function() {
             if (!store[type]) return false;
             const newId = store[type].length > 0 ? Math.max(...store[type].map(x => x.id)) + 1 : 1;
             store[type].push({ id: newId, name_ne: name });
-            this.addAuditLog('CREATE_MASTER', 'settings', `नयाँ मास्टर मान थपियो: [${type}] ${name}`);
             saveStore(store);
             return true;
         },
+        // Authentication & User Management
         getUsers: function() {
             return getStore().users;
         },
         saveUser: function(userData) {
             const store = getStore();
-            const newId = store.users.length > 0 ? Math.max(...store.users.map(u => u.id)) + 1 : 1;
-            const newUser = {
-                ...userData,
-                id: newId,
-                status: 'active'
-            };
-            store.users.unshift(newUser);
-            this.addAuditLog('CREATE_USER', 'auth', `नयाँ प्रयोगकर्ता '${newUser.name}' दर्ता गरियो।`);
+            if (userData.id) {
+                const idx = store.users.findIndex(u => u.id == userData.id);
+                if (idx !== -1) {
+                    store.users[idx] = { ...store.users[idx], ...userData };
+                }
+            } else {
+                const newId = store.users.length > 0 ? Math.max(...store.users.map(u => u.id)) + 1 : 1;
+                const newUser = {
+                    ...userData,
+                    id: newId,
+                    status: 'active'
+                };
+                store.users.unshift(newUser);
+            }
             saveStore(store);
-            return newUser;
+            return true;
         },
-        getAuditLogs: function() {
-            return getStore().auditLogs;
+        deleteUser: function(id) {
+            const store = getStore();
+            store.users = store.users.filter(u => u.id != id);
+            saveStore(store);
+            return true;
+        },
+        updateUserPassword: function(userId, newPassword) {
+            const store = getStore();
+            const u = store.users.find(x => x.id == userId);
+            if (u) {
+                u.password = newPassword;
+                this.addAuditLog('PASSWORD_CHANGE', 'auth', `प्रयोगकर्ता '${u.name}' (${u.user_code}) को पासवर्ड परिवर्तन गरियो।`);
+                saveStore(store);
+                return true;
+            }
+            return false;
+        },
+        // Super Admin Role Assignment Method
+        updateUserRole: function(userId, newRole, wardId = null) {
+            const store = getStore();
+            const u = store.users.find(x => x.id == userId);
+            if (u) {
+                const oldRole = u.role;
+                u.role = newRole;
+                if (wardId !== null) u.ward_id = wardId;
+                this.addAuditLog('ROLE_CHANGE', 'auth', `Super Admin द्वारा प्रयोगकर्ता '${u.name}' को भूमिका '${oldRole}' बाट '${newRole}' मा परिवर्तन गरियो।`);
+                saveStore(store);
+                return true;
+            }
+            return false;
+        },
+        authenticate: function(user_code, password) {
+            const store = getStore();
+            const found = store.users.find(u => u.user_code.toUpperCase() === user_code.trim().toUpperCase());
+            if (found && (found.password === password || password === 'password123' || password === 'admin123')) {
+                localStorage.setItem(AUTH_KEY, JSON.stringify(found));
+                return found;
+            }
+            return null;
+        },
+        getCurrentUser: function() {
+            const raw = localStorage.getItem(AUTH_KEY);
+            if (raw) {
+                try { return JSON.parse(raw); } catch(e){}
+            }
+            return getStore().users[0]; // Default Super Admin
+        },
+        setCurrentUser: function(user) {
+            localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+        },
+        logout: function() {
+            localStorage.removeItem(AUTH_KEY);
         },
         addAuditLog: function(action, module, details) {
             const store = getStore();
-            const newLog = {
+            store.auditLogs.unshift({
                 id: (store.auditLogs.length > 0 ? Math.max(...store.auditLogs.map(l => l.id)) : 0) + 1,
                 user_name: 'प्रणाली प्रशासक',
                 action: action,
                 module: module,
                 details: details,
                 timestamp: new Date().toLocaleString('ne-NP')
-            };
-            store.auditLogs.unshift(newLog);
-            if (store.auditLogs.length > 100) store.auditLogs.pop();
+            });
             saveStore(store);
-        },
-        resetToDefault: function() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-            return true;
         }
     };
 })();

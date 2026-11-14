@@ -27,19 +27,18 @@
                 <div class="mun-sub-text font-devanagari">लुम्बिनी प्रदेश नेपाल</div>
             </div>
 
-            <!-- Role Switcher & User Pill -->
+            <!-- Login / Auth Status & Role Switcher -->
             <div class="d-flex align-items-center gap-2">
-                <div class="bg-light border rounded px-2 py-1 small">
-                    <span class="text-muted fw-bold">प्रयोगकर्ता भूमिका:</span>
-                    <select id="header-role-switcher" class="form-select form-select-sm d-inline-block w-auto border-0 bg-transparent fw-bold text-primary py-0">
-                        <option value="Super Admin">सुपर एडमिन (Super Admin)</option>
-                        <option value="Admin">प्रशासक (Admin - CAO)</option>
-                        <option value="Employee">कर्मचारी (Internal Staff)</option>
-                        <option value="Ward User">वडा प्रयोगकर्ता (Ward User)</option>
-                        <option value="Institution User">संस्था प्रयोगकर्ता (Institution)</option>
-                        <option value="Public">बाहिरी / सार्वजनिक (Public View)</option>
-                    </select>
+                <div class="bg-light border rounded px-2 py-1 small d-flex align-items-center gap-2">
+                    <span class="badge bg-primary font-devanagari" id="current-user-role-badge">Super Admin</span>
+                    <span class="fw-bold text-dark font-devanagari" id="current-user-display-name">प्रणाली प्रशासक</span>
+                    <code class="text-muted small" id="current-user-code-display">(ADMIN001)</code>
                 </div>
+
+                <!-- Login & Switch Account Modal Trigger -->
+                <button type="button" class="btn btn-sm btn-outline-primary font-devanagari fw-bold" id="btn-open-login-modal">
+                    <i class="fa-solid fa-key me-1"></i> लगईन / खाता परिवर्तन
+                </button>
             </div>
         </div>
 
@@ -99,8 +98,8 @@
         </ul>
 
         <div class="nav-actions-right">
-            <button class="btn btn-sm btn-outline-danger font-devanagari fw-bold" onclick="alert('लगआउट गरियो।');">
-                <i class="fa-solid fa-power-off me-1"></i> बाहिर
+            <button class="btn btn-sm btn-outline-danger font-devanagari fw-bold" id="btn-header-logout">
+                <i class="fa-solid fa-power-off me-1"></i> बाहिर (Logout)
             </button>
         </div>
     </nav>
@@ -118,13 +117,10 @@
         <div class="text-secondary">प्राविधिक विकास: <strong>ePalika.com</strong> आन्तरिक नियन्त्रण प्रणाली</div>
     </footer>
 
-    <!-- Toast Notification Container -->
+    <!-- Global Modals Mount Points -->
+    <div id="login-modal-mount"></div>
     <div id="toast-mount"></div>
-
-    <!-- Master Dropdown Quick-Add Modal -->
     <div id="master-quick-modal-mount"></div>
-
-    <!-- Multi-Selection Filter Modal -->
     <div id="multifilter-modal-mount"></div>
 
     <!-- Core Scripts -->
