@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalCount = employees.length;
         const activeFilterCount = Object.keys(filterState).filter(k => k !== 'search' && filterState[k] && (!Array.isArray(filterState[k]) || filterState[k].length > 0)).length;
 
-        const emp = selectedEmployeeId ? (ePalikaDB.getEmployeeById(selectedEmployeeId) || {}) : (employees[0] || {});
+        const emp = selectedEmployeeId ? (ePalikaDB.getEmployeeById(selectedEmployeeId) || {}) : {};
         const isPublic = currentUser.role === 'Public';
 
         mainContainer.innerHTML = `
@@ -334,12 +334,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>
                                 <div class="select-with-icon">
                                     <select id="f-pos-code" class="form-field-select">
-                                        <option value="POS-001">POS-001</option>
-                                        <option value="POS-002">POS-002</option>
-                                        <option value="POS-003">POS-003</option>
-                                        <option value="POS-004">POS-004</option>
+                                        ${(masters.positionCodes || []).map(pc => `<option value="${pc.name_ne}" ${(emp.position_code || 'POS-001') === pc.name_ne ? 'selected':''}>${pc.name_ne}</option>`).join('')}
                                     </select>
-                                    <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('designations', 'पदको कोड')">🏢</button>
+                                    <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('positionCodes', 'पदको कोड')" title="मास्टर थप/हटाउने">🏢</button>
                                 </div>
                             </td>
                             <td class="form-field-label">दरबन्दी:</td>
@@ -581,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${employees.map((e, idx) => {
                                 const currentBsYear = 2083;
                                 let empAge = Number(e.age) || 0;
-                                if (!empAge && e.dob) {
+                                if (empAge <= 0 && e.dob) {
                                     const cleanDob = String(e.dob).replace(/[०-९]/g, ch => ({'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'}[ch] || ch));
                                     const yr = parseInt(cleanDob.split(/[-/]/)[0], 10);
                                     if (yr > 1990 && yr <= 2095) {
@@ -593,13 +590,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                 return `
                                     <tr style="cursor:pointer;" class="emp-row-select ${rowClass}" data-id="${e.id}" title="${is57Plus ? 'चेतावनी: ५७ वर्ष पुगिसकेको (अनिवार्य अवकाश निकट)' : 'विवरण सम्पादन गर्न क्लिक गर्नुहोस्'}">
-                                        <td class="sticky-col-sn">${idx + 1}</td>
+                                        <td class="sticky-col-sn">${e.serial_number || (idx + 1)}</td>
                                         <td class="sticky-col-code"><span class="badge bg-light text-dark border">${e.employee_code}</span></td>
                                         <td class="sticky-col-name emp-name-cell">
                                             <span class="fw-bold ${is57Plus ? 'text-danger' : 'text-primary'}">${e.full_name_ne}</span>
                                             ${is57Plus ? `<span class="badge bg-danger text-white ms-1 font-devanagari" style="font-size:0.68rem;"><i class="fa-solid fa-triangle-exclamation me-1"></i>५७+ वर्ष</span>` : ''}
                                         </td>
-                                        <td>${empAge > 0 ? `<span class="${is57Plus ? 'fw-bold text-danger' : ''}">${empAge} वर्ष</span>` : '-'}</td>
+                                        <td>${empAge > 0 ? `<span class="${is57Plus ? 'fw-bold text-danger' : 'text-dark'}">${empAge} वर्ष</span>` : '-'}</td>
                                         <td>${e.gender || '-'}</td>
                                         <td><span class="badge bg-secondary-subtle text-dark">${e.position_code || 'POS-001'}</span></td>
                                         <td>${e.designation_name || '-'}</td>
@@ -764,13 +761,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectedEmployeeId = null;
                 const form = document.getElementById('ref-employee-form');
                 if (form) {
-                    // Blank out all text, date, and email input fields completely
+                    // Blank out all text, date, and email input fields completely (Point 8)
                     form.querySelectorAll('input').forEach(inp => {
-                        if (inp.id === 'f-emp-code') {
-                            inp.value = 'EMP-' + String(Math.floor(100 + Math.random() * 900));
-                        } else {
-                            inp.value = '';
-                        }
+                        inp.value = '';
                     });
 
                     // Reset all dropdown selects to their initial option
@@ -803,19 +796,104 @@ document.addEventListener('DOMContentLoaded', function() {
         const btnDelete = document.getElementById('btn-ref-delete');
         if (btnDelete) {
             btnDelete.addEventListener('click', () => {
-                if (!selectedEmployeeId) {
-                    showToast('कृपया हटाउनको लागि पहिले तलको सूचीबाट कर्मचारी छनोट गर्नुहोस्।', 'error');
+                let emp = null;
+                if (selectedEmployeeId) {
+                    emp = ePalikaDB.getEmployeeById(selectedEmployeeId);
+                } else {
+                    const currentCode = document.getElementById('f-emp-code')?.value.trim();
+                    if (currentCode) {
+                        emp = ePalikaDB.getEmployees().find(e => e.employee_code.toLowerCase() === currentCode.toLowerCase());
+                    }
+                }
+                if (!emp) {
+                    showToast('कृपया हटाउनको लागि पहिले तलको सूचीबाट कर्मचारी छनोट गर्नुहोस् वा कोड राख्नुहोस्।', 'error');
                     return;
                 }
-                const emp = ePalikaDB.getEmployeeById(selectedEmployeeId);
-                if (confirm(`के तपाईं निश्चित हुनुहुन्छ? कर्मचारी '${emp.full_name_ne}' लाई मेटाउन चाहनुहुन्छ?`)) {
-                    ePalikaDB.deleteEmployee(selectedEmployeeId);
-                    showToast(`कर्मचारी '${emp.full_name_ne}' हटाइयो।`, 'success');
-                    selectedEmployeeId = null;
-                    renderEmployeesTab();
-                }
+                openDeleteEmployeeModal(emp);
             });
         }
+    }
+
+    function openDeleteEmployeeModal(emp) {
+        const mount = document.getElementById('delete-modal-mount');
+        if (!mount) return;
+
+        mount.innerHTML = `
+            <div class="modal fade show d-block" style="background: rgba(0,0,0,0.6);" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header bg-danger text-white py-2">
+                            <h6 class="modal-title font-devanagari text-white mb-0">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i> कर्मचारी रेकर्ड मेटाउने निश्चितता
+                            </h6>
+                            <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('delete-modal-mount').innerHTML='';"></button>
+                        </div>
+                        <div class="modal-body p-4 bg-light">
+                            <div class="p-3 bg-white border border-danger-subtle rounded mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold text-dark font-devanagari fs-6">${emp.full_name_ne}</span>
+                                    <span class="badge bg-danger">${emp.employee_code}</span>
+                                </div>
+                                <div class="small text-muted">
+                                    पद: <strong>${emp.designation_name || '-'}</strong> | शाखा: <strong>${emp.department_name || '-'}</strong>
+                                </div>
+                            </div>
+
+                            <form id="employee-delete-confirm-form">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-dark font-devanagari">
+                                        मेटाउने रेकर्डको कोड नं. राख्नुहोस्:
+                                    </label>
+                                    <input type="text" id="modal-delete-confirm-code" class="form-control fw-bold font-monospace" placeholder="उदा: ${emp.employee_code}" required autocomplete="off">
+                                    <div class="form-text small text-muted">रेकर्ड मेटाउन निश्चित गर्न माथिको कर्मचारी कोड (<code>${emp.employee_code}</code>) टाइप गर्नुहोस्।</div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold small text-dark font-devanagari">
+                                        रेकर्ड मेट्नुपर्ने कारण:
+                                    </label>
+                                    <select id="modal-delete-reason" class="form-select fw-bold">
+                                        <option value="सरुवा">सरुवा (Transfer)</option>
+                                        <option value="अवकाश">अवकाश (Retirement)</option>
+                                        <option value="सेवा समाप्त">सेवा समाप्त (Service Terminated / Resignation)</option>
+                                        <option value="गल्तीले प्रविष्टि">गल्तीले प्रविष्टि (Entry Error)</option>
+                                        <option value="अन्य">अन्य (Other)</option>
+                                    </select>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-secondary btn-sm px-3" onclick="document.getElementById('delete-modal-mount').innerHTML='';">
+                                        Cancel (रद्द)
+                                    </button>
+                                    <button type="submit" class="btn btn-danger btn-sm fw-bold px-4">
+                                        <i class="fa-solid fa-trash me-1"></i> Delete (मेटाउनुहोस्)
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('modal-delete-confirm-code').focus();
+
+        document.getElementById('employee-delete-confirm-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const enteredCode = document.getElementById('modal-delete-confirm-code').value.trim();
+            const reason = document.getElementById('modal-delete-reason').value;
+
+            if (enteredCode.toUpperCase() !== emp.employee_code.trim().toUpperCase()) {
+                alert(`त्रुटि: तपाईंले प्रविष्ट गरेको कोड '${enteredCode}' र कर्मचारीको कोड '${emp.employee_code}' मिलेन। कृपया सही कोड टाइप गर्नुहोस्।`);
+                return;
+            }
+
+            ePalikaDB.deleteEmployee(emp.id, reason);
+            mount.innerHTML = '';
+            selectedEmployeeId = null;
+            showToast(`कर्मचारी '${emp.full_name_ne}' (${emp.employee_code}) को रेकर्ड सफलतापूर्वक मेटाइयो (कारण: ${reason})।`, 'success');
+            renderEmployeesTab();
+        });
     }
 
     function saveOrUpdateEmployee(isUpdate) {
@@ -831,10 +909,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = {
             id: isUpdate ? selectedEmployeeId : null,
             employee_code: code,
-            serial_number: document.getElementById('f-serial-no').value,
+            serial_number: document.getElementById('f-serial-no').value.trim(),
             full_name_ne: name,
             gender: document.getElementById('f-gender').value,
-            dob: document.getElementById('f-dob').value,
+            dob: document.getElementById('f-dob').value.trim(),
+            position_code: document.getElementById('f-pos-code') ? document.getElementById('f-pos-code').value : 'POS-001',
             office_id: Number(document.getElementById('f-office').value),
             employment_type_id: Number(document.getElementById('f-employment-type').value),
             service_type_id: Number(document.getElementById('f-service-type').value),
@@ -846,28 +925,52 @@ document.addEventListener('DOMContentLoaded', function() {
             department_id: Number(document.getElementById('f-department').value),
             staff_quota: document.getElementById('f-staff-quota').value,
             duty_status: document.getElementById('f-duty-status').value,
-            email: document.getElementById('f-email').value,
+            email: document.getElementById('f-email').value.trim(),
             mobile_number: mobile,
-            family_contact_number: document.getElementById('f-family-contact').value,
-            transferred_from_office: document.getElementById('f-transferred-from').value,
-            current_position_appointment_date: document.getElementById('f-curr-app-date').value,
-            current_position_joining_date: document.getElementById('f-curr-join-date').value,
-            current_office_joining_date: document.getElementById('f-office-join-date').value,
-            transfer_release_date: document.getElementById('f-transfer-date').value,
-            initial_appointment_date: document.getElementById('f-initial-app').value,
-            personnel_sheet_roll_no: document.getElementById('f-sheet-roll').value,
-            provident_fund_no: document.getElementById('f-pf-no').value,
-            cit_insurance_no: document.getElementById('f-cit-no').value,
-            investment_fund_no: document.getElementById('f-inv-no').value
+            family_contact_number: document.getElementById('f-family-contact').value.trim(),
+            transferred_from_office: document.getElementById('f-transferred-from').value.trim(),
+            current_position_appointment_date: document.getElementById('f-curr-app-date').value.trim(),
+            current_position_joining_date: document.getElementById('f-curr-join-date').value.trim(),
+            current_office_joining_date: document.getElementById('f-office-join-date').value.trim(),
+            transfer_release_date: document.getElementById('f-transfer-date').value.trim(),
+            initial_appointment_date: document.getElementById('f-initial-app').value.trim(),
+            personnel_sheet_roll_no: document.getElementById('f-sheet-roll').value.trim(),
+            provident_fund_no: document.getElementById('f-pf-no').value.trim(),
+            cit_insurance_no: document.getElementById('f-cit-no').value.trim(),
+            investment_fund_no: document.getElementById('f-inv-no').value.trim()
         };
 
         if (data.dob) {
-            const yr = new Date(data.dob).getFullYear();
-            data.age = new Date().getFullYear() - yr;
+            const nepToEng = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
+            const cleanDob = String(data.dob).replace(/[०-९]/g, ch => nepToEng[ch] || ch);
+            const yr = parseInt(cleanDob.split(/[-/]/)[0], 10);
+            if (yr >= 1990 && yr <= 2095) {
+                data.age = 2083 - yr;
+            }
         }
 
-        ePalikaDB.saveEmployee(data);
-        showToast(isUpdate ? `कर्मचारी विवरण अद्यावधिक भयो।` : `नयाँ कर्मचारी सुरक्षित गरियो।`, 'success');
+        const res = ePalikaDB.saveEmployee(data);
+        if (!res.success) {
+            showToast(res.message || 'त्रुटि भयो।', 'error');
+            return;
+        }
+
+        if (res.duplicate) {
+            showToast(res.message, 'warning');
+            return;
+        }
+
+        if (res.isDuplicatePrevented) {
+            selectedEmployeeId = res.id;
+            showToast(`कर्मचारी कोड '${code}' पहिले नै रहेकोले सोही रेकर्डमा AutoUpdate गरियो (डुप्लिकेट हुनबाट बचाइयो)।`, 'info');
+        } else if (res.updated) {
+            selectedEmployeeId = res.id;
+            showToast(`कर्मचारी '${name}' को विवरण अद्यावधिक (Updated) भयो।`, 'success');
+        } else {
+            selectedEmployeeId = res.id;
+            showToast(`नयाँ कर्मचारी '${name}' (${code}) सुरक्षित गरियो।`, 'success');
+        }
+
         renderEmployeesTab();
     }
 
@@ -1074,9 +1177,152 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
 
+            <!-- Combobox Master Lists Management (Point 5) -->
+            <div class="gov-panel mt-4">
+                <div class="gov-panel-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <span class="gov-panel-title">
+                            <i class="fa-solid fa-list-check text-primary me-2"></i> Combobox / ड्रपडाउन मास्टर सूची व्यवस्थापन
+                        </span>
+                        <span class="small text-muted ms-2">(पद, तह, शाखा, सेवा, समूह आदि Combobox का विकल्पहरू थप्न र हटाउन)</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="small fw-bold text-dark mb-0 font-devanagari">Combobox वर्ग छनोट:</label>
+                        <select id="setting-master-category-select" class="form-select form-select-sm fw-bold text-primary" style="min-width: 210px;">
+                            <option value="positionCodes">पदको कोड (Position Codes)</option>
+                            <option value="designations" selected>पद (Designations)</option>
+                            <option value="levels">तह (Levels)</option>
+                            <option value="services">सेवा (Services)</option>
+                            <option value="groups">समूह (Groups)</option>
+                            <option value="departments">शाखा (Departments)</option>
+                            <option value="offices">कार्यालय (Offices)</option>
+                            <option value="employmentTypes">स्थायी/करार (Employment Types)</option>
+                            <option value="serviceTypes">सेवाको किसिम (Service Types)</option>
+                            <option value="qualifications">शैक्षिक योग्यता (Qualifications)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="p-3 bg-light" id="setting-master-manager-body">
+                    <!-- Dynamic Master List Content rendered by JS -->
+                </div>
+            </div>
+
             <!-- Role Assignment Modal Mount -->
             <div id="role-assignment-modal-mount"></div>
         `;
+
+        // Setting Master Category Manager Renderer
+        function renderSettingMasterManager(category) {
+            const body = document.getElementById('setting-master-manager-body');
+            if (!body) return;
+            const masters = ePalikaDB.getMasters();
+            const list = masters[category] || [];
+            const categoryNames = {
+                positionCodes: 'पदको कोड',
+                designations: 'पद',
+                levels: 'तह',
+                services: 'सेवा',
+                groups: 'समूह',
+                departments: 'शाखा',
+                offices: 'कार्यालय',
+                employmentTypes: 'स्थायी/करार',
+                serviceTypes: 'सेवाको किसिम',
+                qualifications: 'शैक्षिक योग्यता'
+            };
+            const catLabel = categoryNames[category] || 'विकल्प';
+
+            body.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <div class="p-3 bg-white border rounded shadow-sm">
+                            <h6 class="fw-bold font-devanagari text-dark mb-2">
+                                <i class="fa-solid fa-plus-circle text-success me-1"></i> नयाँ ${catLabel} थप्नुहोस्
+                            </h6>
+                            <form id="setting-add-master-form">
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold text-muted">${catLabel}को नाम / मान:</label>
+                                    <input type="text" id="setting-add-master-input" class="form-control form-control-sm" placeholder="उदा: नयाँ ${catLabel}..." required autocomplete="off">
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-primary fw-bold font-devanagari w-100">
+                                    <i class="fa-solid fa-check me-1"></i> ${catLabel} सुरक्षित गर्नुहोस्
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="p-3 bg-white border rounded shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold font-devanagari text-dark mb-0">
+                                    <i class="fa-solid fa-list text-primary me-1"></i> हाल उपलब्ध ${catLabel}हरू
+                                </h6>
+                                <span class="badge bg-primary font-devanagari">${list.length} विकल्पहरू</span>
+                            </div>
+                            <div style="max-height: 320px; overflow-y: auto;">
+                                <table class="table table-sm table-hover mb-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 45px;">क्र.सं.</th>
+                                            <th>नाम / विवरण</th>
+                                            <th class="text-end" style="width: 80px;">कार्य</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${list.length === 0 ? `
+                                            <tr><td colspan="3" class="text-center text-muted small py-3">कुनै पनि रेकर्ड छैन।</td></tr>
+                                        ` : list.map((item, idx) => `
+                                            <tr>
+                                                <td class="text-muted small">${idx + 1}</td>
+                                                <td class="fw-bold text-dark font-devanagari">${item.name_ne}</td>
+                                                <td class="text-end">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-del-setting-master" data-id="${item.id}" data-name="${item.name_ne}" title="हटाउनुहोस्">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const masterInput = document.getElementById('setting-add-master-input');
+            if (masterInput && category !== 'positionCodes' && window.NepaliUnicode) {
+                NepaliUnicode.attach(masterInput, { showToggle: false, enabled: true });
+            }
+
+            document.getElementById('setting-add-master-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const name = document.getElementById('setting-add-master-input').value.trim();
+                if (name) {
+                    ePalikaDB.addMasterItem(category, name);
+                    showToast(`नयाँ ${catLabel} '${name}' सफलतापूर्वक थप गरियो।`, 'success');
+                    renderSettingMasterManager(category);
+                }
+            });
+
+            document.querySelectorAll('.btn-del-setting-master').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = Number(this.getAttribute('data-id'));
+                    const name = this.getAttribute('data-name');
+                    if (confirm(`के तपाईं निश्चित हुनुहुन्छ? '${name}' लाई ${catLabel} सूचीबाट हटाउन चाहनुहुन्छ?`)) {
+                        ePalikaDB.deleteMasterItem(category, id);
+                        showToast(`'${name}' सफलतापूर्वक हटाइयो।`, 'info');
+                        renderSettingMasterManager(category);
+                    }
+                });
+            });
+        }
+
+        const catSelect = document.getElementById('setting-master-category-select');
+        if (catSelect) {
+            catSelect.addEventListener('change', function() {
+                renderSettingMasterManager(this.value);
+            });
+            renderSettingMasterManager(catSelect.value || 'designations');
+        }
 
         // Pick Employee Dropdown Auto-Fill
         const pickEmp = document.getElementById('s-pick-employee');
@@ -1677,14 +1923,120 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // Quick Master Dropdown Modal
+    // Quick Master Dropdown Modal (Add & Delete Options - Point 1 & 2)
     window.openQuickMasterModal = function(type, label) {
-        const name = prompt(`नयाँ ${label} प्रविष्ट गर्नुहोस्:`);
-        if (name && name.trim()) {
-            ePalikaDB.addMasterItem(type, name.trim());
-            showToast(`नयाँ ${label} '${name.trim()}' सुरक्षित गरियो।`, 'success');
-            renderEmployeesTab();
+        const mount = document.getElementById('master-quick-modal-mount');
+        if (!mount) return;
+
+        function renderMasterModalContent() {
+            const masters = ePalikaDB.getMasters();
+            const list = masters[type] || [];
+
+            mount.innerHTML = `
+                <div class="modal fade show d-block" style="background:rgba(0,0,0,0.6);" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content border-0 shadow-lg">
+                            <div class="modal-header bg-navy text-white py-2" style="background: #0f3460;">
+                                <h6 class="modal-title font-devanagari text-white mb-0">
+                                    <i class="fa-solid fa-list-check me-2"></i> ${label} सूची व्यवस्थापन (थप तथा हटाउने)
+                                </h6>
+                                <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('master-quick-modal-mount').innerHTML='';"></button>
+                            </div>
+                            <div class="modal-body p-3 bg-light">
+                                <!-- Add New Form -->
+                                <form id="quick-master-add-form" class="mb-3 p-2 bg-white border rounded">
+                                    <label class="form-label fw-bold small text-dark mb-1 font-devanagari">
+                                        नयाँ ${label} थप्नुहोस्:
+                                    </label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" id="quick-master-new-input" class="form-control" placeholder="नयाँ नाम/मान प्रविष्ट गर्नुहोस्..." required autocomplete="off">
+                                        <button type="submit" class="btn btn-primary fw-bold px-3">
+                                            <i class="fa-solid fa-plus me-1"></i> थप्नुहोस्
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <!-- Existing Items List -->
+                                <div class="bg-white border rounded p-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                                        <span class="small fw-bold text-muted font-devanagari">हाल रहेका विकल्पहरू:</span>
+                                        <span class="badge bg-primary font-devanagari">${list.length} वटा</span>
+                                    </div>
+                                    <div style="max-height: 280px; overflow-y: auto;">
+                                        <table class="table table-sm table-hover mb-0 align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th style="width: 45px;">क्र.सं.</th>
+                                                    <th>नाम / मान</th>
+                                                    <th class="text-end" style="width: 80px;">कार्य</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${list.length === 0 ? `
+                                                    <tr><td colspan="3" class="text-center text-muted small py-3">कुनै पनि रेकर्ड छैन।</td></tr>
+                                                ` : list.map((item, idx) => `
+                                                    <tr>
+                                                        <td class="text-muted small">${idx + 1}</td>
+                                                        <td class="fw-bold text-dark font-devanagari">${item.name_ne}</td>
+                                                        <td class="text-end">
+                                                            <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-delete-quick-master" data-id="${item.id}" data-name="${item.name_ne}" title="हटाउनुहोस्">
+                                                                <i class="fa-solid fa-trash-can"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer py-2 bg-white">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('master-quick-modal-mount').innerHTML='';">
+                                    बन्द गर्नुहोस् (Close)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Auto-attach live Nepali Unicode if relevant
+            const quickInput = document.getElementById('quick-master-new-input');
+            if (quickInput && type !== 'positionCodes' && window.NepaliUnicode) {
+                NepaliUnicode.attach(quickInput, { showToggle: false, enabled: true });
+            }
+            if (quickInput) quickInput.focus();
+
+            // Submit Handler for Adding
+            document.getElementById('quick-master-add-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const name = document.getElementById('quick-master-new-input').value.trim();
+                if (name) {
+                    ePalikaDB.addMasterItem(type, name);
+                    showToast(`नयाँ ${label} '${name}' थप गरियो।`, 'success');
+                    renderMasterModalContent();
+                    if (activeTab === 'employees') renderEmployeesTab();
+                    else if (activeTab === 'settings') renderSettingsTab();
+                }
+            });
+
+            // Delete Handler
+            document.querySelectorAll('.btn-delete-quick-master').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = Number(this.getAttribute('data-id'));
+                    const name = this.getAttribute('data-name');
+                    if (confirm(`के तपाईं निश्चित हुनुहुन्छ? '${name}' लाई ${label} सूचीबाट हटाउन चाहनुहुन्छ?`)) {
+                        ePalikaDB.deleteMasterItem(type, id);
+                        showToast(`'${name}' हटाइयो।`, 'info');
+                        renderMasterModalContent();
+                        if (activeTab === 'employees') renderEmployeesTab();
+                        else if (activeTab === 'settings') renderSettingsTab();
+                    }
+                });
+            });
         }
+
+        renderMasterModalContent();
     };
 
     // MultiSelection Filter Modal

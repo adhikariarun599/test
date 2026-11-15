@@ -45,6 +45,14 @@ const ePalikaDB = (function() {
             { id: 10, ward_number: 10, office_name_ne: 'वडा नं. १० कार्यालय', chairperson_name: 'धर्मराज ज्ञवाली', chairperson_phone: '९८५७०१०११०', secretary_name: 'जीवन थापा', secretary_phone: '९८५७०२०११०', address: 'पटना', contact_number: '०७६-५५१०१०', population: 7890 },
             { id: 11, ward_number: 11, office_name_ne: 'वडा नं. ११ कार्यालय', chairperson_name: 'राजेन्द्र यादव', chairperson_phone: '९८५७०१०१११', secretary_name: 'सुरेन्द्र पाण्डे', secretary_phone: '९८५७०२०१११', address: 'ओदारी', contact_number: '०७६-५५१०११', population: 8120 }
         ],
+        positionCodes: [
+            { id: 1, name_ne: 'POS-001' },
+            { id: 2, name_ne: 'POS-002' },
+            { id: 3, name_ne: 'POS-003' },
+            { id: 4, name_ne: 'POS-004' },
+            { id: 5, name_ne: 'POS-005' },
+            { id: 6, name_ne: 'POS-006' }
+        ],
         designations: [
             { id: 1, name_ne: 'प्रमुख प्रशासकीय अधिकृत' },
             { id: 2, name_ne: 'प्रशासकीय अधिकृत' },
@@ -390,24 +398,86 @@ const ePalikaDB = (function() {
         ]
     };
 
-    function normalizeEmployeeData(data) {
-        if (!data || !data.employees) return data;
+    function parseSerialNumber(val) {
+        if (!val && val !== 0) return 999999;
         const nepToEng = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
-        data.employees.forEach(emp => {
-            if (emp.mobile_number) {
-                emp.mobile_number = String(emp.mobile_number).replace(/[०-९]/g, ch => nepToEng[ch] || ch);
-            }
-            if (emp.family_contact_number) {
-                emp.family_contact_number = String(emp.family_contact_number).replace(/[०-९]/g, ch => nepToEng[ch] || ch);
-            }
-            if (emp.dob && emp.dob.startsWith('19')) emp.dob = '2039-01-31';
-            if (emp.initial_appointment_date && emp.initial_appointment_date.startsWith('2008')) emp.initial_appointment_date = '2064-12-30';
-            if (emp.current_position_appointment_date && emp.current_position_appointment_date.startsWith('2021')) emp.current_position_appointment_date = '2078-03-01';
-            if (emp.current_position_joining_date && emp.current_position_joining_date.startsWith('2021')) emp.current_position_joining_date = '2078-03-06';
-            if (emp.current_office_joining_date && emp.current_office_joining_date.startsWith('2022')) emp.current_office_joining_date = '2078-09-26';
-            if (emp.transfer_release_date && emp.transfer_release_date.startsWith('2022')) emp.transfer_release_date = '2078-09-21';
-            if (emp.staff_quota === 'स्वीकृत' || !emp.staff_quota) emp.staff_quota = 'हो';
-        });
+        const clean = String(val).replace(/[०-९]/g, ch => nepToEng[ch] || ch).replace(/[^0-9]/g, '');
+        const num = parseInt(clean, 10);
+        return isNaN(num) ? 999999 : num;
+    }
+
+    function calculateBsAge(dob) {
+        if (!dob) return 0;
+        const nepToEng = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
+        const clean = String(dob).replace(/[०-९]/g, ch => nepToEng[ch] || ch);
+        const parts = clean.split(/[-/]/);
+        const yr = parseInt(parts[0], 10);
+        const currentBsYear = 2083;
+        if (yr >= 1990 && yr <= 2095) {
+            const age = currentBsYear - yr;
+            return age > 0 ? age : 0;
+        }
+        return 0;
+    }
+
+    function normalizeEmployeeData(data) {
+        if (!data) return data;
+        const nepToEng = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
+
+        // Ensure positionCodes master list exists
+        if (!data.positionCodes || !Array.isArray(data.positionCodes) || data.positionCodes.length === 0) {
+            data.positionCodes = [
+                { id: 1, name_ne: 'POS-001' },
+                { id: 2, name_ne: 'POS-002' },
+                { id: 3, name_ne: 'POS-003' },
+                { id: 4, name_ne: 'POS-004' },
+                { id: 5, name_ne: 'POS-005' },
+                { id: 6, name_ne: 'POS-006' }
+            ];
+        }
+
+        if (data.employees && Array.isArray(data.employees)) {
+            const seenCodes = new Set();
+            const uniqueEmployees = [];
+            data.employees.forEach(emp => {
+                const code = (emp.employee_code || '').trim().toUpperCase();
+                // Deduplicate any accidental duplicate employee code
+                if (code && seenCodes.has(code)) {
+                    return;
+                }
+                if (code) seenCodes.add(code);
+
+                if (emp.mobile_number) {
+                    emp.mobile_number = String(emp.mobile_number).replace(/[०-९]/g, ch => nepToEng[ch] || ch).replace(/[^0-9]/g, '');
+                }
+                if (emp.family_contact_number) {
+                    emp.family_contact_number = String(emp.family_contact_number).replace(/[०-९]/g, ch => nepToEng[ch] || ch).replace(/[^0-9]/g, '');
+                }
+                if (emp.dob && emp.dob.startsWith('19')) emp.dob = '2039-01-31';
+
+                // Correct age calculation for ALL employees using BS year
+                const calcAge = calculateBsAge(emp.dob);
+                if (calcAge > 0) {
+                    emp.age = calcAge;
+                } else if (!emp.age || emp.age <= 0) {
+                    emp.age = 35; // Fallback positive age
+                }
+
+                if (!emp.position_code) {
+                    emp.position_code = 'POS-001';
+                }
+
+                if (emp.initial_appointment_date && emp.initial_appointment_date.startsWith('2008')) emp.initial_appointment_date = '2064-12-30';
+                if (emp.current_position_appointment_date && emp.current_position_appointment_date.startsWith('2021')) emp.current_position_appointment_date = '2078-03-01';
+                if (emp.current_position_joining_date && emp.current_position_joining_date.startsWith('2021')) emp.current_position_joining_date = '2078-03-06';
+                if (emp.current_office_joining_date && emp.current_office_joining_date.startsWith('2022')) emp.current_office_joining_date = '2078-09-26';
+                if (emp.transfer_release_date && emp.transfer_release_date.startsWith('2022')) emp.transfer_release_date = '2078-09-21';
+                if (emp.staff_quota === 'स्वीकृत' || !emp.staff_quota) emp.staff_quota = 'हो';
+
+                uniqueEmployees.push(emp);
+            });
+            data.employees = uniqueEmployees;
+        }
         return data;
     }
 
@@ -470,18 +540,27 @@ const ePalikaDB = (function() {
             }
             if (filters.age_range) {
                 list = list.filter(e => {
-                    const age = Number(e.age) || (e.dob ? (2083 - parseInt(String(e.dob).split(/[-/]/)[0], 10)) : 0);
+                    const age = Number(e.age) || calculateBsAge(e.dob);
                     if (filters.age_range === '20-30') return age >= 20 && age <= 30;
                     if (filters.age_range === '30-40') return age >= 30 && age <= 40;
                     if (filters.age_range === '40-50') return age >= 40 && age <= 50;
                     if (filters.age_range === '50-57') return age >= 50 && age <= 57;
-                    if (filters.age_range === '57+') return age > 57;
+                    if (filters.age_range === '57+') return age >= 57;
                     return true;
                 });
             }
 
+            // Always sort by क्रम संख्या (Serial Number) ascending (Point 4)
+            list.sort((a, b) => {
+                const snA = parseSerialNumber(a.serial_number);
+                const snB = parseSerialNumber(b.serial_number);
+                if (snA !== snB) return snA - snB;
+                return a.id - b.id;
+            });
+
             return list.map(emp => ({
                 ...emp,
+                age: Number(emp.age) > 0 ? Number(emp.age) : calculateBsAge(emp.dob),
                 designation_name: store.designations.find(d => d.id == emp.designation_id)?.name_ne || '-',
                 level_name: store.levels.find(l => l.id == emp.level_id)?.name_ne || '-',
                 department_name: store.departments.find(dp => dp.id == emp.department_id)?.name_ne || '-',
@@ -498,19 +577,56 @@ const ePalikaDB = (function() {
         },
         saveEmployee: function(data) {
             const store = getStore();
+            const cleanCode = (data.employee_code || '').trim().toUpperCase();
+            
+            // Check if an existing employee has this employee_code
+            const existingByCodeIdx = store.employees.findIndex(e => (e.employee_code || '').trim().toUpperCase() === cleanCode);
+            
             if (data.id) {
                 const idx = store.employees.findIndex(e => e.id == data.id);
-                if (idx !== -1) store.employees[idx] = { ...store.employees[idx], ...data };
-            } else {
-                const newId = store.employees.length > 0 ? Math.max(...store.employees.map(e => e.id)) + 1 : 1;
-                store.employees.unshift({ ...data, id: newId, status: 'active' });
+                if (idx !== -1) {
+                    if (existingByCodeIdx !== -1 && existingByCodeIdx !== idx) {
+                        return { 
+                            success: false, 
+                            duplicate: true, 
+                            message: `त्रुटि: कर्मचारी कोड '${data.employee_code}' पहिले नै अर्को कर्मचारी (${store.employees[existingByCodeIdx].full_name_ne}) को लागि सुरक्षित छ (Record Already Exists)! कृपया फरक कोड राख्नुहोस्।` 
+                        };
+                    }
+                    store.employees[idx] = { ...store.employees[idx], ...data };
+                    this.addAuditLog('EMPLOYEE_UPDATE', 'employees', `कर्मचारी '${data.full_name_ne}' (${data.employee_code}) को विवरण अद्यावधिक गरियो।`);
+                    saveStore(store);
+                    return { success: true, updated: true, isDuplicatePrevented: false, id: data.id };
+                }
             }
+            
+            // If ID was not passed (e.g. Save button clicked), but employee_code already exists:
+            // AutoUpdate the existing record instead of creating a duplicate! (Point 1 and 3)
+            if (existingByCodeIdx !== -1) {
+                const targetId = store.employees[existingByCodeIdx].id;
+                store.employees[existingByCodeIdx] = { 
+                    ...store.employees[existingByCodeIdx], 
+                    ...data, 
+                    id: targetId 
+                };
+                this.addAuditLog('EMPLOYEE_AUTO_UPDATE', 'employees', `कर्मचारी कोड '${data.employee_code}' पहिले नै रहेकोले सोही रेकर्ड अद्यावधिक (AutoUpdate) गरियो।`);
+                saveStore(store);
+                return { success: true, updated: true, isDuplicatePrevented: true, id: targetId };
+            }
+            
+            // Brand new record
+            const newId = store.employees.length > 0 ? Math.max(...store.employees.map(e => e.id)) + 1 : 1;
+            const newRecord = { ...data, id: newId, status: 'active' };
+            store.employees.push(newRecord);
+            this.addAuditLog('EMPLOYEE_CREATE', 'employees', `नयाँ कर्मचारी '${data.full_name_ne}' (${data.employee_code}) दर्ता गरियो।`);
             saveStore(store);
-            return true;
+            return { success: true, updated: false, isDuplicatePrevented: false, id: newId };
         },
-        deleteEmployee: function(id) {
+        deleteEmployee: function(id, reason = 'अन्य') {
             const store = getStore();
+            const emp = store.employees.find(e => e.id == id);
+            if (!emp) return false;
             store.employees = store.employees.filter(e => e.id != id);
+            this.addAuditLog('EMPLOYEE_DELETE', 'employees', `कर्मचारी '${emp.full_name_ne}' (${emp.employee_code}) को रेकर्ड मेटाइयो। कारण: ${reason}`);
             saveStore(store);
             return true;
         },
@@ -578,22 +694,30 @@ const ePalikaDB = (function() {
         getMasters: function() {
             const store = getStore();
             return {
-                designations: store.designations,
-                levels: store.levels,
-                services: store.services,
-                groups: store.groups,
-                qualifications: store.qualifications,
-                offices: store.offices,
-                departments: store.departments,
-                employmentTypes: store.employmentTypes,
-                serviceTypes: store.serviceTypes
+                positionCodes: store.positionCodes || [],
+                designations: store.designations || [],
+                levels: store.levels || [],
+                services: store.services || [],
+                groups: store.groups || [],
+                qualifications: store.qualifications || [],
+                offices: store.offices || [],
+                departments: store.departments || [],
+                employmentTypes: store.employmentTypes || [],
+                serviceTypes: store.serviceTypes || []
             };
         },
         addMasterItem: function(type, name) {
             const store = getStore();
-            if (!store[type]) return false;
+            if (!store[type]) store[type] = [];
             const newId = store[type].length > 0 ? Math.max(...store[type].map(x => x.id)) + 1 : 1;
             store[type].push({ id: newId, name_ne: name });
+            saveStore(store);
+            return true;
+        },
+        deleteMasterItem: function(type, id) {
+            const store = getStore();
+            if (!store[type]) return false;
+            store[type] = store[type].filter(x => x.id != id);
             saveStore(store);
             return true;
         },
