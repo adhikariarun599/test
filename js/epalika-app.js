@@ -333,9 +333,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td class="form-field-label">पदको कोड:</td>
                             <td>
                                 <div class="select-with-icon">
-                                    <select id="f-pos-code" class="form-field-select">
-                                        ${(masters.positionCodes || []).map(pc => `<option value="${pc.name_ne}" ${(emp.position_code || 'POS-001') === pc.name_ne ? 'selected':''}>${pc.name_ne}</option>`).join('')}
-                                    </select>
+                                    <div class="position-relative w-100">
+                                        <input type="text" id="f-pos-code" list="pos-codes-list" class="form-field-input fw-bold font-monospace" value="${emp.position_code || ''}" placeholder="उदा: POS-001 (म्यानुअल टाइप वा छनोट)..." autocomplete="off">
+                                        <datalist id="pos-codes-list">
+                                            ${(masters.positionCodes || []).map(pc => `<option value="${pc.name_ne}">`).join('')}
+                                        </datalist>
+                                    </div>
                                     <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('positionCodes', 'पदको कोड')" title="मास्टर थप/हटाउने">🏢</button>
                                 </div>
                             </td>
@@ -722,6 +725,14 @@ document.addEventListener('DOMContentLoaded', function() {
         enforcePhone('f-mobile');
         enforcePhone('f-family-contact');
 
+        // Uppercase and direct manual typing for Position Code (पदको कोड)
+        const posCodeInp = document.getElementById('f-pos-code');
+        if (posCodeInp) {
+            posCodeInp.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        }
+
         const btnShowAll = document.getElementById('btn-show-all-records');
         if (btnShowAll) {
             btnShowAll.addEventListener('click', () => {
@@ -906,6 +917,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const posCodeInput = document.getElementById('f-pos-code');
+        const posCode = posCodeInput ? posCodeInput.value.trim().toUpperCase() : 'POS-001';
+
+        // Auto-register manually typed code into positionCodes master list
+        if (posCode) {
+            const masterPosCodes = ePalikaDB.getMasters().positionCodes || [];
+            if (!masterPosCodes.some(pc => (pc.name_ne || '').toUpperCase() === posCode)) {
+                ePalikaDB.addMasterItem('positionCodes', posCode);
+            }
+        }
+
         const data = {
             id: isUpdate ? selectedEmployeeId : null,
             employee_code: code,
@@ -913,7 +935,7 @@ document.addEventListener('DOMContentLoaded', function() {
             full_name_ne: name,
             gender: document.getElementById('f-gender').value,
             dob: document.getElementById('f-dob').value.trim(),
-            position_code: document.getElementById('f-pos-code') ? document.getElementById('f-pos-code').value : 'POS-001',
+            position_code: posCode || 'POS-001',
             office_id: Number(document.getElementById('f-office').value),
             employment_type_id: Number(document.getElementById('f-employment-type').value),
             service_type_id: Number(document.getElementById('f-service-type').value),
