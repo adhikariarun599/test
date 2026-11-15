@@ -519,6 +519,10 @@ const ePalikaDB = (function() {
                     (e.mobile_number && e.mobile_number.includes(s))
                 );
             }
+            if (filters.office_id && filters.office_id.length > 0) {
+                const d = filters.office_id.map(Number);
+                list = list.filter(e => d.includes(Number(e.office_id)));
+            }
             if (filters.department_id && filters.department_id.length > 0) {
                 const d = filters.department_id.map(Number);
                 list = list.filter(e => d.includes(Number(e.department_id)));

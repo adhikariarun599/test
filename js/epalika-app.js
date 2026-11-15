@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
 
                             <button type="button" class="btn-ref btn-ref-multi ${activeFilterCount > 0 ? 'border border-warning' : ''}" id="btn-ref-multifilter">
-                                Filterby MultiSelection ${activeFilterCount > 0 ? `<span class="badge bg-warning text-dark ms-1">${activeFilterCount}</span>` : ''}
+                                Filter ${activeFilterCount > 0 ? `<span class="badge bg-warning text-dark ms-1">${activeFilterCount}</span>` : ''}
                             </button>
                             <button type="button" class="btn-ref btn-ref-excel" id="btn-ref-excel">Excel</button>
                             <button type="button" class="btn-ref btn-ref-new" id="btn-ref-new">New</button>
@@ -2061,7 +2061,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderMasterModalContent();
     };
 
-    // MultiSelection Filter Modal
+    // Filter Modal
     function openMultiFilterModal() {
         const masters = ePalikaDB.getMasters();
         const mount = document.getElementById('multifilter-modal-mount');
@@ -2071,12 +2071,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content border-0 shadow-lg">
                         <div class="modal-header bg-navy text-white" style="background:#0f3460;">
-                            <h5 class="modal-title font-devanagari text-white"><i class="fa-solid fa-filter me-2"></i> Filterby MultiSelection</h5>
+                            <h5 class="modal-title font-devanagari text-white"><i class="fa-solid fa-filter me-2"></i> फिल्टर (Filter)</h5>
                             <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('multifilter-modal-mount').innerHTML='';"></button>
                         </div>
                         <div class="modal-body p-4 bg-light">
                             <div class="row g-3">
-                                <!-- 1. शाखा (Departments) -->
+                                <!-- 1. कार्यालय (Office) -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-building text-primary me-1"></i>कार्यालय (Office):</label>
+                                    <select class="form-select form-select-sm font-devanagari" id="mf-office">
+                                        <option value="">-- सबै कार्यालय (All Offices) --</option>
+                                        ${masters.offices.map(o => `<option value="${o.id}" ${filterState.office_id && filterState.office_id.includes(o.id) ? 'selected':''}>${o.name_ne}</option>`).join('')}
+                                    </select>
+                                </div>
+
+                                <!-- 2. शाखा (Departments) -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-sitemap text-primary me-1"></i>शाखा (Departments):</label>
                                     <select class="form-select form-select-sm font-devanagari" id="mf-dept">
@@ -2085,7 +2094,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </select>
                                 </div>
 
-                                <!-- 2. पद (Designations) -->
+                                <!-- 3. पद (Designations) -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-user-tag text-primary me-1"></i>पद (Designations):</label>
                                     <select class="form-select form-select-sm font-devanagari" id="mf-des">
@@ -2094,7 +2103,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </select>
                                 </div>
 
-                                <!-- 3. तह (Level) -->
+                                <!-- 4. तह (Level) -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-layer-group text-primary me-1"></i>तह (Level):</label>
                                     <select class="form-select form-select-sm font-devanagari" id="mf-lev">
@@ -2103,7 +2112,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </select>
                                 </div>
 
-                                <!-- 4. रोजगार प्रकार (Type) -->
+                                <!-- 5. रोजगार प्रकार (Type) -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-id-badge text-primary me-1"></i>रोजगार प्रकार (Type):</label>
                                     <select class="form-select form-select-sm font-devanagari" id="mf-typ">
@@ -2112,7 +2121,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </select>
                                 </div>
 
-                                <!-- 5. उमेर समूह (Age) -->
+                                <!-- 6. उमेर समूह (Age) -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-hourglass-half text-primary me-1"></i>उमेर समूह (Age):</label>
                                     <select class="form-select form-select-sm font-devanagari" id="mf-age">
@@ -2125,7 +2134,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </select>
                                 </div>
 
-                                <!-- 6. लिङ्ग (Gender) -->
+                                <!-- 7. लिङ्ग (Gender) -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold small text-navy"><i class="fa-solid fa-venus-mars text-primary me-1"></i>लिङ्ग (Gender):</label>
                                     <select class="form-select form-select-sm font-devanagari" id="mf-gender">
@@ -2147,6 +2156,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         document.getElementById('btn-apply-mf').addEventListener('click', () => {
+            const office = document.getElementById('mf-office').value;
             const dept = document.getElementById('mf-dept').value;
             const des = document.getElementById('mf-des').value;
             const lev = document.getElementById('mf-lev').value;
@@ -2155,6 +2165,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const gender = document.getElementById('mf-gender').value;
 
             filterState = {};
+            if (office) filterState.office_id = [Number(office)];
             if (dept) filterState.department_id = [Number(dept)];
             if (des) filterState.designation_id = [Number(des)];
             if (lev) filterState.level_id = [Number(lev)];
