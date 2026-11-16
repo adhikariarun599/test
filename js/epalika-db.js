@@ -634,6 +634,183 @@ const ePalikaDB = (function() {
             saveStore(store);
             return true;
         },
+        importEmployees: function(records, options = { overwrite: true }) {
+            const store = getStore();
+            const nepToEng = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
+
+            function findOrCreateMaster(listKey, rawName) {
+                if (!rawName) return null;
+                const cleanName = String(rawName).trim();
+                if (!cleanName || cleanName === '-') return null;
+                if (!store[listKey]) store[listKey] = [];
+                const found = store[listKey].find(item => 
+                    (item.name_ne || '').trim().toLowerCase() === cleanName.toLowerCase()
+                );
+                if (found) return found.id;
+                const newId = store[listKey].length > 0 ? Math.max(...store[listKey].map(x => x.id)) + 1 : 1;
+                store[listKey].push({ id: newId, name_ne: cleanName });
+                return newId;
+            }
+
+            let importedCount = 0;
+            let updatedCount = 0;
+            let skippedCount = 0;
+            const errors = [];
+
+            records.forEach((row, idx) => {
+                try {
+                    const getVal = (...keys) => {
+                        for (const k of keys) {
+                            if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+                                return String(row[k]).trim();
+                            }
+                        }
+                        return '';
+                    };
+
+                    const name = getVal('नाम', 'कर्मचारीको नाम', 'कर्मचारी नाम', 'पूरा नाम', 'name', 'full name', 'full_name', 'full_name_ne', 'employee name');
+                    if (!name) {
+                        return; // Skip empty rows
+                    }
+
+                    let code = getVal('कर्मचारी कोड', 'कर्मचारीको कोड', 'कोड', 'code', 'employee code', 'employee_code', 'emp_code', 'emp code').toUpperCase();
+                    if (!code) {
+                        const existingMax = store.employees.reduce((max, e) => {
+                            const match = (e.employee_code || '').match(/EMP-(\d+)/i);
+                            return match ? Math.max(max, parseInt(match[1], 10)) : max;
+                        }, 0);
+                        code = `EMP-${String(existingMax + importedCount + 1).padStart(3, '0')}`;
+                    }
+
+                    let mobile = getVal('मोबाईल नं', 'मोबाईल नं.', 'मोबाईल', 'मोबाइल', 'सम्पर्क नं', 'mobile', 'phone', 'mobile number', 'mobile_number');
+                    if (mobile) {
+                        mobile = mobile.replace(/[०-९]/g, ch => nepToEng[ch] || ch).replace(/[^0-9]/g, '');
+                    }
+
+                    let familyContact = getVal('परिवारको सम्पर्क नं', 'परिवार सम्पर्क', 'घरको सम्पर्क', 'family contact', 'family contact number', 'family_contact_number');
+                    if (familyContact) {
+                        familyContact = familyContact.replace(/[०-९]/g, ch => nepToEng[ch] || ch).replace(/[^0-9]/g, '');
+                    }
+
+                    const dob = getVal('जन्म मिति', 'जन्ममिति', 'dob', 'date of birth').replace(/[०-९]/g, ch => nepToEng[ch] || ch);
+                    let age = parseInt(getVal('उमेर', 'उमेर (वर्ष)', 'age').replace(/[०-९]/g, ch => nepToEng[ch] || ch), 10);
+                    if (isNaN(age) || age <= 0) {
+                        age = calculateBsAge(dob);
+                    }
+
+                    let posCode = getVal('पदको कोड', 'पद कोड', 'position code', 'pos code', 'pos_code', 'position_code').toUpperCase();
+                    if (!posCode) posCode = 'POS-001';
+                    findOrCreateMaster('positionCodes', posCode);
+
+                    const desName = getVal('पद', 'पदको नाम', 'designation', 'post', 'designation_name');
+                    const designation_id = findOrCreateMaster('designations', desName);
+
+                    const levName = getVal('तह', 'श्रेणी', 'तह/श्रेणी', 'level', 'rank', 'level_name');
+                    const level_id = findOrCreateMaster('levels', levName);
+
+                    const deptName = getVal('शाखा', 'शाखा/वडा', 'विभाग', 'department', 'branch', 'section', 'department_name');
+                    const department_id = findOrCreateMaster('departments', deptName);
+
+                    const offName = getVal('कार्यालय', 'कार्यालयको नाम', 'office', 'office_name');
+                    const office_id = findOrCreateMaster('offices', offName);
+
+                    const empTypeName = getVal('स्थायी/करार', 'रोजगार प्रकार', 'स्थायी करार', 'employment type', 'employment_type', 'type');
+                    const employment_type_id = findOrCreateMaster('employmentTypes', empTypeName);
+
+                    const srvTypeName = getVal('सेवाको किसिम', 'सेवा प्रकार', 'service type', 'service_type', 'service_type_name');
+                    const service_type_id = findOrCreateMaster('serviceTypes', srvTypeName);
+
+                    const srvName = getVal('सेवा', 'सेवाको नाम', 'service', 'service_name');
+                    const service_id = findOrCreateMaster('services', srvName);
+
+                    const grpName = getVal('समूह', 'समुह', 'group', 'group_name');
+                    const group_id = findOrCreateMaster('groups', grpName);
+
+                    const qualName = getVal('शैक्षिक योग्यता', 'योग्यता', 'qualification', 'education', 'qualification_name');
+                    const qualification_id = findOrCreateMaster('qualifications', qualName);
+
+                    let staffQuota = getVal('दरबन्दी', 'दरबन्दी स्वीकृत', 'quota', 'staff quota', 'staff_quota');
+                    if (!staffQuota || staffQuota === 'स्वीकृत' || staffQuota === 'हो') staffQuota = 'हो';
+                    else if (staffQuota === 'होइन' || staffQuota === 'अस्वीकृत') staffQuota = 'होइन';
+
+                    let dutyStatus = getVal('बहाल विदा वा अन्य', 'बहाल स्थिति', 'हाजिरी स्थिति', 'duty status', 'duty_status');
+                    if (!dutyStatus) dutyStatus = 'कार्यरत';
+
+                    let gender = getVal('लिङ्ग', 'लिंग', 'gender', 'sex');
+                    if (!gender) gender = 'पुरुष';
+
+                    const serial_number = getVal('क्र.सं.', 'क्र.सं', 'क्र सं', 'सि.नं.', 'सि.नं', 'sn', 's.n.', 's.n', 'serial number', 'serial_number') || String(importedCount + 1);
+
+                    const empRecord = {
+                        employee_code: code,
+                        serial_number: serial_number,
+                        full_name_ne: name,
+                        gender: gender,
+                        dob: dob,
+                        age: age || 35,
+                        position_code: posCode,
+                        office_id: office_id || 1,
+                        employment_type_id: employment_type_id || 1,
+                        service_type_id: service_type_id || 1,
+                        designation_id: designation_id || 1,
+                        level_id: level_id || 1,
+                        service_id: service_id || 1,
+                        group_id: group_id || 1,
+                        qualification_id: qualification_id || 1,
+                        department_id: department_id || 1,
+                        staff_quota: staffQuota,
+                        duty_status: dutyStatus,
+                        email: getVal('ई-मेल', 'इमेल', 'इ-मेल', 'email', 'e-mail', 'mail'),
+                        mobile_number: mobile,
+                        family_contact_number: familyContact,
+                        transferred_from_office: getVal('यस कार्यालयमा आएको कार्यालय', 'आएको कार्यालय', 'transferred from', 'transferred_from_office'),
+                        current_position_appointment_date: getVal('हालको पदमा नियुक्ति', 'हालको पदमा नियुक्ती', 'हालको पदमा नियुक्ती मिति', 'current position appointment date', 'current_position_appointment_date'),
+                        current_position_joining_date: getVal('हालको पदमा हाजिर', 'हालको पदमा हाजिर मिति', 'current position joining date', 'current_position_joining_date'),
+                        current_office_joining_date: getVal('यस कार्यालयमा हाजिर', 'यस कार्यालयमा हाजिर मिति', 'कार्यालयमा हाजिर', 'current office joining date', 'current_office_joining_date'),
+                        transfer_release_date: getVal('रमानाभई आएको मिति', 'रमाना मिति', 'transfer release date', 'transfer_release_date'),
+                        initial_appointment_date: getVal('सुरु नियुक्ती', 'सुरु नियुक्ती मिति', 'शुरु नियुक्ती', 'शुरु नियुक्ती मिति', 'initial appointment date', 'initial_appointment_date'),
+                        personnel_sheet_roll_no: getVal('कर्मचारी संकेत नं', 'कर्मचारी संकेत नं.', 'संकेत नं', 'sheet roll no', 'sheet roll', 'personnel_sheet_roll_no'),
+                        provident_fund_no: getVal('संचयकोष नं', 'संचय कोष नं', 'कर्मचारी संचयकोष', 'pf no', 'provident fund', 'provident_fund_no'),
+                        cit_insurance_no: getVal('सा.जि.विमा नं', 'ना.जि.वि.ना नं', 'बीमा नं', 'cit no', 'cit insurance', 'cit_insurance_no'),
+                        investment_fund_no: getVal('लगानीकोष नं', 'नागरिक लगानी कोष', 'लगानी कोष नं', 'inv no', 'investment fund', 'investment_fund_no'),
+                        status: 'active'
+                    };
+
+                    const existingIdx = store.employees.findIndex(e => (e.employee_code || '').trim().toUpperCase() === code);
+                    if (existingIdx !== -1) {
+                        if (options.overwrite) {
+                            store.employees[existingIdx] = {
+                                ...store.employees[existingIdx],
+                                ...empRecord,
+                                id: store.employees[existingIdx].id
+                            };
+                            updatedCount++;
+                        } else {
+                            skippedCount++;
+                        }
+                    } else {
+                        const newId = store.employees.length > 0 ? Math.max(...store.employees.map(e => e.id)) + 1 : 1;
+                        store.employees.push({
+                            ...empRecord,
+                            id: newId
+                        });
+                        importedCount++;
+                    }
+                } catch (e) {
+                    errors.push(`पङ्क्ति ${idx + 1}: ${e.message}`);
+                }
+            });
+
+            saveStore(store);
+            this.addAuditLog('EXCEL_IMPORT', 'employees', `एक्सेलबाट ${importedCount + updatedCount} वटा कर्मचारी अभिलेख इम्पोर्ट गरियो (नयाँ: ${importedCount}, अद्यावधिक: ${updatedCount}, छोडिएको: ${skippedCount})।`);
+            return {
+                success: true,
+                importedCount: importedCount,
+                updatedCount: updatedCount,
+                skippedCount: skippedCount,
+                errors: errors
+            };
+        },
         getWards: function() {
             const store = getStore();
             return store.wards.map(w => ({

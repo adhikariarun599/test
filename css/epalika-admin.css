@@ -431,6 +431,28 @@ body {
 }
 .btn-ref-excel:hover { background: #0b5e31; }
 
+.btn-ref-import {
+    background: #0d9488;
+    color: #fff;
+    border-color: #0f766e;
+}
+.btn-ref-import:hover { background: #0f766e; }
+
+.excel-dropzone {
+    border: 2px dashed #0d9488;
+    background: #f0fdfa;
+    border-radius: 8px;
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.excel-dropzone:hover, .excel-dropzone.dragover {
+    background: #ccfbf1;
+    border-color: #0f766e;
+    box-shadow: 0 0 10px rgba(13, 148, 136, 0.2);
+}
+
 .btn-ref-new {
     background: #2563eb;
     color: #fff;

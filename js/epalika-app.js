@@ -513,7 +513,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button type="button" class="btn-ref btn-ref-multi ${activeFilterCount > 0 ? 'border border-warning' : ''}" id="btn-ref-multifilter">
                                 Filter ${activeFilterCount > 0 ? `<span class="badge bg-warning text-dark ms-1">${activeFilterCount}</span>` : ''}
                             </button>
-                            <button type="button" class="btn-ref btn-ref-excel" id="btn-ref-excel">Excel</button>
+                            <button type="button" class="btn-ref btn-ref-excel" id="btn-ref-excel" title="एक्सेल/CSV डाउनलोड (Export) गर्नुहोस्">Excel</button>
+                            <button type="button" class="btn-ref btn-ref-import" id="btn-ref-import" title="एक्सेल/CSV बाट कर्मचारीहरू इम्पोर्ट गर्नुहोस्"><i class="fa-solid fa-file-import me-1"></i>Import</button>
                             <button type="button" class="btn-ref btn-ref-new" id="btn-ref-new">New</button>
                             <button type="button" class="btn-ref btn-ref-save" id="btn-ref-save">Save</button>
                             <button type="button" class="btn-ref btn-ref-update" id="btn-ref-update">Update</button>
@@ -765,6 +766,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const btnExcel = document.getElementById('btn-ref-excel');
         if (btnExcel) btnExcel.addEventListener('click', exportEmployeesToCSV);
+
+        const btnImport = document.getElementById('btn-ref-import');
+        if (btnImport) btnImport.addEventListener('click', openExcelImportModal);
 
         const btnNew = document.getElementById('btn-ref-new');
         if (btnNew) {
@@ -2193,6 +2197,474 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast('सबै ३२ वटै विवरणहरू सहितको Excel/CSV फाइल डाउनलोड भयो।', 'success');
     }
 
+    // =========================================================================
+    // EXCEL / CSV IMPORT SYSTEM (एक्सेलबाट कर्मचारी अभिलेख इम्पोर्ट)
+    // =========================================================================
+    function openExcelImportModal() {
+        const mount = document.getElementById('excel-import-modal-mount');
+        if (!mount) return;
+
+        mount.innerHTML = `
+            <div class="modal fade show d-block" style="background: rgba(0,0,0,0.6);" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header bg-success text-white py-2">
+                            <h6 class="modal-title font-devanagari text-white mb-0">
+                                <i class="fa-solid fa-file-excel me-2"></i> एक्सेलबाट कर्मचारी अभिलेख इम्पोर्ट (Excel / CSV Employee Import)
+                            </h6>
+                            <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('excel-import-modal-mount').innerHTML='';"></button>
+                        </div>
+                        <div class="modal-body p-4 bg-light">
+                            <!-- Step 1: Info & Template Download -->
+                            <div class="alert alert-success bg-white border-success d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 mb-3 shadow-sm rounded">
+                                <div>
+                                    <h6 class="fw-bold mb-1 font-devanagari text-success">
+                                        <i class="fa-solid fa-circle-info me-2"></i> ३२ वटै विवरणहरू भएको एक्सेल टेम्प्लेट प्रयोग गर्नुहोस्
+                                    </h6>
+                                    <div class="small text-muted font-devanagari">
+                                        एक्सेल फाइल (.xlsx, .xls) वा CSV (.csv) फाइलमा ३२ वटै स्तम्भहरू (क्र.सं., कोड, नाम, उमेर, लिङ्ग, पद, तह, शाखा, कार्यालय, जन्म मिति, सम्पर्क, आदि) भर्न सक्नुहुन्छ।
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-success font-devanagari fw-bold" id="btn-download-sample-template">
+                                    <i class="fa-solid fa-download me-1"></i> नमुना एक्सेल टेम्प्लेट डाउनलोड (Sample Template)
+                                </button>
+                            </div>
+
+                            <!-- Step 2: File Upload / Dropzone -->
+                            <div class="card p-3 border shadow-sm mb-3 bg-white">
+                                <div id="excel-dropzone" class="excel-dropzone">
+                                    <i class="fa-solid fa-cloud-arrow-up fa-3x mb-2" style="color:#0d9488;"></i>
+                                    <h6 class="fw-bold text-dark font-devanagari mb-1">यहाँ एक्सेल वा CSV फाइल ड्रप गर्नुहोस् वा क्लिक गर्नुहोस्</h6>
+                                    <div class="small text-muted mb-2">समर्थित फाइलहरू: <strong>.xlsx, .xls, .csv</strong></div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary font-devanagari px-3" id="btn-browse-excel-file">
+                                        <i class="fa-solid fa-folder-open me-1"></i> फाइल छनोट गर्नुहोस्
+                                    </button>
+                                    <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" class="d-none">
+                                </div>
+
+                                <!-- Policy Options -->
+                                <div class="mt-3 pt-3 border-top d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                    <div class="fw-bold small text-navy font-devanagari">
+                                        <i class="fa-solid fa-sliders text-primary me-1"></i> कर्मचारी कोड जुधेमा के गर्ने?
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="import-policy" id="policy-overwrite" value="overwrite" checked>
+                                            <label class="form-check-label font-devanagari small text-dark" for="policy-overwrite">
+                                                अद्यावधिक (Auto-Update) गर्ने <span class="badge bg-success-subtle text-success ms-1">सिफारिस</span>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="import-policy" id="policy-skip" value="skip">
+                                            <label class="form-check-label font-devanagari small text-dark" for="policy-skip">
+                                                छोड्ने (Skip Duplicate Code)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Preview Container -->
+                            <div id="import-preview-wrapper" class="d-none">
+                                <div class="card border shadow-sm bg-white p-3 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                                        <div class="font-devanagari">
+                                            <span class="fw-bold text-dark"><i class="fa-solid fa-table me-1 text-primary"></i> फाइल पूर्व-अवलोकन (Data Preview):</span>
+                                            <span class="badge bg-light text-dark border ms-2" id="preview-file-name">-</span>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <span class="badge bg-primary font-devanagari px-2 py-1" id="badge-total-rows">कुल: ०</span>
+                                            <span class="badge bg-success font-devanagari px-2 py-1" id="badge-new-rows">नयाँ: ०</span>
+                                            <span class="badge bg-warning text-dark font-devanagari px-2 py-1" id="badge-update-rows">अद्यावधिक: ०</span>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                                        <table class="table table-bordered table-sm table-hover font-devanagari small mb-0 align-middle">
+                                            <thead class="table-light sticky-top">
+                                                <tr>
+                                                    <th>क्र.सं.</th>
+                                                    <th>कोड</th>
+                                                    <th>कर्मचारीको नाम</th>
+                                                    <th>उमेर</th>
+                                                    <th>लिङ्ग</th>
+                                                    <th>पद</th>
+                                                    <th>तह</th>
+                                                    <th>शाखा</th>
+                                                    <th>कार्यालय</th>
+                                                    <th>मोबाईल नं</th>
+                                                    <th>स्थिति</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="preview-table-body">
+                                                <!-- Dynamic preview rows -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-white py-2">
+                            <button type="button" class="btn btn-secondary btn-sm font-devanagari" onclick="document.getElementById('excel-import-modal-mount').innerHTML='';">
+                                रद्द गर्नुहोस्
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm font-devanagari fw-bold" id="btn-start-import-action" disabled>
+                                <i class="fa-solid fa-cloud-arrow-up me-1"></i> इम्पोर्ट सुरु गर्नुहोस् (Import)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        let parsedRecords = [];
+
+        // Sample template download event
+        document.getElementById('btn-download-sample-template').addEventListener('click', downloadSampleExcelTemplate);
+
+        // Dropzone & File Input events
+        const dropzone = document.getElementById('excel-dropzone');
+        const fileInput = document.getElementById('excel-file-input');
+        const btnBrowse = document.getElementById('btn-browse-excel-file');
+
+        btnBrowse.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('click', (e) => {
+            if (e.target !== btnBrowse && !btnBrowse.contains(e.target)) fileInput.click();
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleSelectedFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files && fileInput.files[0]) {
+                handleSelectedFile(fileInput.files[0]);
+            }
+        });
+
+        function handleSelectedFile(file) {
+            const fileName = file.name;
+            const ext = fileName.split('.').pop().toLowerCase();
+            if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+                showToast('कृपया केवल .xlsx, .xls वा .csv फाइल मात्र छनोट गर्नुहोस्।', 'error');
+                return;
+            }
+
+            parseFileToRecords(file).then(records => {
+                if (!records || records.length === 0) {
+                    showToast('फाइलमा कुनै पनि कर्मचारीको रेकर्ड भेटिएन।', 'warning');
+                    return;
+                }
+                parsedRecords = records;
+                renderImportPreview(fileName, records);
+            }).catch(err => {
+                showToast(`फाइल पढ्न सकिएन: ${err.message}`, 'error');
+            });
+        }
+
+        function renderImportPreview(fileName, records) {
+            const previewWrapper = document.getElementById('import-preview-wrapper');
+            const previewFileName = document.getElementById('preview-file-name');
+            const badgeTotal = document.getElementById('badge-total-rows');
+            const badgeNew = document.getElementById('badge-new-rows');
+            const badgeUpdate = document.getElementById('badge-update-rows');
+            const tbody = document.getElementById('preview-table-body');
+            const btnImport = document.getElementById('btn-start-import-action');
+
+            previewWrapper.classList.remove('d-none');
+            previewFileName.textContent = fileName;
+
+            const existingEmployees = ePalikaDB.getEmployees();
+            const existingCodes = new Set(existingEmployees.map(e => (e.employee_code || '').trim().toUpperCase()));
+
+            let newCount = 0;
+            let updateCount = 0;
+
+            const rowsHtml = records.slice(0, 15).map((row, idx) => {
+                const getVal = (...keys) => {
+                    for (const k of keys) {
+                        if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') return String(row[k]).trim();
+                    }
+                    return '';
+                };
+
+                const name = getVal('नाम', 'कर्मचारीको नाम', 'कर्मचारी नाम', 'पूरा नाम', 'name', 'full name', 'full_name');
+                const code = getVal('कर्मचारी कोड', 'कर्मचारीको कोड', 'कोड', 'code', 'employee code', 'employee_code').toUpperCase();
+                const des = getVal('पद', 'पदको नाम', 'designation', 'post');
+                const dept = getVal('शाखा', 'शाखा/वडा', 'department', 'branch');
+                const off = getVal('कार्यालय', 'कार्यालयको नाम', 'office');
+                const level = getVal('तह', 'श्रेणी', 'level');
+                const age = getVal('उमेर', 'age');
+                const gender = getVal('लिङ्ग', 'लिंग', 'gender');
+                const mobile = getVal('मोबाईल नं', 'मोबाईल नं.', 'मोबाईल', 'mobile', 'phone');
+
+                const isExisting = code && existingCodes.has(code);
+                if (isExisting) updateCount++;
+                else newCount++;
+
+                return `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td><span class="badge bg-light text-dark border font-monospace">${code || '(स्वतः EMP-xxx)'}</span></td>
+                        <td class="fw-bold text-primary">${name || '<span class="text-danger">रिक्त नाम</span>'}</td>
+                        <td>${age || '-'}</td>
+                        <td>${gender || '-'}</td>
+                        <td>${des || '-'}</td>
+                        <td>${level || '-'}</td>
+                        <td>${dept || '-'}</td>
+                        <td>${off || '-'}</td>
+                        <td class="font-monospace">${mobile || '-'}</td>
+                        <td>
+                            ${isExisting 
+                                ? '<span class="badge bg-warning-subtle text-dark border border-warning">अद्यावधिक हुने (Update)</span>' 
+                                : '<span class="badge bg-success-subtle text-success border border-success">नयाँ थपिने (New)</span>'
+                            }
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // If more than 15 records, calculate full stats
+            records.slice(15).forEach(row => {
+                const getVal = (...keys) => {
+                    for (const k of keys) {
+                        if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') return String(row[k]).trim();
+                    }
+                    return '';
+                };
+                const code = getVal('कर्मचारी कोड', 'कर्मचारीको कोड', 'कोड', 'code', 'employee code', 'employee_code').toUpperCase();
+                if (code && existingCodes.has(code)) updateCount++;
+                else newCount++;
+            });
+
+            badgeTotal.textContent = `कुल: ${records.length} जना`;
+            badgeNew.textContent = `नयाँ: ${newCount} जना`;
+            badgeUpdate.textContent = `अद्यावधिक: ${updateCount} जना`;
+
+            tbody.innerHTML = rowsHtml;
+            btnImport.disabled = false;
+            btnImport.innerHTML = `<i class="fa-solid fa-cloud-arrow-up me-1"></i> ${records.length} वटा रेकर्ड इम्पोर्ट गर्नुहोस्`;
+        }
+
+        // Start Import Button Event
+        document.getElementById('btn-start-import-action').addEventListener('click', function() {
+            if (!parsedRecords || parsedRecords.length === 0) return;
+            const policy = document.querySelector('input[name="import-policy"]:checked')?.value || 'overwrite';
+            this.disabled = true;
+            this.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> इम्पोर्ट हुँदैछ...';
+
+            setTimeout(() => {
+                const res = ePalikaDB.importEmployees(parsedRecords, { overwrite: policy === 'overwrite' });
+                if (res.success) {
+                    let msg = `सफलतापूर्वक इम्पोर्ट सम्पन्न! नयाँ थपिएका: ${res.importedCount} जना, अद्यावधिक: ${res.updatedCount} जना।`;
+                    if (res.skippedCount > 0) {
+                        msg += ` (नीति अनुसार दोहोरिएका ${res.skippedCount} जना छोडियो)।`;
+                    }
+                    showToast(msg, 'success');
+                    mount.innerHTML = '';
+                    renderEmployeesTab();
+                } else {
+                    showToast('इम्पोर्टमा त्रुटि भयो।', 'error');
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i> पुनः प्रयास गर्नुहोस्';
+                }
+            }, 250);
+        });
+    }
+
+    // Parse Excel or CSV to JSON array
+    function parseFileToRecords(file) {
+        return new Promise((resolve, reject) => {
+            const isCsv = file.name.endsWith('.csv');
+            if (typeof XLSX !== 'undefined') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+                        resolve(json);
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            } else if (isCsv) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result;
+                        const json = parseCsvText(text);
+                        resolve(json);
+                    } catch(err) {
+                        reject(err);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsText(file, 'utf-8');
+            } else {
+                reject(new Error('SheetJS लाइब्रेरी लोड हुन सकेन। कृपया CSV फाइल प्रयोग गर्नुहोस् वा इन्टरनेट जडान जाँच गर्नुहोस्।'));
+            }
+        });
+    }
+
+    // Built-in Native CSV Parser with UTF-8 Devanagari and quote handling
+    function parseCsvText(csvText) {
+        if (!csvText) return [];
+        if (csvText.charCodeAt(0) === 0xFEFF) {
+            csvText = csvText.slice(1);
+        }
+        const lines = [];
+        let row = [''];
+        let inQuotes = false;
+        for (let i = 0; i < csvText.length; i++) {
+            const c = csvText[i];
+            const next = csvText[i + 1];
+            if (c === '"') {
+                if (inQuotes && next === '"') {
+                    row[row.length - 1] += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (c === ',' && !inQuotes) {
+                row.push('');
+            } else if ((c === '\r' || c === '\n') && !inQuotes) {
+                if (c === '\r' && next === '\n') {
+                    i++;
+                }
+                if (row.length > 1 || row[0] !== '') {
+                    lines.push(row);
+                }
+                row = [''];
+            } else {
+                row[row.length - 1] += c;
+            }
+        }
+        if (row.length > 1 || row[0] !== '') {
+            lines.push(row);
+        }
+        if (lines.length < 2) return [];
+        const headers = lines[0].map(h => h.trim());
+        const records = [];
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.length === 1 && line[0].trim() === '') continue;
+            const obj = {};
+            headers.forEach((h, idx) => {
+                obj[h] = (line[idx] !== undefined ? line[idx].trim() : '');
+            });
+            records.push(obj);
+        }
+        return records;
+    }
+
+    // Download Sample Excel Template
+    function downloadSampleExcelTemplate() {
+        const sampleRows = [
+            {
+                "क्र.सं.": "१",
+                "कर्मचारी कोड": "EMP-010",
+                "नाम": "हरिप्रसाद न्यौपाने",
+                "उमेर": "४२",
+                "लिङ्ग": "पुरुष",
+                "पदको कोड": "POS-001",
+                "पद": "शाखा अधिकृत",
+                "तह": "छैटौं",
+                "सेवा": "नेपाल प्रशासन सेवा",
+                "समूह": "सामान्य प्रशासन",
+                "शैक्षिक योग्यता": "स्नातकोत्तर",
+                "शाखा": "प्रशासन तथा आन्तरिक नियन्त्रण",
+                "कार्यालय": "नगर कार्यपालिकाको कार्यालय",
+                "स्थायी/करार": "स्थायी",
+                "सेवाको किसिम": "निजामती",
+                "दरबन्दी": "हो",
+                "बहाल विदा वा अन्य": "कार्यरत",
+                "ई-मेल": "hari.neupane@bangangamun.gov.np",
+                "मोबाईल नं": "9857012345",
+                "यस कार्यालयमा आएको कार्यालय": "जिल्ला प्रशासन कार्यालय, कपिलवस्तु",
+                "परिवारको सम्पर्क नं": "9847123456",
+                "सुरु नियुक्ती": "2070-05-12",
+                "हालको पदमा नियुक्ति": "2076-08-15",
+                "हालको पदमा हाजिर": "2076-08-20",
+                "यस कार्यालयमा हाजिर": "2078-01-10",
+                "रमानाभई आएको मिति": "2078-01-08",
+                "कर्मचारी संकेत नं": "SKN-11223",
+                "संचयकोष नं": "PF-99881",
+                "सा.जि.विमा नं": "CIT-44332",
+                "लगानीकोष नं": "INV-8877",
+                "जन्म मिति": "2041-03-15",
+                "स्थिति": "कार्यरत"
+            },
+            {
+                "क्र.सं.": "२",
+                "कर्मचारी कोड": "EMP-011",
+                "नाम": "सुनिता पौडेल",
+                "उमेर": "३२",
+                "लिङ्ग": "महिला",
+                "पदको कोड": "POS-003",
+                "पद": "सव-इन्जिनियर",
+                "तह": "पाँचौं",
+                "सेवा": "नेपाल इन्जिनियरिङ सेवा",
+                "समूह": "सिभिल",
+                "शैक्षिक योग्यता": "डिप्लोमा",
+                "शाखा": "पूर्वाधार विकास तथा प्राविधिक शाखा",
+                "कार्यालय": "नगर कार्यपालिकाको कार्यालय",
+                "स्थायी/करार": "स्थायी",
+                "सेवाको किसिम": "स्थानीय तह",
+                "दरबन्दी": "हो",
+                "बहाल विदा वा अन्य": "कार्यरत",
+                "ई-मेल": "sunita.eng@bangangamun.gov.np",
+                "मोबाईल नं": "9857065432",
+                "यस कार्यालयमा आएको कार्यालय": "बुटवल उपमहानगरपालिका",
+                "परिवारको सम्पर्क नं": "9847654321",
+                "सुरु नियुक्ती": "2075-02-10",
+                "हालको पदमा नियुक्ति": "2078-04-01",
+                "हालको पदमा हाजिर": "2078-04-05",
+                "यस कार्यालयमा हाजिर": "2079-02-15",
+                "रमानाभई आएको मिति": "2079-02-10",
+                "कर्मचारी संकेत नं": "SKN-44552",
+                "संचयकोष नं": "PF-33221",
+                "सा.जि.विमा नं": "CIT-77881",
+                "लगानीकोष नं": "INV-9901",
+                "जन्म मिति": "2051-09-20",
+                "स्थिति": "कार्यरत"
+            }
+        ];
+
+        if (typeof XLSX !== 'undefined') {
+            const ws = XLSX.utils.json_to_sheet(sampleRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Employees");
+            XLSX.writeFile(wb, "banganga_employee_import_sample.xlsx");
+            showToast('नमुना एक्सेल फाइल (banganga_employee_import_sample.xlsx) डाउनलोड भयो।', 'success');
+        } else {
+            // Fallback CSV download
+            const headers = Object.keys(sampleRows[0]);
+            let csv = "\uFEFF" + headers.join(',') + "\n";
+            sampleRows.forEach(row => {
+                csv += headers.map(h => `"${row[h] || ''}"`).join(',') + "\n";
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `banganga_employee_import_sample.csv`;
+            link.click();
+            showToast('नमुना CSV फाइल (banganga_employee_import_sample.csv) डाउनलोड भयो।', 'success');
+        }
+    }
+
     function showToast(msg, type = 'info') {
         const div = document.createElement('div');
         div.className = 'toast-notice';
@@ -2202,4 +2674,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.openLoginModal = openLoginModal;
+    window.openExcelImportModal = openExcelImportModal;
+    window.downloadSampleExcelTemplate = downloadSampleExcelTemplate;
 });
