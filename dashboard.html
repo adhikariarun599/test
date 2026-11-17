@@ -1,0 +1,426 @@
+﻿<!DOCTYPE html>
+<html lang="ne">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>कार्यकक्ष | स्थानीय तह कार्य सरलीकरण प्रणाली</title>
+    <!-- FontAwesome 6 & Bootstrap 5.3 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/epalika-admin.css">
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Mukta', 'Segoe UI', Tahoma, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .dash-header {
+            background: #ffffff;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 0.85rem 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .dash-hero-card {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: #ffffff;
+            border-radius: 14px;
+            padding: 2rem;
+            box-shadow: 0 8px 24px rgba(30, 58, 138, 0.25);
+            margin-bottom: 1.5rem;
+        }
+        .dash-notice-box {
+            background: #eff6ff;
+            border: 2px dashed #3b82f6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.75rem;
+        }
+        .dash-module-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+            height: 100%;
+        }
+        .dash-module-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            border-color: #93c5fd;
+        }
+        .dash-icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            margin-bottom: 0.85rem;
+        }
+        .dash-footer {
+            margin-top: auto;
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 1.25rem 0;
+            border-top: 1px solid #1e293b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Top Official Header -->
+    <header class="dash-header">
+        <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <img src="logo 1.jpg" alt="नेपाल सरकार निशान छाप" width="60" height="60" style="object-fit:contain;">
+                <div>
+                    <h4 class="fw-bold font-devanagari text-dark mb-0" id="dash-palika-name">
+                        बाणगंगा नगरपालिका, कपिलवस्तु
+                    </h4>
+                    <div class="text-primary font-devanagari fw-bold small" id="dash-province-name">
+                        लुम्बिनी प्रदेश नेपाल
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Pill Badge -->
+            <div class="text-center d-none d-md-block">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-devanagari px-3 py-2 fs-6">
+                    <i class="fa-solid fa-landmark me-1"></i> स्थानीय तह कार्य सरलीकरण प्रणाली
+                </span>
+            </div>
+
+            <!-- Right Actions: User Identity & Logout -->
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary font-devanagari fw-bold px-3 py-1 d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#dash-login-modal" id="btn-header-login" title="लगईन गर्नुहोस्">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>लगईन (Login)</span>
+                </button>
+                <span class="badge bg-light text-dark border font-devanagari px-3 py-2 d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-circle-user text-primary fs-6"></i>
+                    <span id="dash-user-label">स्थानीय तह प्रयोगकर्ता</span>
+                </span>
+                <a href="index.html" class="btn btn-sm btn-outline-danger font-devanagari fw-bold px-3 py-1" id="btn-dash-logout">
+                    <i class="fa-solid fa-power-off me-1"></i> बाहिर (Logout)
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. Main Content Area -->
+    <main class="container-fluid px-lg-4 py-4">
+        <!-- Hero Welcome Banner -->
+        <div class="dash-hero-card">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <span class="badge bg-warning text-dark font-devanagari fw-bold px-3 py-1 mb-2">
+                        <i class="fa-solid fa-circle-check me-1"></i> सफल लगईन
+                    </span>
+                    <h2 class="fw-bold font-devanagari mb-1">
+                        स्वागत छ! <span id="dash-hero-palika" class="text-warning">बाणगंगा नगरपालिका</span> को कार्यकक्षमा
+                    </h2>
+                    <p class="font-devanagari mb-0 text-light opacity-90 fs-5">
+                        डिजिटल स्थानीय शासन पोर्टल • ७५३ स्थानीय तह कार्यक्षेत्र
+                    </p>
+                </div>
+                <div>
+                    <a href="index.html" class="btn btn-light text-primary fw-bold font-devanagari px-3 py-2 shadow-sm">
+                        <i class="fa-solid fa-arrow-left me-1"></i> पोर्टल गृहपृष्ठमा फर्कनुहोस्
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layout Pending Notice Box (Matches user's request: "aayle naya page ko layout ma dinxu poxi") -->
+        <div class="dash-notice-box">
+            <div class="d-flex align-items-start gap-3">
+                <div class="fs-1 text-primary">
+                    <i class="fa-solid fa-compass-drafting"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold font-devanagari text-dark mb-1">
+                        📌 नयाँ पेजको लेआउट (Layout) को प्रतीक्षा
+                    </h5>
+                    <p class="font-devanagari text-secondary mb-1">
+                        तपाईंको निर्देशन अनुसार: <em>"Login गरिसकेपछि नयाँ पेजमा जाने मात्र बनाऊ, अहिले नयाँ पेजको लेआउट म दिन्छु पछि, यो जसले पनि Login गर्न मिल्ने हुनुपर्‍यो।"</em>
+                    </p>
+                    <p class="font-devanagari text-dark mb-0 fw-bold">
+                        → तपाईंले नयाँ पेजको लेआउट र आवश्यकताहरू प्रदान गर्नासाथ सोही अनुसार यस कार्यकक्षको नयाँ डिजाइन र मोड्युलहरू तुरुन्त थपिनेछन्।
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direct Access to Previous 8 Modules of Banganga Municipality -->
+        <div class="card shadow-sm border-warning mb-4" style="border-width: 2px;">
+            <div class="card-body p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-warning-subtle text-warning-emphasis d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 1.4rem;">
+                        👑
+                    </div>
+                    <div>
+                        <h6 class="fw-bold font-devanagari text-dark mb-0" id="dash-internal-box-title">
+                            <span id="dash-internal-palika-name">बाणगंगा नगरपालिका, कपिलवस्तु</span> पूर्ण आन्तरिक नियन्त्रण प्रणाली (८ आधिकारिक मोड्युलहरू)
+                        </h6>
+                        <small class="text-muted font-devanagari">
+                            यस पालिकाको कर्मचारी फारम (३२ फिल्ड), पालिका प्रोफाइल, वडा कार्यालय, सहकारी, खानेपानी, वन तथा संघसंस्था मोड्युलहरू हेर्नुहोस्।
+                        </small>
+                    </div>
+                </div>
+                <a href="index.html?view=banganga_internal" class="btn btn-warning fw-bold font-devanagari px-4 shadow-sm">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-2"></i> कार्यकक्ष खोल्नुहोस् →
+                </a>
+            </div>
+        </div>
+
+        <!-- 6 Proposed Modules Grid (Clean Preview Cards) -->
+        <h5 class="fw-bold font-devanagari text-dark mb-3 d-flex align-items-center gap-2">
+            <i class="fa-solid fa-boxes-stacked text-primary"></i> स्थानीय तहका मुख्य सेवा मोड्युलहरू (प्रस्तावित)
+        </h5>
+
+        <div class="row g-3">
+            <!-- 1. Settings -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-module-card">
+                    <div class="dash-icon-box bg-primary-subtle text-primary">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <h5 class="fw-bold font-devanagari text-dark mb-1">आफ्नै सेटिङ गर्न मिल्ने</h5>
+                    <p class="small text-muted font-devanagari mb-2">
+                        पालिकाको आवश्यकता अनुसार पद, शाखा, कार्यालय तथा मास्टर ड्रपडाउनहरू आफैं व्यवस्थापन गर्ने सुविधा।
+                    </p>
+                    <span class="badge bg-light text-secondary border font-devanagari">मोड्युल १</span>
+                </div>
+            </div>
+
+            <!-- 2. Palika Profile -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-module-card">
+                    <div class="dash-icon-box bg-success-subtle text-success">
+                        <i class="fa-solid fa-landmark"></i>
+                    </div>
+                    <h5 class="fw-bold font-devanagari text-dark mb-1">पालिका प्रोफाइल</h5>
+                    <p class="small text-muted font-devanagari mb-2">
+                        नगर प्रमुख, उपप्रमुख, प्रमुख प्रशासकीय अधिकृत, जनप्रतिनिधि तथा भौगोलिक तथ्याङ्क प्रोफाइल।
+                    </p>
+                    <span class="badge bg-light text-secondary border font-devanagari">मोड्युल २</span>
+                </div>
+            </div>
+
+            <!-- 3. Employee Management -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-module-card">
+                    <div class="dash-icon-box bg-purple-subtle text-purple" style="background:#f3e8ff; color:#7e22ce;">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <h5 class="fw-bold font-devanagari text-dark mb-1">कर्मचारी व्यवस्थापन रिपोर्टिङ</h5>
+                    <p class="small text-muted font-devanagari mb-2">
+                        ३२ वटा आधिकारिक फिल्डहरू भएको पूर्ण कर्मचारी प्रशासन, विक्रम संवत् उमेर गणना र अवकाश अलर्ट।
+                    </p>
+                    <span class="badge bg-light text-secondary border font-devanagari">मोड्युल ३</span>
+                </div>
+            </div>
+
+            <!-- 4. Ward Office -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-module-card">
+                    <div class="dash-icon-box bg-warning-subtle text-warning-emphasis">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+                    <h5 class="fw-bold font-devanagari text-dark mb-1">वडा कार्यालय व्यवस्थापन</h5>
+                    <p class="small text-muted font-devanagari mb-2">
+                        प्रत्येक वडाको प्रोफाइल, वडा अध्यक्ष, वडा सचिव, कर्मचारी दरबन्दी तथा सेवा प्रवाह निगरानी।
+                    </p>
+                    <span class="badge bg-light text-secondary border font-devanagari">मोड्युल ४</span>
+                </div>
+            </div>
+
+            <!-- 5. Cooperatives -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-module-card">
+                    <div class="dash-icon-box bg-info-subtle text-info-emphasis">
+                        <i class="fa-solid fa-handshake-angle"></i>
+                    </div>
+                    <h5 class="fw-bold font-devanagari text-dark mb-1">सहकारी तथा संघसंस्था नियमन</h5>
+                    <p class="small text-muted font-devanagari mb-2">
+                        पालिकाभित्र दर्ता भएका बचत तथा ऋण सहकारी, सामुदायिक वन र गैरसरकारी संघसंस्थाहरूको अभिलेख।
+                    </p>
+                    <span class="badge bg-light text-secondary border font-devanagari">मोड्युल ५</span>
+                </div>
+            </div>
+
+            <!-- 6. Recommendations -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dash-module-card">
+                    <div class="dash-icon-box bg-danger-subtle text-danger">
+                        <i class="fa-solid fa-file-signature"></i>
+                    </div>
+                    <h5 class="fw-bold font-devanagari text-dark mb-1">सिफारिस (English/Nepali)</h5>
+                    <p class="small text-muted font-devanagari mb-2">
+                        नागरिकता, नाता प्रमाणित, जग्गा सिफारिस तथा विभिन्न आधिकारिक नेपाली र अंग्रेजी ढाँचाहरू।
+                    </p>
+                    <span class="badge bg-light text-secondary border font-devanagari">मोड्युल ६</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="dash-footer text-center">
+        <div class="container">
+            <div class="font-devanagari mb-1">
+                © २०८३ स्थानीय तह कार्य सरलीकरण प्रणाली • डिजिटल नेपाल पहल
+            </div>
+            <div class="small text-muted font-devanagari">
+                कार्यक्षेत्र: ७५३ स्थानीय तह | प्राविधिक विकास: ePalika.com
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS & App Logic -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.submitDashUserLogin = function() {
+            var codeInp = document.getElementById('dash-login-code');
+            var passInp = document.getElementById('dash-login-pass');
+            var code = (codeInp ? codeInp.value : 'admin').trim();
+            var pass = (passInp ? passInp.value : 'admin123').trim();
+
+            if (!code) {
+                alert('कृपया प्रयोगकर्ता कोड (User ID) प्रविष्टि गर्नुहोस्।');
+                return;
+            }
+
+            var alertEl = document.getElementById('dash-login-alert');
+            if (alertEl) {
+                alertEl.className = 'mt-3 font-devanagari alert alert-info py-2 px-3 d-flex align-items-center gap-2';
+                alertEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> प्रमाणीकरण हुँदैछ (' + code + ')...';
+                alertEl.classList.remove('d-none');
+            }
+
+            try {
+                sessionStorage.setItem('active_session', 'true');
+                sessionStorage.setItem('auth_user_code', code);
+                sessionStorage.setItem('auth_password', pass);
+                localStorage.setItem('currentUserCode', code);
+            } catch(e) {
+                console.warn(e);
+            }
+
+            var codeUpper = code.toUpperCase();
+            var roleLabel = 'प्रशासकीय प्यानल (Super Admin)';
+            if (codeUpper === 'CAO' || codeUpper.startsWith('CAO')) {
+                roleLabel = 'प्रमुख प्रशासकीय अधिकृत (CAO)';
+            } else if (codeUpper.startsWith('WARD')) {
+                roleLabel = 'वडा कार्यालय (Ward User)';
+            } else if (codeUpper.startsWith('EMP')) {
+                roleLabel = 'कर्मचारी (Employee)';
+            }
+
+            setTimeout(function() {
+                if (alertEl) {
+                    alertEl.className = 'mt-3 font-devanagari alert alert-success py-2 px-3 d-flex align-items-center gap-2';
+                    alertEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> सफल लगईन! ' + roleLabel + ' कार्यकक्ष खुल्दैछ...';
+                }
+                setTimeout(function() {
+                    window.location.href = 'index.html?view=banganga_internal&user=' + encodeURIComponent(code);
+                }, 350);
+            }, 250);
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Read selected Palika, District and Province from localStorage
+            var palikaName = localStorage.getItem('selected_palika_name') || 'बाणगंगा नगरपालिका, कपिलवस्तु';
+            var districtName = localStorage.getItem('selected_district_name') || '';
+
+            // Dynamic extraction: if palikaName has comma (e.g. 'शीतगंगा नगरपालिका, अर्घाखाँची'), extract exact district
+            if (palikaName && palikaName.indexOf(',') !== -1) {
+                var dPart = palikaName.split(',')[1].trim();
+                if (dPart) districtName = dPart;
+            }
+            if (!districtName) districtName = 'कपिलवस्तु';
+
+            var provinceName = localStorage.getItem('selected_province_name') || 'लुम्बिनी प्रदेश';
+            if (provinceName.indexOf('नेपाल') === -1) {
+                provinceName += ' नेपाल';
+            }
+
+            var elPalika = document.getElementById('dash-palika-name');
+            var elHeroPalika = document.getElementById('dash-hero-palika');
+            var elProvince = document.getElementById('dash-province-name');
+            var elInternalPalika = document.getElementById('dash-internal-palika-name');
+
+            if (elPalika) elPalika.textContent = palikaName;
+            if (elHeroPalika) elHeroPalika.textContent = palikaName;
+            if (elProvince) elProvince.textContent = 'जिल्ला: ' + districtName + ' • ' + provinceName;
+            if (elInternalPalika) elInternalPalika.textContent = palikaName;
+
+            // Page title update
+            document.title = palikaName + " | स्थानीय तह कार्य सरलीकरण प्रणाली";
+
+            // Auto-focus User ID when login modal opens
+            var loginModal = document.getElementById('dash-login-modal');
+            if (loginModal) {
+                loginModal.addEventListener('shown.bs.modal', function () {
+                    var inp = document.getElementById('dash-login-code');
+                    if (inp) inp.focus();
+                });
+            }
+
+            // Logout Handler
+            var btnLogout = document.getElementById('btn-dash-logout');
+            if (btnLogout) {
+                btnLogout.addEventListener('click', function(e) {
+                    sessionStorage.removeItem('active_session');
+                });
+            }
+        });
+    </script>
+    <!-- Compact Login Modal (Opens only when clicking 'Login') -->
+    <div class="modal fade font-devanagari" id="dash-login-modal" tabindex="-1" aria-labelledby="dashLoginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
+            <div class="modal-content shadow border-0" style="border-radius: 14px; overflow: hidden;">
+                <div class="modal-header bg-primary text-white py-3 px-4">
+                    <h5 class="modal-title fw-bold fs-5 mb-0 d-flex align-items-center gap-2" id="dashLoginModalLabel">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>लगईन (Login)</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-white">
+                    <p class="small text-muted mb-3">
+                        आफ्नो प्रयोगकर्ता कोड (User ID) र पासवर्ड प्रविष्टि गरी प्रणालीमा प्रवेश गर्नुहोस्।
+                    </p>
+                    <form id="dash-modal-login-form" onsubmit="event.preventDefault(); window.submitDashUserLogin();">
+                        <div class="mb-3">
+                            <label for="dash-login-code" class="form-label fw-bold small text-dark mb-1">
+                                <i class="fa-solid fa-id-badge text-primary me-1"></i> प्रयोगकर्ता कोड (User ID):
+                            </label>
+                            <input type="text" class="form-control" id="dash-login-code" value="admin" placeholder="admin" style="height: 42px; font-weight: 600;" required autofocus>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dash-login-pass" class="form-label fw-bold small text-dark mb-1">
+                                <i class="fa-solid fa-key text-primary me-1"></i> पासवर्ड (Password):
+                            </label>
+                            <input type="password" class="form-control" id="dash-login-pass" value="admin123" placeholder="admin123" style="height: 42px;" required>
+                        </div>
+                        <div class="d-grid pt-1">
+                            <button type="submit" class="btn btn-primary fw-bold py-2 shadow-sm" id="btn-dash-login-submit">
+                                <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> लगईन (Login)
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Alert inside modal -->
+                    <div id="dash-login-alert" class="mt-3 small font-devanagari d-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

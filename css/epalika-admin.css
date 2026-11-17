@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    ePalika.com - आन्तरिक नियन्त्रण प्रणाली (Official Government Design System)
    बाणगंगा नगरपालिका, कपिलवस्तु, लुम्बिनी प्रदेश नेपाल
    ========================================================================== */
@@ -824,4 +824,374 @@ body {
     .nav-actions-right {
         justify-content: space-between;
     }
+}
+
+/* =========================================================================
+   LOCAL LEVEL SIMPLIFICATION SYSTEM (स्थानीय तह कार्य सरलीकरण पोर्टल - LANDING PORTAL)
+   ========================================================================= */
+#app-landing-portal {
+    background: #0b0f19;
+    min-height: 100vh;
+    color: #f8fafc;
+    font-family: 'Mukta', 'Segoe UI', Tahoma, sans-serif;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.portal-landing-wrapper {
+    position: relative;
+    z-index: 1;
+}
+
+/* Hero Header */
+.portal-hero-header {
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
+}
+
+.portal-hero-pill {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 9999px;
+    padding: 0.35rem 1.25rem;
+    font-size: 0.88rem;
+    color: #f1f5f9;
+    backdrop-filter: blur(10px);
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.portal-main-title {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    margin-top: 0.35rem;
+    margin-bottom: 0.2rem;
+    text-shadow: 0 0 25px rgba(37, 99, 235, 0.4);
+}
+
+.portal-sub-title {
+    font-size: 0.88rem;
+    color: #94a3b8;
+    margin-bottom: 0.65rem;
+}
+
+/* Portal Cards (White rounded cards on dark background) */
+.portal-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.3);
+    padding: 1.1rem 1.25rem;
+    color: #0f172a;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#btn-hero-admin-direct {
+    transition: all 0.2s ease;
+}
+#btn-hero-admin-direct:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(234, 179, 8, 0.4) !important;
+}
+
+#btn-portal-direct-admin {
+    background: linear-gradient(135deg, #fef08a 0%, #fde047 100%);
+    border: 1px solid #facc15;
+    transition: all 0.2s ease;
+}
+#btn-portal-direct-admin:hover {
+    background: linear-gradient(135deg, #fde047 0%, #eab308 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35) !important;
+}
+
+.portal-icon-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+}
+
+/* Nepal Map SVG Styles */
+.portal-map-container {
+    background: #0f172a;
+    border-radius: 10px;
+    padding: 0.5rem;
+    border: 1px solid #1e293b;
+    overflow: hidden;
+}
+
+.portal-nepal-svg {
+    width: 100%;
+    height: auto;
+    max-height: 480px;
+    display: block;
+}
+
+.nepal-province-path {
+    transition: all 0.22s ease;
+    cursor: pointer;
+    stroke: #ffffff;
+    stroke-width: 2.2;
+    stroke-linejoin: round;
+    opacity: 0.95;
+}
+
+.nepal-province-path:hover,
+.nepal-province-path.active {
+    opacity: 1;
+    filter: brightness(1.15) drop-shadow(0 4px 14px rgba(0, 0, 0, 0.28));
+    stroke: #ffffff;
+    stroke-width: 3.2;
+}
+
+.map-label-main {
+    fill: #ffffff;
+    font-size: 15px;
+    font-weight: 800;
+    pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+    font-family: 'Mukta', sans-serif;
+    text-anchor: middle;
+}
+
+.map-label-sub {
+    fill: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    font-family: 'Mukta', sans-serif;
+    text-anchor: middle;
+}
+
+.portal-map-legend-box {
+    position: absolute;
+    bottom: 16px;
+    left: 20px;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 14px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    z-index: 5;
+}
+
+.province-pill-btn {
+    font-size: 0.78rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+    cursor: pointer;
+    background: #f8fafc;
+    transition: all 0.15s ease;
+}
+.province-pill-btn:hover,
+.province-pill-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #1d4ed8;
+}
+
+/* 7 Modules List */
+.portal-modules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.portal-module-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.95rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    background: #f8fafc;
+    font-size: 0.9rem;
+}
+
+.portal-module-row:hover {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    transform: translateX(4px);
+}
+
+.portal-module-row.active {
+    background: #eff6ff;
+    border-color: #2563eb;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.portal-module-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-right: 0.65rem;
+}
+
+/* Software Demo Preview Box */
+.portal-demo-preview {
+    background: #1e293b;
+    color: #f8fafc;
+    border-radius: 10px;
+    padding: 1.25rem;
+    border: 1px solid #334155;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Login Card Styles */
+.portal-province-select {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    border: 1px solid #1d4ed8;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+}
+
+.portal-province-select option {
+    background: #ffffff;
+    color: #0f172a;
+}
+
+.btn-quick-portal-user {
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+/* Footer */
+.portal-footer {
+    background: #0b0f19;
+    border-top: 1px solid #1e293b;
+    color: #94a3b8;
+}
+
+/* ==========================================================================
+   New Landing Page Layout (Matching User Screenshot)
+   ========================================================================== */
+.portal-header-title-box {
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 2.1rem;
+    font-weight: 800;
+    padding: 0.6rem 2.5rem;
+    border-radius: 8px;
+    letter-spacing: -0.01em;
+    display: inline-block;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.portal-header-subpill {
+    background: #091325;
+    color: #94a3b8;
+    border: 1px solid #1e293b;
+    border-radius: 9999px;
+    padding: 0.35rem 1.75rem;
+    font-size: 0.92rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.portal-map-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.portal-feature-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.15rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 0.6rem;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.portal-feature-item:hover {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    transform: translateX(4px);
+}
+
+.portal-select-custom {
+    height: 46px;
+    font-size: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    padding-left: 1rem;
+    transition: all 0.2s ease;
+}
+
+.portal-select-blue {
+    background-color: #1e3a8a !important;
+    color: #ffffff !important;
+    border-color: #1e40af !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+}
+
+.portal-select-blue:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.4) !important;
+}
+
+.portal-select-blue option {
+    background-color: #1e293b;
+    color: #ffffff;
+}
+
+.portal-select-palika-style {
+    background-color: #94a3b8 !important;
+    color: #ffffff !important;
+    border-color: #94a3b8 !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+}
+
+.portal-select-palika-style.active-selection {
+    background-color: #1e3a8a !important;
+    border-color: #1e40af !important;
+}
+
+.portal-select-palika-style option {
+    background-color: #1e293b;
+    color: #ffffff;
+}
+
+.btn-portal-login-pill {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    padding: 0.65rem 4rem !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-portal-login-pill:hover {
+    background-color: #1d4ed8 !important;
+    color: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5) !important;
 }

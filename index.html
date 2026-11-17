@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ne">
 <head>
     <meta charset="UTF-8">
@@ -7,109 +7,598 @@
     <!-- FontAwesome 6 & Bootstrap 5.3 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/epalika-admin.css?v=2.9">
+    <link rel="stylesheet" href="css/epalika-admin.css">
+    <script src="js/nepal-palikas-data.js"></script>
+    <script>
+        window.addEventListener('error', function(e) {
+            console.error('Captured Runtime Error:', e.message, e.filename, e.lineno);
+            var b = document.getElementById('debug-err-banner');
+            if (!b) {
+                b = document.createElement('div');
+                b.id = 'debug-err-banner';
+                b.style = "position:fixed;bottom:10px;right:10px;background:#ef4444;color:white;padding:12px 18px;border-radius:8px;font-size:13px;z-index:9999999;box-shadow:0 4px 15px rgba(0,0,0,0.3);max-width:420px;font-family:sans-serif;";
+                (document.body || document.documentElement).appendChild(b);
+            }
+            var errMsg = (e.error && e.error.message) ? e.error.message : e.message;
+            var loc = (e.filename) ? ' <small class="d-block text-white-50">' + e.filename.split('/').pop() + ':' + e.lineno + '</small>' : '';
+            b.innerHTML = '<strong>प्रणाली सूचना:</strong> ' + errMsg + loc;
+        });
+    </script>
+    <script>
+        // Instant Workspace Switcher if Admin Login or Internal View is requested
+        (function() {
+            try {
+                if (window.location.search.indexOf('view=banganga_internal') !== -1) {
+                    document.write('<style>#app-landing-portal { display: none !important; } #app-internal-system { display: block !important; }</style>');
+                }
+            } catch(e) {}
+        })();
+    </script>
 </head>
 <body>
 
     <!-- =====================================================================
-         1. Official Header (Exact Match to PDF Page 1)
+         A. LANDING PORTAL (Public Front View matching shared design)
          ===================================================================== -->
-    <header class="official-header">
-        <div class="official-header-top">
-            <!-- Centered Municipality Identity (Logo 1 + Font/Title + Logo 2) -->
-            <div class="mun-official-box">
-                <img src="logo 1.jpg" alt="बाणगंगा नगरपालिका लोगो १" class="mun-header-logo" width="100" height="100" style="width:100px; height:100px; max-width:100px; max-height:100px; object-fit:contain; display:inline-block;">
-                <div class="mun-text-container">
-                    <div class="mun-name-text font-devanagari">बाणगंगा नगरपालिका, कपिलवस्तु</div>
-                    <div class="mun-sub-text font-devanagari">लुम्बिनी प्रदेश नेपाल</div>
+    <div id="app-landing-portal">
+        <div class="portal-landing-wrapper">
+            <div class="container-fluid px-lg-4 py-3">
+                <!-- Top Hero Header (Exact Match to User Screenshot) -->
+                <div class="text-center mb-3 pt-2 portal-hero-header">
+                    <div class="mb-2">
+                        <img src="logo 1.jpg" alt="नेपाल सरकार निशान छाप" width="115" height="115" style="object-fit:contain; filter: drop-shadow(0 4px 14px rgba(0,0,0,0.2));">
+                    </div>
+                    <div class="d-flex justify-content-center mb-2">
+                        <div class="portal-header-title-box font-devanagari">
+                            स्थानीय तह कार्य सरलीकरण प्रणाली
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="portal-header-subpill font-devanagari">
+                            <span class="text-info fw-bold">डिजिटल स्थानीय शासन पोर्टल</span>
+                            <span class="mx-2 text-secondary">|</span>
+                            <span>लक्षित: <strong class="text-white">७५३ स्थानीय तह</strong></span>
+                            <span class="mx-2 text-secondary">|</span>
+                            <span class="text-warning fw-bold">प्रस्तावित: ४२५ पालिका</span>
+                        </div>
+                    </div>
                 </div>
-                <img src="logo 2.jpg" alt="बाणगंगा नगरपालिका लोगो २" class="mun-header-logo" width="100" height="100" style="width:100px; height:100px; max-width:100px; max-height:100px; object-fit:contain; display:inline-block;">
-            </div>
-        </div>
 
-        <!-- Center Pill: आन्तरिक नियन्त्रण प्रणाली -->
-        <div class="system-title-box">
-            <span class="system-title-pill font-devanagari">
-                आन्तरिक नियन्त्रण प्रणाली
-            </span>
+                <!-- Full-Width Nepal Map Card (Exact Match to User Screenshot) -->
+                <div class="portal-map-card mb-4 shadow-sm">
+                    <!-- Map Box Header -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-2 bg-light border-bottom">
+                        <div class="d-flex align-items-center gap-1 small font-devanagari fw-bold text-dark">
+                            <span class="text-danger fs-5" style="line-height:1;">•</span>
+                            <span>नेपालको प्रादेशिक तथा स्थानीय तह सीमाना नक्सा <span class="text-muted fw-normal">(नक्सामा प्रदेश छान्नुहोस् वा तलको लग-इन बक्स प्रयोग गर्नुहोस्)</span></span>
+                        </div>
+                        <div class="small font-devanagari text-dark fw-bold">
+                            <i class="fa-solid fa-location-dot text-danger me-1"></i> सबै ७ प्रदेश • कुल ७५३ पालिका <span class="text-muted fw-normal">(प्रस्तावित: ४२५)</span>
+                        </div>
+                    </div>
+
+                                        <!-- Interactive SVG Nepal Map (Exact Replica to Official 7-Province Reference) -->
+                    <div class="portal-map-container position-relative p-2 p-md-3 bg-white border rounded-3 shadow-sm mb-3" style="overflow: hidden;">
+                        <svg viewBox="0 0 1020 530" class="portal-nepal-svg" id="portal-nepal-map-svg" style="background:#ffffff; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.06));">
+                            <defs>
+                                <!-- Geometric Mesh / Lattice Pattern matching user screenshot -->
+                                <pattern id="nepal-mesh-pattern" width="22" height="22" patternUnits="userSpaceOnUse">
+                                    <path d="M 0 11 L 11 0 L 22 11 L 11 22 Z" fill="none" stroke="#ffffff" stroke-width="0.75" stroke-opacity="0.3" />
+                                    <path d="M 11 0 L 11 22 M 0 11 L 22 11" fill="none" stroke="#ffffff" stroke-width="0.45" stroke-opacity="0.2" />
+                                    <circle cx="11" cy="11" r="1.1" fill="#ffffff" fill-opacity="0.4" />
+                                </pattern>
+                            </defs>
+
+                            <!-- ==========================================
+                                 1. Sudurpashchim (सुदूरपश्चिम प्रदेश) Teal #00a896
+                                 ========================================== -->
+                            <g class="province-group" data-prov="sudurpashchim">
+                                <path id="prov-sudurpashchim" class="nepal-province-path" data-prov="sudurpashchim" data-name="सुदूरपश्चिम प्रदेश" data-palikas="८८ पालिका" fill="#00a896"
+                                      d="M 152 28 L 180 58 L 146 88 L 175 98 L 215 142 L 268 165 L 244 235 L 272 245 L 195 282 L 188 335 L 85 365 L 98 312 L 126 278 L 92 222 L 134 162 Z" />
+                                <path fill="url(#nepal-mesh-pattern)" pointer-events="none" stroke="#ffffff" stroke-width="2.6" stroke-linejoin="round"
+                                      d="M 152 28 L 180 58 L 146 88 L 175 98 L 215 142 L 268 165 L 244 235 L 272 245 L 195 282 L 188 335 L 85 365 L 98 312 L 126 278 L 92 222 L 134 162 Z" />
+                                <!-- Mountain Silhouettes (Black Triangles) -->
+                                <polygon points="105,175 145,115 185,175" fill="#111827" pointer-events="none" stroke="#ffffff" stroke-width="1.2" />
+                                <polygon points="172,230 215,138 255,230" fill="#111827" pointer-events="none" stroke="#ffffff" stroke-width="1.2" />
+                                <!-- Labels -->
+                                <text x="156" y="278" class="map-label-main">सुदूरपश्चिम</text>
+                                <text x="156" y="298" class="map-label-sub">प्रदेश</text>
+                            </g>
+
+                            <!-- ==========================================
+                                 2. Karnali (कर्णाली प्रदेश) Dark Earth #382924
+                                 ========================================== -->
+                            <g class="province-group" data-prov="karnali">
+                                <path id="prov-karnali" class="nepal-province-path" data-prov="karnali" data-name="कर्णाली प्रदेश" data-palikas="७९ पालिका" fill="#382924"
+                                      d="M 268 165 L 252 78 L 312 36 L 372 82 L 482 178 L 442 262 L 354 314 L 298 314 L 244 235 Z" />
+                                <path fill="url(#nepal-mesh-pattern)" pointer-events="none" stroke="#ffffff" stroke-width="2.6" stroke-linejoin="round"
+                                      d="M 268 165 L 252 78 L 312 36 L 372 82 L 482 178 L 442 262 L 354 314 L 298 314 L 244 235 Z" />
+                                <!-- Mountain Silhouette -->
+                                <polygon points="252,185 315,36 376,185" fill="#111827" pointer-events="none" stroke="#ffffff" stroke-width="1.2" />
+                                <!-- Labels -->
+                                <text x="312" y="275" class="map-label-main">कर्णाली</text>
+                                <text x="312" y="295" class="map-label-sub">प्रदेश</text>
+                            </g>
+
+                            <!-- ==========================================
+                                 3. Lumbini (लुम्बिनी प्रदेश) Coral Rose #ea4c65
+                                 ========================================== -->
+                            <g class="province-group" data-prov="lumbini">
+                                <path id="prov-lumbini" class="nepal-province-path active" data-prov="lumbini" data-name="लुम्बिनी प्रदेश (बाणगंगा)" data-palikas="१०९ पालिका" fill="#ea4c65"
+                                      d="M 188 335 L 195 282 L 272 245 L 298 314 L 354 314 L 442 262 L 522 378 L 508 428 L 448 438 L 372 414 L 306 372 Z" />
+                                <path fill="url(#nepal-mesh-pattern)" pointer-events="none" stroke="#ffffff" stroke-width="2.6" stroke-linejoin="round"
+                                      d="M 188 335 L 195 282 L 272 245 L 298 314 L 354 314 L 442 262 L 522 378 L 508 428 L 448 438 L 372 414 L 306 372 Z" />
+                                <!-- Labels -->
+                                <text x="388" y="375" class="map-label-main">लुम्बिनी</text>
+                                <text x="388" y="395" class="map-label-sub">प्रदेश</text>
+                                <!-- Pulsing Baanaganga Pin in Kapilvastu -->
+                                <g id="map-banganga-pin" cursor="pointer" title="बाणगंगा नगरपालिका, कपिलवस्तु (लुम्बिनी)">
+                                    <circle cx="345" cy="380" r="6" fill="#facc15" stroke="#ffffff" stroke-width="2">
+                                        <animate attributeName="r" values="5;8;5" dur="2s" repeatCount="indefinite"/>
+                                    </circle>
+                                    <circle cx="345" cy="380" r="11" fill="none" stroke="#facc15" stroke-width="1.5" opacity="0.8">
+                                        <animate attributeName="r" values="7;16;7" dur="2s" repeatCount="indefinite"/>
+                                        <animate attributeName="opacity" values="0.8;0;0.8" dur="2s" repeatCount="indefinite"/>
+                                    </circle>
+                                </g>
+                            </g>
+
+                            <!-- ==========================================
+                                 4. Gandaki (गण्डकी प्रदेश) Crimson Red #c4192b
+                                 ========================================== -->
+                            <g class="province-group" data-prov="gandaki">
+                                <path id="prov-gandaki" class="nepal-province-path" data-prov="gandaki" data-name="गण्डकी प्रदेश" data-palikas="८५ पालिका" fill="#c4192b"
+                                      d="M 482 178 L 498 168 L 526 148 L 646 278 L 612 334 L 536 364 L 508 428 L 522 378 L 442 262 Z" />
+                                <path fill="url(#nepal-mesh-pattern)" pointer-events="none" stroke="#ffffff" stroke-width="2.6" stroke-linejoin="round"
+                                      d="M 482 178 L 498 168 L 526 148 L 646 278 L 612 334 L 536 364 L 508 428 L 522 378 L 442 262 Z" />
+                                <!-- Mountain Silhouette (Annapurna Peak) -->
+                                <polygon points="422,295 512,156 524,310" fill="#111827" pointer-events="none" stroke="#ffffff" stroke-width="1.2" />
+                                <!-- Labels -->
+                                <text x="532" y="380" class="map-label-main">गण्डकी</text>
+                                <text x="532" y="400" class="map-label-sub">प्रदेश</text>
+                            </g>
+
+                            <!-- ==========================================
+                                 5. Bagmati (वाग्मती प्रदेश) Olive Moss #5b6326
+                                 ========================================== -->
+                            <g class="province-group" data-prov="bagmati">
+                                <path id="prov-bagmati" class="nepal-province-path" data-prov="bagmati" data-name="वाग्मती प्रदेश" data-palikas="११९ पालिका" fill="#5b6326"
+                                      d="M 646 278 L 712 298 L 766 354 L 802 378 L 762 448 L 638 438 L 602 418 L 612 334 Z" />
+                                <path fill="url(#nepal-mesh-pattern)" pointer-events="none" stroke="#ffffff" stroke-width="2.6" stroke-linejoin="round"
+                                      d="M 646 278 L 712 298 L 766 354 L 802 378 L 762 448 L 638 438 L 602 418 L 612 334 Z" />
+                                <!-- Labels -->
+                                <text x="674" y="386" class="map-label-main">वाग्मती</text>
+                                <text x="674" y="406" class="map-label-sub">प्रदेश</text>
+                            </g>
+
+                            <!-- ==========================================
+                                 6. Madhesh (मधेश प्रदेश) Purple #7b2292
+                                 ========================================== -->
+                            <g class="province-group" data-prov="madhesh">
+                                <path id="prov-madhesh" class="nepal-province-path" data-prov="madhesh" data-name="मधेश प्रदेश" data-palikas="१३६ पालिका" fill="#7b2292"
+                                      d="M 602 418 L 638 438 L 762 448 L 862 498 L 836 524 L 726 488 L 652 464 Z" />
+                                <path fill="url(#nepal-mesh-pattern)" pointer-events="none" stroke="#ffffff" stroke-width="2.6" stroke-linejoin="round"
+                                      d="M 602 418 L 638 438 L 762 448 L 862 498 L 836 524 L 726 488 L 652 464 Z" />
+                                <!-- Labels -->
+                                <text x="674" y="462" class="map-label-main">मधेश</text>
+                            </g>
+
+                            <!-- ==========================================
+                                 7. Koshi (कोसी प्रदेश) Vibrant Orange #ea580c
+                                 ========================================== -->
+                            <g class="province-group" data-prov="koshi">
+                                <path id="prov-koshi" class="nepal-province-path" data-prov="koshi" data-name="कोसी प्रदेश" data-palikas="१३७ पालिका" fill="#ea580c"
+                                      d="M 766 354 L 802 318 L 902 334 L 990 358 L 972 474 L 862 498 L 762 448 L 802 378 Z" />
+                                <path fill="url(#nepal-mesh-pattern)" pointer-events="none" stroke="#ffffff" stroke-width="2.6" stroke-linejoin="round"
+                                      d="M 766 354 L 802 318 L 902 334 L 990 358 L 972 474 L 862 498 L 762 448 L 802 378 Z" />
+                                <!-- Labels -->
+                                <text x="888" y="418" class="map-label-sub">प्रदेश</text>
+                                <text x="888" y="442" class="map-label-main">कोसी</text>
+                            </g>
+                        </svg>
+
+                        <!-- Legend Card inside Map (Exact Match to User Screenshot) -->
+                        <div class="portal-map-legend-box font-devanagari">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <svg width="30" height="8" class="flex-shrink-0">
+                                    <line x1="0" y1="4" x2="30" y2="4" stroke="#1e3a8a" stroke-width="3" stroke-linecap="round" />
+                                </svg>
+                                <span class="fw-bold text-dark small">प्रदेश सीमाना (७ प्रदेश)</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <svg width="30" height="8" class="flex-shrink-0">
+                                    <line x1="0" y1="4" x2="30" y2="4" stroke="#64748b" stroke-width="2" stroke-dasharray="4,3" stroke-linecap="round" />
+                                </svg>
+                                <span class="text-secondary small">पालिका सीमाना (७५३ स्थानीय तह)</span>
+                            </div>
+                        </div>
+
+                        <!-- Active Province Hover Indicator -->
+                        <div class="position-absolute top-0 end-0 m-2 m-md-3" style="z-index: 10;">
+                            <div class="badge bg-white text-dark border shadow-sm px-3 py-2 font-devanagari" id="map-hover-info">
+                                <span class="badge bg-danger me-1">लुम्बिनी प्रदेश</span> बाणगंगा नगरपालिका (१०९ पालिका)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Province Selection Pills -->
+                    <div class="d-flex flex-wrap gap-1 px-3 py-2 bg-white border rounded-3 shadow-sm mb-3" id="province-pills-bar">
+                        <button type="button" class="province-pill-btn active" data-prov="lumbini">लुम्बिनी (बाणगंगा)</button>
+                        <button type="button" class="province-pill-btn" data-prov="koshi">कोशी</button>
+                        <button type="button" class="province-pill-btn" data-prov="madhesh">मधेश</button>
+                        <button type="button" class="province-pill-btn" data-prov="bagmati">वाग्मती</button>
+                        <button type="button" class="province-pill-btn" data-prov="gandaki">गण्डकी</button>
+                        <button type="button" class="province-pill-btn" data-prov="karnali">कर्णाली</button>
+                        <button type="button" class="province-pill-btn" data-prov="sudurpashchim">सुदूरपश्चिम</button>
+                    </div>
+                </div>
+
+                <!-- Row Below Map: सफ्टवेयरका सुविधाहरू (Left) + Login Gateway (Right) -->
+                <div class="row g-4 mb-4 align-items-stretch">
+                    <!-- Left Column: सफ्टवेयरका सुविधाहरू -->
+                    <div class="col-lg-6 d-flex">
+                        <div class="portal-card w-100 d-flex flex-column justify-content-between p-4">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                    <h5 class="fw-bold font-devanagari text-primary mb-0 d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-layer-group"></i> सफ्टवेयरका सुविधाहरू
+                                    </h5>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-devanagari px-2 py-1">
+                                        ७ मुख्य मोड्युल
+                                    </span>
+                                </div>
+
+                                <!-- 6 Features List (Exact Match to User Screenshot) -->
+                                <div class="portal-features-list font-devanagari">
+                                    <div class="portal-feature-item">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fa-solid fa-sliders text-primary fs-5"></i>
+                                            <span class="fw-bold">आफ्नै सेटिङ गर्न मिल्ने</span>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-muted small"></i>
+                                    </div>
+                                    <div class="portal-feature-item">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fa-solid fa-landmark text-success fs-5"></i>
+                                            <span class="fw-bold">पालिका प्रोफाइल</span>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-muted small"></i>
+                                    </div>
+                                    <div class="portal-feature-item">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fa-solid fa-users text-purple fs-5" style="color:#7e22ce;"></i>
+                                            <span class="fw-bold">कर्मचारी व्यवस्थापन रिपोर्टिङ</span>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-muted small"></i>
+                                    </div>
+                                    <div class="portal-feature-item">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fa-solid fa-sitemap text-warning fs-5" style="color:#d97706;"></i>
+                                            <span class="fw-bold">संघसंस्था रिपोर्टिङ</span>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-muted small"></i>
+                                    </div>
+                                    <div class="portal-feature-item">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fa-solid fa-handshake-angle text-teal fs-5" style="color:#0d9488;"></i>
+                                            <span class="fw-bold">सहकारी व्यवस्थापन</span>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-muted small"></i>
+                                    </div>
+                                    <div class="portal-feature-item">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="fa-solid fa-file-signature text-danger fs-5"></i>
+                                            <span class="fw-bold">सिफारिस (English/Nepali)</span>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-muted small"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Login Gateway (Exact Match to User Screenshot) -->
+                    <div class="col-lg-6 d-flex">
+                        <div class="portal-card w-100 d-flex flex-column justify-content-center p-4" id="portal-login-card-anchor">
+                            <!-- Quick Admin Login Bar Above Province -->
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                <span class="fw-bold font-devanagari text-dark fs-6 d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-users text-primary"></i> स्थानीय तह प्रवेश
+                                </span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-devanagari px-2 py-1 small">
+                                    <i class="fa-solid fa-shield-halved me-1"></i> सुरक्षित प्रणाली
+                                </span>
+                            </div>
+
+                            <!-- Province Dropdown (7 Provinces) -->
+                            <div class="mb-4">
+                                <label for="portal-select-province" class="form-label fw-bold text-dark font-devanagari fs-6 mb-2">
+                                    प्रदेश:
+                                </label>
+                                <select class="form-select portal-select-custom portal-select-blue font-devanagari" id="portal-select-province" onchange="window.handleProvinceChange(this.value);">
+                                    <option value="">-- प्रदेश छान्नुहोस् --</option>
+                                    <option value="koshi">कोशी प्रदेश</option>
+                                    <option value="madhesh">मधेश प्रदेश</option>
+                                    <option value="bagmati">बागमती प्रदेश</option>
+                                    <option value="gandaki">गण्डकी प्रदेश</option>
+                                    <option value="lumbini" selected>लुम्बिनी प्रदेश</option>
+                                    <option value="karnali">कर्णाली प्रदेश</option>
+                                    <option value="sudurpashchim">सुदूरपश्चिम प्रदेश</option>
+                                </select>
+                            </div>
+
+                            <!-- District Dropdown (जिल्ला) -->
+                            <div class="mb-4">
+                                <label for="portal-select-district" class="form-label fw-bold text-dark font-devanagari fs-6 mb-2">
+                                    जिल्ला:
+                                </label>
+                                <select class="form-select portal-select-custom portal-select-blue font-devanagari" id="portal-select-district" onchange="window.handleDistrictChange(this.value);">
+                                    <option value="">-- सबै जिल्लाहरू --</option>
+                                    <option value="कपिलवस्तु" selected>कपिलवस्तु</option>
+                                    <option value="रुपन्देही">रुपन्देही</option>
+                                    <option value="नवलपरासी पश्चिम">नवलपरासी पश्चिम</option>
+                                    <option value="पाल्पा">पाल्पा</option>
+                                    <option value="अर्घाखाँची">अर्घाखाँची</option>
+                                    <option value="गुल्मी">गुल्मी</option>
+                                    <option value="दाङ">दाङ</option>
+                                    <option value="बाँके">बाँके</option>
+                                    <option value="बर्दिया">बर्दिया</option>
+                                    <option value="प्युठान">प्युठान</option>
+                                    <option value="रोल्पा">रोल्पा</option>
+                                    <option value="रुकुम पूर्व">रुकुम पूर्व</option>
+                                </select>
+                            </div>
+
+                            <!-- Palika Dropdown (All 753 Local Levels of Nepal) -->
+                            <div class="mb-4">
+                                <label for="portal-select-palika" class="form-label fw-bold text-dark font-devanagari fs-6 mb-2">
+                                    स्थानीय तह:
+                                </label>
+                                <select class="form-select portal-select-custom portal-select-palika-style font-devanagari active-selection" id="portal-select-palika">
+                                    <option value="">-- स्थानीय तह छान्नुहोस् --</option>
+                                    <option value="बाणगंगा नगरपालिका, कपिलवस्तु" selected>बाणगंगा नगरपालिका, कपिलवस्तु</option>
+                                    <option value="कपिलवस्तु नगरपालिका, कपिलवस्तु">कपिलवस्तु नगरपालिका, कपिलवस्तु</option>
+                                    <option value="बुद्धभूमि नगरपालिका, कपिलवस्तु">बुद्धभूमि नगरपालिका, कपिलवस्तु</option>
+                                    <option value="शिवराज नगरपालिका, कपिलवस्तु">शिवराज नगरपालिका, कपिलवस्तु</option>
+                                    <option value="महाराजगञ्ज नगरपालिका, कपिलवस्तु">महाराजगञ्ज नगरपालिका, कपिलवस्तु</option>
+                                    <option value="कृष्णनगर नगरपालिका, कपिलवस्तु">कृष्णनगर नगरपालिका, कपिलवस्तु</option>
+                                    <option value="मायादेवी गाउँपालिका, कपिलवस्तु">मायादेवी गाउँपालिका, कपिलवस्तु</option>
+                                    <option value="यशोधरा गाउँपालिका, कपिलवस्तु">यशोधरा गाउँपालिका, कपिलवस्तु</option>
+                                    <option value="शुद्धोधन गाउँपालिका, कपिलवस्तु">शुद्धोधन गाउँपालिका, कपिलवस्तु</option>
+                                    <option value="विजानगर गाउँपालिका, कपिलवस्तु">विजानगर गाउँपालिका, कपिलवस्तु</option>
+                                    <option value="बुटवल उपमहानगरपालिका, रुपन्देही">बुटवल उपमहानगरपालिका, रुपन्देही</option>
+                                    <option value="सिद्धार्थनगर नगरपालिका, रुपन्देही">सिद्धार्थनगर नगरपालिका, रुपन्देही</option>
+                                    <option value="तिलोत्तमा नगरपालिका, रुपन्देही">तिलोत्तमा नगरपालिका, रुपन्देही</option>
+                                    <option value="सैनामैना नगरपालिका, रुपन्देही">सैनामैना नगरपालिका, रुपन्देही</option>
+                                    <option value="लुम्बिनी सांस्कृतिक नगरपालिका, रुपन्देही">लुम्बिनी सांस्कृतिक नगरपालिका, रुपन्देही</option>
+                                    <option value="देवदह नगरपालिका, रुपन्देही">देवदह नगरपालिका, रुपन्देही</option>
+                                    <option value="गैडहवा गाउँपालिका, रुपन्देही">गैडहवा गाउँपालिका, रुपन्देही</option>
+                                    <option value="कञ्चन गाउँपालिका, रुपन्देही">कञ्चन गाउँपालिका, रुपन्देही</option>
+                                    <option value="कोटहीमाई गाउँपालिका, रुपन्देही">कोटहीमाई गाउँपालिका, रुपन्देही</option>
+                                    <option value="मर्चवारी गाउँपालिका, रुपन्देही">मर्चवारी गाउँपालिका, रुपन्देही</option>
+                                    <option value="मायादेवी गाउँपालिका, रुपन्देही">मायादेवी गाउँपालिका, रुपन्देही</option>
+                                    <option value="ओमसतिया गाउँपालिका, रुपन्देही">ओमसतिया गाउँपालिका, रुपन्देही</option>
+                                    <option value="रोहिणी गाउँपालिका, रुपन्देही">रोहिणी गाउँपालिका, रुपन्देही</option>
+                                    <option value="सम्मरीमाई गाउँपालिका, रुपन्देही">सम्मरीमाई गाउँपालिका, रुपन्देही</option>
+                                    <option value="समयमाई गाउँपालिका, रुपन्देही">समयमाई गाउँपालिका, रुपन्देही</option>
+                                    <option value="शुद्धोधन गाउँपालिका, रुपन्देही">शुद्धोधन गाउँपालिका, रुपन्देही</option>
+                                    <option value="रामग्राम नगरपालिका, नवलपरासी पश्चिम">रामग्राम नगरपालिका, नवलपरासी पश्चिम</option>
+                                    <option value="सुनवल नगरपालिका, नवलपरासी पश्चिम">सुनवल नगरपालिका, नवलपरासी पश्चिम</option>
+                                    <option value="बर्दघाट नगरपालिका, नवलपरासी पश्चिम">बर्दघाट नगरपालिका, नवलपरासी पश्चिम</option>
+                                    <option value="पाल्हीनन्दन गाउँपालिका, नवलपरासी पश्चिम">पाल्हीनन्दन गाउँपालिका, नवलपरासी पश्चिम</option>
+                                    <option value="प्रतापपुर गाउँपालिका, नवलपरासी पश्चिम">प्रतापपुर गाउँपालिका, नवलपरासी पश्चिम</option>
+                                    <option value="सरावल गाउँपालिका, नवलपरासी पश्चिम">सरावल गाउँपालिका, नवलपरासी पश्चिम</option>
+                                    <option value="सुस्ता गाउँपालिका, नवलपरासी पश्चिम">सुस्ता गाउँपालिका, नवलपरासी पश्चिम</option>
+                                    <option value="तानसेन नगरपालिका, पाल्पा">तानसेन नगरपालिका, पाल्पा</option>
+                                    <option value="रामपुर नगरपालिका, पाल्पा">रामपुर नगरपालिका, पाल्पा</option>
+                                    <option value="निस्दी गाउँपालिका, पाल्पा">निस्दी गाउँपालिका, पाल्पा</option>
+                                    <option value="पूर्वखोला गाउँपालिका, पाल्पा">पूर्वखोला गाउँपालिका, पाल्पा</option>
+                                    <option value="रम्भा गाउँपालिका, पाल्पा">रम्भा गाउँपालिका, पाल्पा</option>
+                                    <option value="माथागढी गाउँपालिका, पाल्पा">माथागढी गाउँपालिका, पाल्पा</option>
+                                    <option value="तिनाउ गाउँपालिका, पाल्पा">तिनाउ गाउँपालिका, पाल्पा</option>
+                                    <option value="बगनासकाली गाउँपालिका, पाल्पा">बगनासकाली गाउँपालिका, पाल्पा</option>
+                                    <option value="रिब्दीकोट गाउँपालिका, पाल्पा">रिब्दीकोट गाउँपालिका, पाल्पा</option>
+                                    <option value="रैनादेवी छहरा गाउँपालिका, पाल्पा">रैनादेवी छहरा गाउँपालिका, पाल्पा</option>
+                                    <option value="सन्धिखर्क नगरपालिका, अर्घाखाँची">सन्धिखर्क नगरपालिका, अर्घाखाँची</option>
+                                    <option value="शीतगंगा नगरपालिका, अर्घाखाँची">शीतगंगा नगरपालिका, अर्घाखाँची</option>
+                                    <option value="भूमिकास्थान नगरपालिका, अर्घाखाँची">भूमिकास्थान नगरपालिका, अर्घाखाँची</option>
+                                    <option value="छत्रदेव गाउँपालिका, अर्घाखाँची">छत्रदेव गाउँपालिका, अर्घाखाँची</option>
+                                    <option value="पाणिनी गाउँपालिका, अर्घाखाँची">पाणिनी गाउँपालिका, अर्घाखाँची</option>
+                                    <option value="मालारानी गाउँपालिका, अर्घाखाँची">मालारानी गाउँपालिका, अर्घाखाँची</option>
+                                    <option value="रेसुङ्गा नगरपालिका, गुल्मी">रेसुङ्गा नगरपालिका, गुल्मी</option>
+                                    <option value="मुसिकोट नगरपालिका, गुल्मी">मुसिकोट नगरपालिका, गुल्मी</option>
+                                    <option value="इस्मा गाउँपालिका, गुल्मी">इस्मा गाउँपालिका, गुल्मी</option>
+                                    <option value="कालिगण्डकी गाउँपालिका, गुल्मी">कालिगण्डकी गाउँपालिका, गुल्मी</option>
+                                    <option value="गुल्मीदरबार गाउँपालिका, गुल्मी">गुल्मीदरबार गाउँपालिका, गुल्मी</option>
+                                    <option value="सत्यवती गाउँपालिका, गुल्मी">सत्यवती गाउँपालिका, गुल्मी</option>
+                                    <option value="चन्द्रकोट गाउँपालिका, गुल्मी">चन्द्रकोट गाउँपालिका, गुल्मी</option>
+                                    <option value="रुरुक्षेत्र गाउँपालिका, गुल्मी">रुरुक्षेत्र गाउँपालिका, गुल्मी</option>
+                                    <option value="छत्रकोट गाउँपालिका, गुल्मी">छत्रकोट गाउँपालिका, गुल्मी</option>
+                                    <option value="धुर्कोट गाउँपालिका, गुल्मी">धुर्कोट गाउँपालिका, गुल्मी</option>
+                                    <option value="मदाने गाउँपालिका, गुल्मी">मदाने गाउँपालिका, गुल्मी</option>
+                                    <option value="मालिका गाउँपालिका, गुल्मी">मालिका गाउँपालिका, गुल्मी</option>
+                                    <option value="घोराही उपमहानगरपालिका, दाङ">घोराही उपमहानगरपालिका, दाङ</option>
+                                    <option value="तुलसीपुर उपमहानगरपालिका, दाङ">तुलसीपुर उपमहानगरपालिका, दाङ</option>
+                                    <option value="लमही नगरपालिका, दाङ">लमही नगरपालिका, दाङ</option>
+                                    <option value="गढवा गाउँपालिका, दाङ">गढवा गाउँपालिका, दाङ</option>
+                                    <option value="राजपुर गाउँपालिका, दाङ">राजपुर गाउँपालिका, दाङ</option>
+                                    <option value="शान्तिनगर गाउँपालिका, दाङ">शान्तिनगर गाउँपालिका, दाङ</option>
+                                    <option value="राप्ती गाउँपालिका, दाङ">राप्ती गाउँपालिका, दाङ</option>
+                                    <option value="बंगलाचुली गाउँपालिका, दाङ">बंगलाचुली गाउँपालिका, दाङ</option>
+                                    <option value="दंगीशरण गाउँपालिका, दाङ">दंगीशरण गाउँपालिका, दाङ</option>
+                                    <option value="बबई गाउँपालिका, दाङ">बबई गाउँपालिका, दाङ</option>
+                                    <option value="नेपालगञ्ज उपमहानगरपालिका, बाँके">नेपालगञ्ज उपमहानगरपालिका, बाँके</option>
+                                    <option value="कोहलपुर नगरपालिका, बाँके">कोहलपुर नगरपालिका, बाँके</option>
+                                    <option value="नरैनापुर गाउँपालिका, बाँके">नरैनापुर गाउँपालिका, बाँके</option>
+                                    <option value="डुडुवा गाउँपालिका, बाँके">डुडुवा गाउँपालिका, बाँके</option>
+                                    <option value="जानकी गाउँपालिका, बाँके">जानकी गाउँपालिका, बाँके</option>
+                                    <option value="खजुरा गाउँपालिका, बाँके">खजुरा गाउँपालिका, बाँके</option>
+                                    <option value="बैजनाथ गाउँपालिका, बाँके">बैजनाथ गाउँपालिका, बाँके</option>
+                                    <option value="राप्तीसोनारी गाउँपालिका, बाँके">राप्तीसोनारी गाउँपालिका, बाँके</option>
+                                    <option value="गुलरिया नगरपालिका, बर्दिया">गुलरिया नगरपालिका, बर्दिया</option>
+                                    <option value="मधुवन नगरपालिका, बर्दिया">मधुवन नगरपालिका, बर्दिया</option>
+                                    <option value="राजापुर नगरपालिका, बर्दिया">राजापुर नगरपालिका, बर्दिया</option>
+                                    <option value="ठाकुरबाबा नगरपालिका, बर्दिया">ठाकुरबाबा नगरपालिका, बर्दिया</option>
+                                    <option value="बाँसगढी नगरपालिका, बर्दिया">बाँसगढी नगरपालिका, बर्दिया</option>
+                                    <option value="बारबर्दिया नगरपालिका, बर्दिया">बारबर्दिया नगरपालिका, बर्दिया</option>
+                                    <option value="बढैयाताल गाउँपालिका, बर्दिया">बढैयाताल गाउँपालिका, बर्दिया</option>
+                                    <option value="गेरुवा गाउँपालिका, बर्दिया">गेरुवा गाउँपालिका, बर्दिया</option>
+                                    <option value="प्युठान नगरपालिका, प्युठान">प्युठान नगरपालिका, प्युठान</option>
+                                    <option value="स्वर्गद्वारी नगरपालिका, प्युठान">स्वर्गद्वारी नगरपालिका, प्युठान</option>
+                                    <option value="गौमुखी गाउँपालिका, प्युठान">गौमुखी गाउँपालिका, प्युठान</option>
+                                    <option value="माण्डवी गाउँपालिका, प्युठान">माण्डवी गाउँपालिका, प्युठान</option>
+                                    <option value="सरुमारानी गाउँपालिका, प्युठान">सरुमारानी गाउँपालिका, प्युठान</option>
+                                    <option value="मल्लरानी गाउँपालिका, प्युठान">मल्लरानी गाउँपालिका, प्युठान</option>
+                                    <option value="नौवहिनी गाउँपालिका, प्युठान">नौवहिनी गाउँपालिका, प्युठान</option>
+                                    <option value="झिमरुक गाउँपालिका, प्युठान">झिमरुक गाउँपालिका, प्युठान</option>
+                                    <option value="ऐरावती गाउँपालिका, प्युठान">ऐरावती गाउँपालिका, प्युठान</option>
+                                    <option value="रोल्पा नगरपालिका, रोल्पा">रोल्पा नगरपालिका, रोल्पा</option>
+                                    <option value="त्रिवेणी गाउँपालिका, रोल्पा">त्रिवेणी गाउँपालिका, रोल्पा</option>
+                                    <option value="परिवर्तन गाउँपालिका, रोल्पा">परिवर्तन गाउँपालिका, रोल्पा</option>
+                                    <option value="माडी गाउँपालिका, रोल्पा">माडी गाउँपालिका, रोल्पा</option>
+                                    <option value="रुन्टीगढी गाउँपालिका, रोल्पा">रुन्टीगढी गाउँपालिका, रोल्पा</option>
+                                    <option value="लुङ्ग्री गाउँपालिका, रोल्पा">लुङ्ग्री गाउँपालिका, रोल्पा</option>
+                                    <option value="गंगादेव गाउँपालिका, रोल्पा">गंगादेव गाउँपालिका, रोल्पा</option>
+                                    <option value="सुनछहरी गाउँपालिका, रोल्पा">सुनछहरी गाउँपालिका, रोल्पा</option>
+                                    <option value="थवाङ गाउँपालिका, रोल्पा">थवाङ गाउँपालिका, रोल्पा</option>
+                                    <option value="सुनिलस्मृति गाउँपालिका, रोल्पा">सुनिलस्मृति गाउँपालिका, रोल्पा</option>
+                                    <option value="सिस्ने गाउँपालिका, रुकुम पूर्व">सिस्ने गाउँपालिका, रुकुम पूर्व</option>
+                                    <option value="भूमे गाउँपालिका, रुकुम पूर्व">भूमे गाउँपालिका, रुकुम पूर्व</option>
+                                    <option value="पुथा उत्तरगंगा गाउँपालिका, रुकुम पूर्व">पुथा उत्तरगंगा गाउँपालिका, रुकुम पूर्व</option>
+                                </select>
+                            </div>
+
+                            <!-- Login Button (Anyone Can Login! Goes to dashboard.html) -->
+                            <div class="text-center pt-2 mb-3">
+                                <button type="button" class="btn btn-portal-login-pill font-devanagari fw-bold" id="btn-portal-login" onclick="window.submitNewPortalLogin();">
+                                    Login
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portal Footer -->
+            <footer class="portal-footer py-3 text-center small mt-5">
+                <div class="text-light font-devanagari mb-1">
+                    © २०८२ स्थानीय तह कार्य सरलीकरण प्रणाली • डिजिटल नेपाल पहल
+                </div>
+                <div class="text-secondary font-devanagari">
+                    सहायता केन्द्र: ०१-४२००१११ | support@sthaniyasewa.gov.np | बाणगंगा नगरपालिका, कपिलवस्तु
+                </div>
+            </footer>
         </div>
-    </header>
+    </div>
 
     <!-- =====================================================================
-         2. Official 8 Top Tabs Navigation (Exact Match to PDF Page 1)
+         B. INTERNAL MUNICIPAL ADMINISTRATION SYSTEM (Post-Login View)
          ===================================================================== -->
-    <nav class="official-nav-bar">
-        <ul class="official-tabs">
-            <li>
-                <button class="official-tab-btn" data-tab="settings">
-                    <i class="fa-solid fa-sliders"></i> सेटिङ
-                </button>
-            </li>
-            <li>
-                <button class="official-tab-btn active" data-tab="employees">
-                    <i class="fa-solid fa-users"></i> कर्मचारी
-                </button>
-            </li>
-            <li>
-                <button class="official-tab-btn" data-tab="palika_profile">
-                    <i class="fa-solid fa-landmark"></i> पालिका प्रोफाइल
-                </button>
-            </li>
-            <li>
-                <button class="official-tab-btn" data-tab="wards">
-                    <i class="fa-solid fa-map-location-dot"></i> वडा कार्यालय
-                </button>
-            </li>
-            <li>
-                <button class="official-tab-btn" data-tab="cooperative">
-                    <i class="fa-solid fa-handshake-angle"></i> सहकारी
-                </button>
-            </li>
-            <li>
-                <button class="official-tab-btn" data-tab="drinking_water">
-                    <i class="fa-solid fa-faucet-drip"></i> खानेपानी
-                </button>
-            </li>
-            <li>
-                <button class="official-tab-btn" data-tab="forest">
-                    <i class="fa-solid fa-tree"></i> वन
-                </button>
-            </li>
-            <li>
-                <button class="official-tab-btn" data-tab="organization">
-                    <i class="fa-solid fa-sitemap"></i> संघसंस्था
-                </button>
-            </li>
-        </ul>
+    <div id="app-internal-system" class="d-none">
+        <!-- 1. Official Header (Exact Match to PDF Page 1) -->
+        <header class="official-header">
+            <div class="official-header-top">
+                <!-- Centered Municipality Identity (Logo 1 + Font/Title + Logo 2) -->
+                <div class="mun-official-box">
+                    <img src="logo 1.jpg" alt="बाणगंगा नगरपालिका लोगो १" class="mun-header-logo" width="100" height="100" style="width:100px; height:100px; max-width:100px; max-height:100px; object-fit:contain; display:inline-block;">
+                    <div class="mun-text-container">
+                        <div class="mun-name-text font-devanagari">बाणगंगा नगरपालिका, कपिलवस्तु</div>
+                        <div class="mun-sub-text font-devanagari">लुम्बिनी प्रदेश नेपाल</div>
+                    </div>
+                    <img src="logo 2.jpg" alt="बाणगंगा नगरपालिका लोगो २" class="mun-header-logo" width="100" height="100" style="width:100px; height:100px; max-width:100px; max-height:100px; object-fit:contain; display:inline-block;">
+                </div>
+            </div>
 
-        <div class="nav-actions-right d-flex align-items-center gap-2">
-            <!-- Logged-in User Symbol & Role Badge (Clickable for Switch Account) -->
-            <div class="nav-user-identity" id="btn-open-login-modal" role="button" title="खाता परिवर्तन वा लगईन गर्न थिच्नुहोस्">
-                <span id="current-user-avatar-symbol" class="user-role-symbol">
-                    <i class="fa-solid fa-user-shield text-danger"></i>
+            <!-- Center Pill: आन्तरिक नियन्त्रण प्रणाली -->
+            <div class="system-title-box">
+                <span class="system-title-pill font-devanagari">
+                    आन्तरिक नियन्त्रण प्रणाली
                 </span>
-                <span class="badge bg-danger font-devanagari" id="current-user-role-badge">Super Admin</span>
             </div>
+        </header>
 
-            <!-- Logout Button -->
-            <button class="btn btn-sm btn-outline-danger font-devanagari fw-bold" id="btn-header-logout" title="प्रणालीबाट बाहिर निस्कनुहोस्">
-                <i class="fa-solid fa-power-off me-1"></i> बाहिर (Logout)
-            </button>
-        </div>
-    </nav>
+        <!-- 2. Official 8 Top Tabs Navigation (Exact Match to PDF Page 1) -->
+        <nav class="official-nav-bar">
+            <ul class="official-tabs">
+                <li>
+                    <button class="official-tab-btn" data-tab="settings">
+                        <i class="fa-solid fa-sliders"></i> सेटिङ
+                    </button>
+                </li>
+                <li>
+                    <button class="official-tab-btn active" data-tab="employees">
+                        <i class="fa-solid fa-users"></i> कर्मचारी
+                    </button>
+                </li>
+                <li>
+                    <button class="official-tab-btn" data-tab="palika_profile">
+                        <i class="fa-solid fa-landmark"></i> पालिका प्रोफाइल
+                    </button>
+                </li>
+                <li>
+                    <button class="official-tab-btn" data-tab="wards">
+                        <i class="fa-solid fa-map-location-dot"></i> वडा कार्यालय
+                    </button>
+                </li>
+                <li>
+                    <button class="official-tab-btn" data-tab="cooperative">
+                        <i class="fa-solid fa-handshake-angle"></i> सहकारी
+                    </button>
+                </li>
+                <li>
+                    <button class="official-tab-btn" data-tab="drinking_water">
+                        <i class="fa-solid fa-faucet-drip"></i> खानेपानी
+                    </button>
+                </li>
+                <li>
+                    <button class="official-tab-btn" data-tab="forest">
+                        <i class="fa-solid fa-tree"></i> वन
+                    </button>
+                </li>
+                <li>
+                    <button class="official-tab-btn" data-tab="organization">
+                        <i class="fa-solid fa-sitemap"></i> संघसंस्था
+                    </button>
+                </li>
+            </ul>
 
-    <!-- =====================================================================
-         3. Dynamic Main Content Area
-         ===================================================================== -->
-    <main class="content-wrapper" id="main-content-display">
-        <!-- Injected dynamically via JS based on selected tab -->
-    </main>
+            <div class="nav-actions-right d-flex align-items-center gap-2">
+                <!-- Back to Public Dashboard Button -->
+                <a href="dashboard.html" class="btn btn-sm btn-outline-primary font-devanagari fw-bold" id="btn-back-to-dashboard" title="सार्वजनिक ड्यासबोर्डमा फर्कनुहोस्">
+                    <i class="fa-solid fa-gauge me-1"></i> ड्यासबोर्ड
+                </a>
 
-    <!-- Footer -->
-    <footer class="py-3 text-center text-muted small bg-white border-top mt-5">
-        <div>© २०८३ बाणगंगा नगरपालिका नगर कार्यपालिकाको कार्यालय, जीतपुर, कपिलवस्तु।</div>
-        <div class="text-secondary">प्राविधिक विकास: <strong>ePalika.com</strong> आन्तरिक नियन्त्रण प्रणाली</div>
-    </footer>
+                <!-- Home Portal Switch Button -->
+                <a href="index.html" class="btn btn-sm btn-outline-primary font-devanagari fw-bold" id="btn-header-home-portal" title="डिजिटल नेपाल पोर्टल गृहपृष्ठ हेर्नुहोस्">
+                    <i class="fa-solid fa-globe me-1"></i> पोर्टल गृहपृष्ठ
+                </a>
+
+                <!-- Logged-in User Symbol & Role Badge (Clickable for Switch Account) -->
+                <div class="nav-user-identity" id="btn-open-login-modal" role="button" title="खाता परिवर्तन वा लगईन गर्न थिच्नुहोस्">
+                    <span id="current-user-avatar-symbol" class="user-role-symbol">
+                        <i class="fa-solid fa-user-shield text-danger"></i>
+                    </span>
+                    <span class="badge bg-danger font-devanagari" id="current-user-role-badge">Super Admin</span>
+                </div>
+
+                <!-- Logout Button -->
+                <button class="btn btn-sm btn-outline-danger font-devanagari fw-bold" id="btn-header-logout" title="प्रणालीबाट बाहिर निस्कनुहोस्">
+                    <i class="fa-solid fa-power-off me-1"></i> बाहिर (Logout)
+                </button>
+            </div>
+        </nav>
+
+        <!-- 3. Dynamic Main Content Area -->
+        <main class="content-wrapper" id="main-content-display">
+            <!-- Injected dynamically via JS based on selected tab -->
+        </main>
+
+        <!-- Footer -->
+        <footer class="py-3 text-center text-muted small bg-white border-top mt-5">
+            <div>© २०८३ बाणगंगा नगरपालिका नगर कार्यपालिकाको कार्यालय, जीतपुर, कपिलवस्तु।</div>
+            <div class="text-secondary">प्राविधिक विकास: <strong>ePalika.com</strong> आन्तरिक नियन्त्रण प्रणाली</div>
+        </footer>
+    </div>
 
     <!-- Global Modals Mount Points -->
     <div id="login-modal-mount"></div>
@@ -121,12 +610,333 @@
     <div id="role-assignment-modal-mount"></div>
     <div id="excel-import-modal-mount"></div>
 
-    <!-- Core Scripts with Cache Buster -->
+        <!-- Dynamic Nepal Province & Palika Controller Engine -->
+    <script>
+        // 1. Province Change Handler (Updates District and Palikas)
+        window.handleProvinceChange = function(provKey, selectedDistrict, selectedPalika) {
+            if (!provKey) return;
+
+            var provSel = document.getElementById('portal-select-province');
+            if (provSel && provSel.value !== provKey) {
+                provSel.value = provKey;
+            }
+
+            // Populate Districts of this province
+            var distList = [];
+            if (window.NEPAL_PALIKAS_DATA && window.NEPAL_PALIKAS_DATA.districts && window.NEPAL_PALIKAS_DATA.districts[provKey]) {
+                distList = window.NEPAL_PALIKAS_DATA.districts[provKey];
+            }
+
+            var distSel = document.getElementById('portal-select-district');
+            var activeDist = selectedDistrict;
+            if (distSel) {
+                var dHtml = '<option value="">-- सबै जिल्लाहरू --</option>';
+                if (!activeDist) {
+                    activeDist = (provKey === 'lumbini' ? 'कपिलवस्तु' : (distList[0] || ''));
+                }
+                distList.forEach(function(d) {
+                    var isSel = (d === activeDist);
+                    dHtml += '<option value="' + d + '"' + (isSel ? ' selected' : '') + '>' + d + '</option>';
+                });
+                distSel.innerHTML = dHtml;
+            }
+
+            // Populate Palikas filtered by this district
+            window.handleDistrictChange(activeDist, selectedPalika);
+
+            // Highlight Map Path
+            var paths = document.querySelectorAll('.nepal-province-path');
+            paths.forEach(function(p) {
+                if (p.getAttribute('data-prov') === provKey) {
+                    p.classList.add('active');
+                } else {
+                    p.classList.remove('active');
+                }
+            });
+
+            // Highlight Quick Select Pills
+            var pills = document.querySelectorAll('.province-pill-btn');
+            pills.forEach(function(btn) {
+                if (btn.getAttribute('data-prov') === provKey) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Update Map Hover Info
+            var info = document.getElementById('map-hover-info');
+            if (info && window.NEPAL_PALIKAS_DATA && window.NEPAL_PALIKAS_DATA.provinces) {
+                var pObj = window.NEPAL_PALIKAS_DATA.provinces.find(function(p) { return p.id === provKey; });
+                if (pObj) {
+                    info.innerHTML = '<span class="badge bg-danger">' + pObj.name + '</span> कुल ' + pObj.palikas_count + ' स्थानीय तह (' + distList.length + ' जिल्ला)';
+                }
+            }
+        };
+
+        // 2. District Change Handler (Filters Palikas by District)
+        window.handleDistrictChange = function(distName, selectedPalika) {
+            var provSel = document.getElementById('portal-select-province');
+            var provKey = provSel ? provSel.value : 'lumbini';
+
+            var allPalikas = [];
+            if (window.NEPAL_PALIKAS_DATA && window.NEPAL_PALIKAS_DATA.palikas && window.NEPAL_PALIKAS_DATA.palikas[provKey]) {
+                allPalikas = window.NEPAL_PALIKAS_DATA.palikas[provKey];
+            }
+
+            var filtered = allPalikas;
+            if (distName) {
+                filtered = allPalikas.filter(function(item) {
+                    return item.endsWith(', ' + distName) || item.indexOf(distName) !== -1;
+                });
+            }
+
+            var palikaSel = document.getElementById('portal-select-palika');
+            if (palikaSel) {
+                var pHtml = '<option value="">-- स्थानीय तह छान्नुहोस् --</option>';
+                filtered.forEach(function(item) {
+                    var isSel = false;
+                    if (selectedPalika) {
+                        isSel = (item === selectedPalika);
+                    } else if (distName === 'कपिलवस्तु' && item.indexOf('बाणगंगा') !== -1) {
+                        isSel = true;
+                    }
+                    pHtml += '<option value="' + item + '"' + (isSel ? ' selected' : '') + '>' + item + '</option>';
+                });
+                palikaSel.innerHTML = pHtml;
+                palikaSel.classList.add('active-selection');
+            }
+        };
+
+        window.updatePalikas = window.handleProvinceChange;
+
+        // 3. New Portal Login Submission
+        window.submitNewPortalLogin = function() {
+            var provSel = document.getElementById('portal-select-province');
+            var distSel = document.getElementById('portal-select-district');
+            var palikaSel = document.getElementById('portal-select-palika');
+
+            var provKey = provSel ? provSel.value : 'lumbini';
+            var palikaName = (palikaSel ? palikaSel.value : '').trim();
+            var distName = (distSel ? distSel.value : '').trim();
+
+            if (!provKey) provKey = 'lumbini';
+
+            if (!palikaName || palikaName.indexOf('छान्नुहोस्') !== -1) {
+                if (palikaSel && palikaSel.options.length > 1) {
+                    palikaName = palikaSel.options[1].value;
+                    palikaSel.selectedIndex = 1;
+                } else {
+                    palikaName = 'बाणगंगा नगरपालिका, कपिलवस्तु';
+                }
+            }
+
+            // Always accurately extract the district from the selected palika string if available
+            if (palikaName && palikaName.indexOf(',') !== -1) {
+                var pParts = palikaName.split(',');
+                if (pParts.length > 1 && pParts[1].trim()) {
+                    distName = pParts[1].trim();
+                }
+            }
+            if (!distName) distName = 'कपिलवस्तु';
+
+            var provName = 'लुम्बिनी प्रदेश';
+            if (window.NEPAL_PALIKAS_DATA && window.NEPAL_PALIKAS_DATA.provinces) {
+                var pObj = window.NEPAL_PALIKAS_DATA.provinces.find(function(p) { return p.id === provKey; });
+                if (pObj) provName = pObj.name;
+            }
+
+            try {
+                localStorage.setItem('selected_province_id', provKey);
+                localStorage.setItem('selected_province_name', provName);
+                localStorage.setItem('selected_district_name', distName);
+                localStorage.setItem('selected_palika_name', palikaName);
+                sessionStorage.setItem('active_session', 'true');
+            } catch (e) {
+                console.warn(e);
+            }
+
+            window.location.href = 'dashboard.html';
+        };
+
+        // Auto-attach listeners to map paths and pills
+        document.addEventListener('DOMContentLoaded', function() {
+            var paths = document.querySelectorAll('.nepal-province-path');
+            paths.forEach(function(path) {
+                path.addEventListener('click', function() {
+                    var pKey = this.getAttribute('data-prov');
+                    if (pKey) {
+                        window.handleProvinceChange(pKey);
+                        var distEl = document.getElementById('portal-select-district');
+                        if (distEl) distEl.focus();
+                    }
+                });
+                path.addEventListener('mouseenter', function() {
+                    var pName = this.getAttribute('data-name');
+                    var pCount = this.getAttribute('data-palikas');
+                    var info = document.getElementById('map-hover-info');
+                    if (info && pName && pCount) {
+                        info.innerHTML = '<span class="badge bg-danger">' + pName + '</span> ' + pCount;
+                    }
+                });
+                path.addEventListener('mouseleave', function() {
+                    var provSel = document.getElementById('portal-select-province');
+                    var activeKey = provSel ? provSel.value : 'lumbini';
+                    if (activeKey && window.NEPAL_PALIKAS_DATA && window.NEPAL_PALIKAS_DATA.provinces) {
+                        var pObj = window.NEPAL_PALIKAS_DATA.provinces.find(function(p) { return p.id === activeKey; });
+                        var info = document.getElementById('map-hover-info');
+                        if (info && pObj) {
+                            info.innerHTML = '<span class="badge bg-danger">' + pObj.name + '</span> कुल ' + pObj.palikas_count + ' स्थानीय तह';
+                        }
+                    }
+                });
+            });
+
+            var pills = document.querySelectorAll('.province-pill-btn');
+            pills.forEach(function(pill) {
+                pill.addEventListener('click', function() {
+                    var pKey = this.getAttribute('data-prov');
+                    if (pKey) {
+                        window.handleProvinceChange(pKey);
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Global Bulletproof Direct Login Engine -->
+    <script>
+        window.performDirectLogin = function(code, pass, targetTab) {
+            if (typeof window.performPortalLogin === 'function') {
+                window.performPortalLogin(code, pass, targetTab);
+                return;
+            }
+            var userCode = (code || document.getElementById('portal-input-code')?.value || 'ADMIN001').trim();
+            var password = (pass || document.getElementById('portal-input-pass')?.value || 'password123').trim();
+            
+            try {
+                sessionStorage.setItem('active_session', 'true');
+                if (window.ePalikaDB) {
+                    var authed = window.ePalikaDB.authenticate(userCode, password);
+                    if (!authed) {
+                        var users = window.ePalikaDB.getUsers();
+                        authed = users.find(function(u) { return u.user_code && u.user_code.toUpperCase() === userCode.toUpperCase(); }) || users[0];
+                        window.ePalikaDB.setCurrentUser(authed);
+                        if (typeof window.setCurrentUser === 'function') window.setCurrentUser(authed);
+                    }
+                }
+            } catch (err) {
+                console.warn(err);
+            }
+            
+            var portal = document.getElementById('app-landing-portal');
+            var internal = document.getElementById('app-internal-system');
+            if (portal) portal.classList.add('d-none');
+            if (internal) internal.classList.remove('d-none');
+            
+            if (typeof window.showInternalSystem === 'function') {
+                window.showInternalSystem();
+                if (targetTab && typeof window.switchTab === 'function') {
+                    window.switchTab(targetTab);
+                }
+            } else if (typeof window.switchTab === 'function') {
+                window.switchTab(targetTab || 'employees');
+            } else if (typeof window.renderTab === 'function') {
+                window.renderTab(targetTab || 'employees');
+            }
+            window.scrollTo(0, 0);
+        };
+
+        window.submitPortalLogin = function() {
+            var codeInp = document.getElementById('portal-input-code');
+            var passInp = document.getElementById('portal-input-pass');
+            var code = codeInp ? codeInp.value : 'ADMIN001';
+            var pass = passInp ? passInp.value : 'password123';
+            window.performDirectLogin(code, pass);
+        };
+
+        window.submitNewPortalLogin = function() {
+            var provSel = document.getElementById('portal-select-province');
+            var distSel = document.getElementById('portal-select-district');
+            var palikaSel = document.getElementById('portal-select-palika');
+
+            var provKey = provSel ? provSel.value : 'lumbini';
+            var palikaName = (palikaSel ? palikaSel.value : '').trim();
+            var distName = (distSel ? distSel.value : '').trim();
+
+            if (!provKey) provKey = 'lumbini';
+
+            if (!palikaName || palikaName.indexOf('छान्नुहोस्') !== -1) {
+                if (palikaSel && palikaSel.options.length > 1) {
+                    palikaName = palikaSel.options[1].value;
+                    palikaSel.selectedIndex = 1;
+                } else {
+                    palikaName = 'बाणगंगा नगरपालिका, कपिलवस्तु';
+                }
+            }
+
+            // Always accurately extract the district from the selected palika string if available
+            if (palikaName && palikaName.indexOf(',') !== -1) {
+                var pParts = palikaName.split(',');
+                if (pParts.length > 1 && pParts[1].trim()) {
+                    distName = pParts[1].trim();
+                }
+            }
+            if (!distName) distName = 'कपिलवस्तु';
+
+            var provName = 'लुम्बिनी प्रदेश';
+            if (window.NEPAL_PALIKAS_DATA && window.NEPAL_PALIKAS_DATA.provinces) {
+                var pObj = window.NEPAL_PALIKAS_DATA.provinces.find(function(p) { return p.id === provKey; });
+                if (pObj) provName = pObj.name;
+            }
+
+            try {
+                localStorage.setItem('selected_province_id', provKey);
+                localStorage.setItem('selected_province_name', provName);
+                localStorage.setItem('selected_district_name', distName);
+                localStorage.setItem('selected_palika_name', palikaName);
+                sessionStorage.setItem('active_session', 'true');
+            } catch (e) {
+                console.warn(e);
+            }
+
+            window.location.href = 'dashboard.html';
+        };
+    </script>
+
+    <!-- Core Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="js/epalika-unicode.js?v=2.9"></script>
-    <script src="js/epalika-nepali-date.js?v=2.9"></script>
-    <script src="js/epalika-db.js?v=2.9"></script>
-    <script src="js/epalika-app.js?v=2.9"></script>
+    <script src="js/epalika-unicode.js"></script>
+    <script src="js/epalika-nepali-date.js"></script>
+    <script src="js/epalika-db.js"></script>
+    <script src="js/epalika-app-v3.js"></script>
+    <script>
+        // Automatic Safety Fallback: Always renders employee view if internal system is visible
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var isInternalParam = window.location.search.indexOf('view=banganga_internal') !== -1;
+                var portal = document.getElementById('app-landing-portal');
+                var internal = document.getElementById('app-internal-system');
+                if (isInternalParam) {
+                    if (portal) portal.classList.add('d-none');
+                    if (internal) internal.classList.remove('d-none');
+                    if (typeof window.showInternalSystem === 'function') {
+                        window.showInternalSystem();
+                    }
+                }
+                var main = document.getElementById('main-content-display');
+                if (internal && !internal.classList.contains('d-none')) {
+                    if (!main || !main.innerHTML.trim()) {
+                        if (typeof window.renderTab === 'function') {
+                            window.renderTab('employees');
+                        } else if (typeof window.switchTab === 'function') {
+                            window.switchTab('employees');
+                        }
+                    }
+                }
+            }, 60);
+        });
+    </script>
 </body>
 </html>

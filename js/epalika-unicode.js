@@ -174,8 +174,21 @@
 
         // Surnames / Castes
         'joshi': 'जोशी',
+        'sharma': 'शर्मा',
+        'pandit': 'पण्डित',
+        'shah': 'शाह',
+        'shahi': 'शाही',
+        'chand': 'चन्द',
+        'jha': 'झा',
+        'mishra': 'मिश्र',
+        'mandal': 'मण्डल',
+        'tharu': 'थारु',
+        'mahato': 'महतो',
+        'gupta': 'गुप्त',
+        'sah': 'साह',
         'shrestha': 'श्रेष्ठ',
         'adhikari': 'अधिकारी',
+        'adhikary': 'अधिकारी',
         'bhattarai': 'भट्टराई',
         'pokharel': 'पोखरेल',
         'pokhrel': 'पोखरेल',
@@ -188,7 +201,7 @@
         'chaudhary': 'चौधरी',
         'chaudhari': 'चौधरी',
         'bhandari': 'भण्डारी',
-        'pandey': 'पाण्डेय',
+        'pandey': 'पाण्डे',
         'pande': 'पाण्डे',
         'subedi': 'सुवेदी',
         'regmi': 'रेग्मी',
@@ -196,9 +209,11 @@
         'khadka': 'खड्का',
         'paudel': 'पौडेल',
         'poudel': 'पौडेल',
+        'poudyal': 'पौड्याल',
         'dahal': 'दाहाल',
         'acharya': 'आचार्य',
         'bhatta': 'भट्ट',
+        'bhatt': 'भट्ट',
         'ghimire': 'घिमिरे',
         'bista': 'विष्ट',
         'kc': 'केसी',
@@ -227,12 +242,32 @@
         'kattel': 'कट्टेल',
         'kafle': 'काफ्ले',
         'luitel': 'लुइटेल',
-        'timilsina': 'तििमल्सिना',
+        'timilsina': 'तिमल्सिना',
+        'timalsina': 'तिमल्सिना',
         'dhamala': 'धमाला',
         'panta': 'पन्त',
         'koirala': 'कोइराला',
         'baral': 'बराल',
         'aryal': 'अर्याल',
+        'kandel': 'कँडेल',
+        'dangi': 'डाँगी',
+        'gharti': 'घर्ती',
+        'rokaya': 'रोकाया',
+        'budha': 'बुढा',
+        'pun': 'पुन',
+        'ale': 'अले',
+        'rana': 'राणा',
+        'bogati': 'बोगटी',
+        'basyal': 'बस्याल',
+        'belbase': 'बेलबासे',
+        'marasini': 'मरासिनी',
+        'khan': 'खान',
+        'alam': 'आलम',
+        'ansari': 'अन्सारी',
+        'miya': 'मियाँ',
+        'dhakal': 'ढकाल',
+        'gyawali': 'ज्ञावली',
+        'kashyap': 'कश्यप',
 
         // Places & Municipal Terms
         'nepal': 'नेपाल',
@@ -430,6 +465,7 @@
 
     /**
      * Attach smart live transliteration to an input or textarea
+     * Converts Romanized words into Nepali Unicode on Space, Enter, Tab, Blur, or Paste.
      */
     function attach(input, options = {}) {
         if (!input || input.__nepaliUnicodeAttached) return;
@@ -461,45 +497,113 @@
             }
 
             if (input.parentNode) {
-                // If input is inside an input-group or div
                 input.parentNode.style.position = 'relative';
-                // Add right margin or place nicely
             }
         }
 
-        // Live input conversion
-        input.addEventListener('input', function (e) {
-            if (!enabled) return;
-
-            // Only convert if there are Roman letters
-            const val = this.value;
-            if (!/[a-zA-Z]/.test(val)) return;
-
-            const start = this.selectionStart;
-            const end = this.selectionEnd;
-
-            const converted = transliterateText(val);
-
-            if (converted !== val) {
-                this.value = converted;
-                // Preserve cursor position gracefully at end or approximate
-                const newPos = Math.max(0, start + (converted.length - val.length));
-                this.setSelectionRange(newPos, newPos);
+        // Helper: Convert Roman word immediately before cursor
+        function convertWordAtCursor(target, addSuffix = ' ') {
+            const val = target.value;
+            const cursorPos = target.selectionStart;
+            const textBefore = val.slice(0, cursorPos);
+            const match = textBefore.match(/([a-zA-Z]+)$/);
+            if (match) {
+                const word = match[1];
+                const converted = transliterateWord(word);
+                const wordStart = cursorPos - word.length;
+                const newText = val.slice(0, wordStart) + converted + addSuffix + val.slice(cursorPos);
+                target.value = newText;
+                const newCursor = wordStart + converted.length + addSuffix.length;
+                target.setSelectionRange(newCursor, newCursor);
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                return true;
             }
-        });
+            return false;
+        }
 
-        // Toggle with Ctrl + G
+        // Keydown: Trigger transliteration on Space, Enter, Tab, Comma, Period
         input.addEventListener('keydown', function (e) {
+            // Toggle with Ctrl + G
             if (e.ctrlKey && (e.key === 'g' || e.key === 'G')) {
                 e.preventDefault();
                 enabled = !enabled;
                 if (options.onToggle) options.onToggle(enabled);
+                return;
             }
+
+            if (!enabled) return;
+
+            // When user hits Space
+            if (e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space') {
+                if (convertWordAtCursor(this, ' ')) {
+                    e.preventDefault();
+                }
+            } else if (e.key === 'Enter') {
+                if (convertWordAtCursor(this, '')) {
+                    e.preventDefault();
+                }
+            } else if (e.key === 'Tab') {
+                // Convert word before cursor before tab moves focus to the next field
+                convertWordAtCursor(this, '');
+            } else if (e.key === ',' || e.key === '।') {
+                if (convertWordAtCursor(this, e.key + ' ')) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Live input: handles mobile keyboard space, punctuation, or multi-word pasting
+        input.addEventListener('input', function (e) {
+            if (!enabled) return;
+            const val = this.value;
+
+            // If any English word is followed by a space, newline, or punctuation, convert that word!
+            if (/[a-zA-Z]/.test(val) && /([a-zA-Z]+)(\s|[।,.-])/m.test(val)) {
+                const start = this.selectionStart;
+                const converted = val.replace(/([a-zA-Z]+)(\s|[।,.-])/g, function (match, word, sep) {
+                    return transliterateWord(word) + sep;
+                });
+                if (converted !== val) {
+                    const diff = converted.length - val.length;
+                    this.value = converted;
+                    const newPos = Math.max(0, (start || converted.length) + diff);
+                    if (this.setSelectionRange && typeof start === 'number') {
+                        this.setSelectionRange(newPos, newPos);
+                    }
+                }
+            }
+        });
+
+        // On blur (leaving the field), convert any remaining Roman word immediately
+        input.addEventListener('blur', function () {
+            if (!enabled) return;
+            const val = this.value;
+            if (val && /[a-zA-Z]/.test(val)) {
+                this.value = transliterateText(val);
+                this.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+
+        // On paste, convert all Roman words immediately
+        input.addEventListener('paste', function () {
+            if (!enabled) return;
+            setTimeout(() => {
+                const val = input.value;
+                if (val && /[a-zA-Z]/.test(val)) {
+                    input.value = transliterateText(val);
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }, 10);
         });
 
         return {
             toggle: () => { enabled = !enabled; return enabled; },
-            isEnabled: () => enabled
+            isEnabled: () => enabled,
+            convertNow: () => {
+                if (input.value && /[a-zA-Z]/.test(input.value)) {
+                    input.value = transliterateText(input.value);
+                }
+            }
         };
     }
 

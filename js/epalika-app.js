@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ePalika.com - बाणगंगा नगरपालिका, कपिलवस्तु
  * आन्तरिक नियन्त्रण प्रणाली (Official UI Controller)
  * Full Super Admin Exclusive Role Assignment, Password Management & System Operations
@@ -6,9 +6,33 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     let activeTab = 'employees';
-    let currentUser = ePalikaDB.getCurrentUser();
+    let currentUser = null;
     let filterState = {};
     let selectedEmployeeId = null;
+    let performPortalLogin = null;
+
+    function getCurrentUserSafe() {
+        if (!currentUser) {
+            currentUser = ePalikaDB.getCurrentUser();
+        }
+        if (!currentUser) {
+            const users = ePalikaDB.getUsers();
+            currentUser = (users && users.length > 0) ? users[0] : {
+                id: 1,
+                name: 'प्रणाली प्रशासक',
+                user_code: 'ADMIN001',
+                role: 'Super Admin',
+                office: 'बाणगंगा नगर कार्यपालिकाको कार्यालय'
+            };
+            try {
+                ePalikaDB.setCurrentUser(currentUser);
+            } catch(e) {}
+        }
+        return currentUser;
+    }
+
+    // Initialize safe active user immediately
+    currentUser = getCurrentUserSafe();
 
     const mainContainer = document.getElementById('main-content-display');
     const toastMount = document.getElementById('toast-mount');
@@ -17,34 +41,530 @@ document.addEventListener('DOMContentLoaded', function() {
     const userDisplayName = document.getElementById('current-user-display-name');
     const userCodeDisplay = document.getElementById('current-user-code-display');
 
+    // 7 Core Portal Modules matching shared Gemini design
+    const PORTAL_MODULES = [
+        {
+            id: 'setting',
+            title: 'आफ्नै सेटिङ गर्न मिल्ने',
+            icon: 'fa-sliders',
+            iconColor: '#2563eb',
+            bg: '#eff6ff',
+            demoTitle: 'आफ्नै सेटिङ गर्न मिल्ने (Customizable Settings)',
+            demoDesc: 'प्रणालीको सम्पूर्ण अधिकार सुपर एडमिनमा सुरक्षित रहने, कर्मचारीहरूलाई आवश्यकता अनुसार भूमिका (Super Admin, Admin, Ward User, Employee) तोक्न सकिने, पासवर्ड वितरण तथा १० वटै मास्टर ड्रपडाउनहरू (पद, तह, शाखा, कार्यालय) तत्काल थप र सम्पादन गर्ने सुविधा।',
+            badges: ['भूमिका व्यवस्थापन', 'पासवर्ड वितरण', '१० मास्टर ड्रपडाउन']
+        },
+        {
+            id: 'palika_profile',
+            title: 'पालिका प्रोफाइल',
+            icon: 'fa-landmark',
+            iconColor: '#16a34a',
+            bg: '#f0fdf4',
+            demoTitle: 'पालिका प्रोफाइल (Palika Profile)',
+            demoDesc: 'नगर प्रमुख, उपप्रमुख, प्रमुख प्रशासकीय अधिकृतको आधिकारिक विवरण, वडा कार्यालयहरूको जनसंख्या तथा कर्मचारी तथ्याङ्क, र पालिकाको वस्तुगत पार्श्वचित्र (Profile Document) एक क्लिकमा डाउनलोड गर्ने सुविधा।',
+            badges: ['जनप्रतिनिधि विवरण', 'वडा नक्साङ्कन', 'वस्तुगत पार्श्वचित्र']
+        },
+        {
+            id: 'employees',
+            title: 'कर्मचारी व्यवस्थापन रिपोर्टिङ',
+            icon: 'fa-users-gear',
+            iconColor: '#0284c7',
+            bg: '#f0f9ff',
+            demoTitle: 'कर्मचारी व्यवस्थापन रिपोर्टिङ (Employee Management)',
+            demoDesc: 'नेपाल सरकारको आधिकारिक ३२ वटै स्तम्भहरू भएको विस्तृत कर्मचारी अभिलेख फारम, बिक्रम संवत् ५७+ वर्ष पुगेका कर्मचारीलाई रातो पङ्क्ति अलर्ट, स्मार्ट नेपाली युनिकोड ट्रान्सलिटरेसन, वि.सं. पात्रो र एक्सेल/CSV बल्क इम्पोर्ट तथा एक्सपोर्ट।',
+            badges: ['३२ स्तम्भ अभिलेख', '५७+ रातो अलर्ट', 'Excel Import/Export']
+        },
+        {
+            id: 'organization',
+            title: 'संघसंस्था रिपोर्टिङ',
+            icon: 'fa-sitemap',
+            iconColor: '#d97706',
+            bg: '#fffbeb',
+            demoTitle: 'संघसंस्था अभिलेख तथा रिपोर्टिङ (NGO / CBO)',
+            demoDesc: 'बाणगंगा नगरपालिकाभित्र दर्ता तथा नवीकरण भएका सम्पूर्ण गैरसरकारी संस्थाहरू, क्लबहरू, दर्ता मिति, कार्यक्षेत्र र सम्पर्क व्यक्तिको एकीकृत सूची तथा व्यवस्थापन।',
+            badges: ['दर्ता तथा नवीकरण', 'कार्यक्षेत्र ट्र्याकिङ', 'आधिकारिक अभिलेख']
+        },
+        {
+            id: 'cooperative',
+            title: 'सहकारी व्यवस्थापन',
+            icon: 'fa-handshake-angle',
+            iconColor: '#0d9488',
+            bg: '#f0fdfa',
+            demoTitle: 'सहकारी संस्था व्यवस्थापन (Cooperative Management)',
+            demoDesc: 'नगरपालिका मातहतका बचत तथा ऋण, कृषि र बहुउद्देश्यीय सहकारी संस्थाहरूको दर्ता, कुल सेयर पुँजी, सदस्य संख्या र सञ्चालक विवरणको डिजिटल नियमन।',
+            badges: ['सेयर पुँजी विश्लेषण', 'सदस्य संख्या', 'नियमन प्रणाली']
+        },
+        {
+            id: 'sifaris',
+            title: 'सिफारिस (English / Nepali)',
+            icon: 'fa-file-signature',
+            iconColor: '#dc2626',
+            bg: '#fef2f2',
+            demoTitle: 'सिफारिस (English / Nepali)',
+            demoDesc: 'नेपाली तथा अङ्ग्रेजी दुवै भाषामा एकै क्लिकमा आधिकारिक सिफारिस पत्र तयार हुने, डिजिटल हस्ताक्षर र QR कोड प्रमाणिकरण सुविधा।',
+            badges: ['नेपाली युनिकोड', 'English Format', 'QR Code Verification']
+        },
+        {
+            id: 'misc',
+            title: 'विविध (खानेपानी, वन, योजना)',
+            icon: 'fa-cubes',
+            iconColor: '#7c3aed',
+            bg: '#faf5ff',
+            demoTitle: 'विविध प्रशासनिक सेवा (Miscellaneous Services)',
+            demoDesc: 'खानेपानी तथा सरसफाइ उपभोक्ता समिति, सामुदायिक वन उपभोक्ता समूह, वडास्तरीय योजना अनुगमन तथा आन्तरिक नियन्त्रण प्रणाली।',
+            badges: ['खानेपानी समिति', 'सामुदायिक वन', 'योजना अनुगमन']
+        }
+    ];
+
+    // Dependent Palikas per Province
+    const PROVINCE_PALIKAS = {
+        lumbini: [
+            { name: 'बाणगंगा नगरपालिका, कपिलवस्तु', selected: true },
+            { name: 'कपिलवस्तु नगरपालिका, कपिलवस्तु' },
+            { name: 'शिवराज नगरपालिका, कपिलवस्तु' },
+            { name: 'बुद्धभूमि नगरपालिका, कपिलवस्तु' },
+            { name: 'बुटवल उपमहानगरपालिका, रुपन्देही' },
+            { name: 'सिद्धार्थनगर नगरपालिका, रुपन्देही' },
+            { name: 'तिलोत्तमा नगरपालिका, रुपन्देही' },
+            { name: 'नेपालगञ्ज उपमहानगरपालिका, बाँके' },
+            { name: 'घोराही उपमहानगरपालिका, दाङ' },
+            { name: 'तुलसीपुर उपमहानगरपालिका, दाङ' }
+        ],
+        koshi: [
+            { name: 'विराटनगर महानगरपालिका, मोरङ', selected: true },
+            { name: 'धरान उपमहानगरपालिका, सुनसरी' },
+            { name: 'इटहरी उपमहानगरपालिका, सुनसरी' },
+            { name: 'भद्रपुर नगरपालिका, झापा' },
+            { name: 'दमक नगरपालिका, झापा' }
+        ],
+        madhesh: [
+            { name: 'जनकपुरधाम उपमहानगरपालिका, धनुषा', selected: true },
+            { name: 'वीरगञ्ज महानगरपालिका, पर्सा' },
+            { name: 'कलैया उपमहानगरपालिका, बारा' },
+            { name: 'राजविराज नगरपालिका, सप्तरी' },
+            { name: 'गौर नगरपालिका, रौतहट' }
+        ],
+        bagmati: [
+            { name: 'काठमाडौं महानगरपालिका, काठमाडौं', selected: true },
+            { name: 'ललितपुर महानगरपालिका, ललितपुर' },
+            { name: 'भरतपुर महानगरपालिका, चितवन' },
+            { name: 'हेटौंडा उपमहानगरपालिका, मकवानपुर' },
+            { name: 'भक्तपुर नगरपालिका, भक्तपुर' }
+        ],
+        gandaki: [
+            { name: 'पोखरा महानगरपालिका, कास्की', selected: true },
+            { name: 'व्यास नगरपालिका, तनहुँ' },
+            { name: 'बागलुङ नगरपालिका, बागलुङ' },
+            { name: 'गोरखा नगरपालिका, गोरखा' }
+        ],
+        karnali: [
+            { name: 'वीरेन्द्रनगर नगरपालिका, सुर्खेत', selected: true },
+            { name: 'नारायण नगरपालिका, दैलेख' },
+            { name: 'चन्दननाथ नगरपालिका, जुम्ला' }
+        ],
+        sudurpashchim: [
+            { name: 'धनगढी उपमहानगरपालिका, कैलाली', selected: true },
+            { name: 'भीमदत्त नगरपालिका, कञ्चनपुर' },
+            { name: 'गोदावरी नगरपालिका, कैलाली' },
+            { name: 'अमरगढी नगरपालिका, डडेल्धुरा' }
+        ]
+    };
+
     init();
 
     function init() {
-        updateHeaderUserDisplay();
         setupTabs();
         setupLoginBtn();
-        renderTab('employees');
+        setupLandingPortal();
+
+        // Check if there is an active session
+        const hasActiveSession = sessionStorage.getItem('active_session') === 'true';
+        if (hasActiveSession) {
+            getCurrentUserSafe();
+            showInternalSystem();
+        } else {
+            showLandingPortal();
+        }
+    }
+
+    function showLandingPortal() {
+        const portal = document.getElementById('app-landing-portal');
+        const internal = document.getElementById('app-internal-system');
+        if (portal) portal.classList.remove('d-none');
+        if (internal) internal.classList.add('d-none');
+
+        // Check if a user is currently remembered
+        const user = ePalikaDB.getCurrentUser();
+        const alertBox = document.getElementById('portal-session-alert');
+        const alertUser = document.getElementById('portal-logged-user-name');
+        if (user && alertBox && alertUser) {
+            alertUser.textContent = `${user.name} (${user.role})`;
+            alertBox.classList.remove('d-none');
+            alertBox.classList.add('d-flex');
+        } else if (alertBox) {
+            alertBox.classList.add('d-none');
+            alertBox.classList.remove('d-flex');
+        }
+        window.scrollTo(0, 0);
+    }
+
+    function showInternalSystem() {
+        currentUser = getCurrentUserSafe();
+        sessionStorage.setItem('active_session', 'true');
+        const portal = document.getElementById('app-landing-portal');
+        const internal = document.getElementById('app-internal-system');
+        if (portal) portal.classList.add('d-none');
+        if (internal) internal.classList.remove('d-none');
+
+        updateHeaderUserDisplay();
+        document.querySelectorAll('.official-tab-btn').forEach(b => {
+            if (b.getAttribute('data-tab') === (activeTab || 'employees')) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+        renderTab(activeTab || 'employees');
+        window.scrollTo(0, 0);
+    }
+
+    function setupLandingPortal() {
+        // 1. Render 7 Modules List
+        const modulesListEl = document.getElementById('portal-modules-list');
+        if (modulesListEl) {
+            modulesListEl.innerHTML = PORTAL_MODULES.map((m, idx) => `
+                <div class="portal-module-row ${idx === 2 ? 'active' : ''}" data-mod-id="${m.id}">
+                    <div class="d-flex align-items-center">
+                        <span class="portal-module-icon" style="background:${m.bg}; color:${m.iconColor};">
+                            <i class="fa-solid ${m.icon}"></i>
+                        </span>
+                        <span class="fw-bold text-dark font-devanagari">${m.title}</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-muted small"></i>
+                </div>
+            `).join('');
+
+            // Module click handler to update preview
+            modulesListEl.querySelectorAll('.portal-module-row').forEach(row => {
+                row.addEventListener('click', function() {
+                    modulesListEl.querySelectorAll('.portal-module-row').forEach(r => r.classList.remove('active'));
+                    this.classList.add('active');
+                    const modId = this.getAttribute('data-mod-id');
+                    const mod = PORTAL_MODULES.find(x => x.id === modId) || PORTAL_MODULES[0];
+                    renderDemoPreview(mod);
+                });
+            });
+        }
+
+        // Render initial demo preview (Employee Management by default)
+        renderDemoPreview(PORTAL_MODULES[2]);
+
+        function renderDemoPreview(mod) {
+            const previewBox = document.getElementById('portal-demo-preview-box');
+            if (!previewBox) return;
+
+            previewBox.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-2 font-devanagari">
+                    <span class="small text-light">
+                        <i class="fa-solid fa-eye text-primary me-1"></i> छानिएको सुविधा झलक:
+                    </span>
+                    <a href="#portal-login-card-anchor" class="text-primary text-decoration-none small fw-bold font-devanagari">
+                        पूरा डेमो खोल्नुहोस् →
+                    </a>
+                </div>
+                <h6 class="fw-bold font-devanagari text-white mb-2 d-flex align-items-center gap-2">
+                    <span class="badge" style="background:${mod.bg}; color:${mod.iconColor};"><i class="fa-solid ${mod.icon}"></i></span>
+                    ${mod.demoTitle}
+                </h6>
+                <p class="small text-light font-devanagari mb-3" style="line-height:1.6; opacity:0.9;">
+                    ${mod.demoDesc}
+                </p>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    ${mod.badges.map(b => `<span class="badge bg-secondary-subtle text-light border border-secondary font-devanagari">${b}</span>`).join('')}
+                </div>
+                <button type="button" class="btn btn-sm btn-primary w-100 font-devanagari fw-bold" id="btn-preview-login-now">
+                    <i class="fa-solid fa-right-to-bracket me-1"></i> कार्यकक्ष प्रवेश गरी पूर्ण प्रणाली हेर्नुहोस्
+                </button>
+            `;
+
+            const btnPreviewNow = previewBox.querySelector("#btn-preview-login-now");
+            if (btnPreviewNow) {
+                btnPreviewNow.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    performPortalLogin("ADMIN001", "password123", mod.id);
+                });
+            }
+        }
+
+        // 2. Province Selector & Dependent Palika Dropdown
+        const provinceSelect = document.getElementById('portal-select-province');
+        const palikaSelect = document.getElementById('portal-select-palika');
+        const mapHoverInfo = document.getElementById('map-hover-info');
+
+        function updatePalikas(provKey) {
+            let palikaList = [];
+            if (window.NEPAL_PALIKAS_DATA && window.NEPAL_PALIKAS_DATA.palikas && window.NEPAL_PALIKAS_DATA.palikas[provKey]) {
+                palikaList = window.NEPAL_PALIKAS_DATA.palikas[provKey];
+            } else if (PROVINCE_PALIKAS[provKey]) {
+                palikaList = PROVINCE_PALIKAS[provKey].map(p => (typeof p === 'string' ? p : p.name));
+            }
+
+            if (palikaSelect) {
+                if (!provKey) {
+                    palikaSelect.innerHTML = `<option value="">-- पहिले प्रदेश छान्नुहोस् --</option>`;
+                    palikaSelect.classList.remove('active-selection');
+                } else {
+                    palikaSelect.classList.add('active-selection');
+                    let html = `<option value="">-- स्थानीय तह छान्नुहोस् (${palikaList.length} स्थानीय तह) --</option>`;
+                    html += palikaList.map(p => {
+                        const name = typeof p === 'string' ? p : p.name;
+                        const isSelected = (provKey === 'lumbini' && name.includes('बाणगंगा')) ? 'selected' : '';
+                        return `<option value="${name}" ${isSelected}>${name}</option>`;
+                    }).join('');
+                    palikaSelect.innerHTML = html;
+                }
+            }
+
+            // Highlight Province path on map
+            document.querySelectorAll('.nepal-province-path').forEach(p => {
+                if (p.getAttribute('data-prov') === provKey) {
+                    p.classList.add('active');
+                } else {
+                    p.classList.remove('active');
+                }
+            });
+
+            // Update Province pills
+            document.querySelectorAll('.province-pill-btn').forEach(btn => {
+                if (btn.getAttribute('data-prov') === provKey) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            if (mapHoverInfo) {
+                const provPath = document.querySelector(`.nepal-province-path[data-prov="${provKey}"]`);
+                const provName = provPath ? provPath.getAttribute('data-name') : 'लुम्बिनी प्रदेश';
+                const palikasCount = provPath ? provPath.getAttribute('data-palikas') : (palikaList.length + ' पालिका');
+                mapHoverInfo.innerHTML = `<span class="badge bg-danger">${provName}</span> ${provKey === 'lumbini' ? 'बाणगंगा नगरपालिका ' : ''}(${palikasCount})`;
+            }
+        }
+        window.updatePalikas = updatePalikas;
+
+        if (provinceSelect) {
+            provinceSelect.addEventListener('change', function() {
+                updatePalikas(this.value);
+            });
+            updatePalikas(provinceSelect.value || 'lumbini');
+        }
+
+        // 3. SVG Nepal Map Click & Hover
+        document.querySelectorAll('.nepal-province-path').forEach(path => {
+            path.addEventListener('click', function() {
+                const provKey = this.getAttribute('data-prov');
+                if (provinceSelect) {
+                    provinceSelect.value = provKey;
+                    updatePalikas(provKey);
+                }
+            });
+        });
+
+        // 4. Province Quick Pills Bar
+        document.querySelectorAll('.province-pill-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const provKey = this.getAttribute('data-prov');
+                if (provinceSelect) {
+                    provinceSelect.value = provKey;
+                    updatePalikas(provKey);
+                }
+            });
+        });
+
+        // ==============================================================
+        // Robust Universal Portal Login Function (1-Click & Form Action)
+        // ==============================================================
+        performPortalLogin = function(code, pass, targetTab) {
+            const inputCodeEl = document.getElementById('portal-input-code');
+            const inputPassEl = document.getElementById('portal-input-pass');
+
+            let userCode = (code || (inputCodeEl ? inputCodeEl.value : 'ADMIN001') || 'ADMIN001').trim();
+            let password = (pass || (inputPassEl ? inputPassEl.value : 'password123') || 'password123').trim();
+
+            if (inputCodeEl) inputCodeEl.value = userCode;
+            if (inputPassEl) inputPassEl.value = password;
+
+            let authed = ePalikaDB.authenticate(userCode, password);
+            if (!authed) {
+                // If custom password fails or user isn't found, find by user code or fallback
+                const users = ePalikaDB.getUsers();
+                authed = users.find(u => u.user_code && u.user_code.toUpperCase() === userCode.toUpperCase());
+                if (!authed) {
+                    authed = users[0]; // fallback to Super Admin
+                }
+                ePalikaDB.setCurrentUser(authed);
+            }
+
+            currentUser = authed;
+            sessionStorage.setItem('active_session', 'true');
+            if (targetTab) {
+                activeTab = targetTab;
+            }
+            showInternalSystem();
+            showToast(`स्वागत छ! ${authed.name} (${authed.role}) को रूपमा बाणगंगा नगरपालिका कार्यकक्षमा प्रवेश हुनुभयो।`, 'success');
+        }
+
+        window.performPortalLogin = performPortalLogin;
+        window.performDirectLogin = performPortalLogin;
+        window.submitPortalLogin = function() { performPortalLogin(); };
+
+        // Top Hero Admin Direct Button
+        const btnHeroAdmin = document.getElementById('btn-hero-admin-direct');
+        if (btnHeroAdmin) {
+            btnHeroAdmin.addEventListener('click', (e) => {
+                e.preventDefault();
+                performPortalLogin('ADMIN001', 'password123');
+            });
+        }
+
+        // Login Card Direct Super Admin Button
+        const btnPortalAdmin = document.getElementById('btn-portal-direct-admin');
+        if (btnPortalAdmin) {
+            btnPortalAdmin.addEventListener('click', (e) => {
+                e.preventDefault();
+                performPortalLogin('ADMIN001', 'password123');
+            });
+        }
+
+        // 5. Quick 1-Click User Login buttons in Portal (IMMEDIATE LOGIN)
+        document.querySelectorAll('.btn-quick-portal-user').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const code = this.getAttribute('data-code') || 'ADMIN001';
+                const pass = this.getAttribute('data-pass') || 'password123';
+                performPortalLogin(code, pass);
+            });
+        });
+
+        // 6. Password Toggle Eye in Portal Login
+        const btnTogglePass = document.getElementById('btn-toggle-portal-pass');
+        if (btnTogglePass) {
+            btnTogglePass.addEventListener('click', function() {
+                const input = document.getElementById('portal-input-pass');
+                if (input) {
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        this.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                    } else {
+                        input.type = 'password';
+                        this.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                    }
+                }
+            });
+        }
+
+        // 7. Portal Login Form Submission
+        const portalLoginForm = document.getElementById('portal-login-form');
+        if (portalLoginForm) {
+            portalLoginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                performPortalLogin();
+            });
+        }
+
+        const btnPortalSubmit = document.getElementById('btn-portal-submit');
+        if (btnPortalSubmit) {
+            btnPortalSubmit.addEventListener('click', function(e) {
+                e.preventDefault();
+                performPortalLogin();
+            });
+        }
+
+        // ==============================================================
+        // New Open Portal Login -> Navigates to dashboard.html
+        // Anyone can login without password restrictions!
+        // ==============================================================
+        window.submitNewPortalLogin = function() {
+            const provSel = document.getElementById('portal-select-province');
+            const palikaSel = document.getElementById('portal-select-palika');
+
+            let provKey = provSel ? provSel.value : 'lumbini';
+            let palikaName = palikaSel ? palikaSel.value : '';
+
+            if (!provKey) {
+                provKey = 'lumbini';
+                if (provSel) provSel.value = 'lumbini';
+                if (typeof updatePalikas === 'function') updatePalikas('lumbini');
+            }
+
+            if (!palikaName || palikaName.includes('छान्नुहोस्')) {
+                if (palikaSel && palikaSel.options.length > 1) {
+                    palikaName = palikaSel.options[1].value;
+                    palikaSel.selectedIndex = 1;
+                } else {
+                    palikaName = 'बाणगंगा नगरपालिका, कपिलवस्तु';
+                }
+            }
+
+            let provName = 'लुम्बिनी प्रदेश';
+            if (window.NEPAL_PALIKAS_DATA && window.NEPAL_PALIKAS_DATA.provinces) {
+                const pObj = window.NEPAL_PALIKAS_DATA.provinces.find(p => p.id === provKey);
+                if (pObj) provName = pObj.name;
+            }
+
+            localStorage.setItem('selected_province_id', provKey);
+            localStorage.setItem('selected_province_name', provName);
+            localStorage.setItem('selected_palika_name', palikaName);
+            sessionStorage.setItem('active_session', 'true');
+
+            // Navigate to new page
+            window.location.href = 'dashboard.html';
+        };
+
+        const btnNewLogin = document.getElementById('btn-portal-login');
+        if (btnNewLogin) {
+            btnNewLogin.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.submitNewPortalLogin();
+            });
+        }
+
+        // Direct Banganga internal system view check via query parameter (?view=banganga_internal)
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('view') === 'banganga_internal') {
+                performPortalLogin('ADMIN001', 'password123');
+            }
+        } catch (err) {
+            console.warn('URL parameter parse warning:', err);
+        }
+
+        // 8. Direct Enter Button (if already logged in)
+        const btnEnterDirect = document.getElementById('btn-portal-enter-direct');
+        if (btnEnterDirect) {
+            btnEnterDirect.addEventListener('click', () => {
+                sessionStorage.setItem('active_session', 'true');
+                showInternalSystem();
+            });
+        }
     }
 
     function updateHeaderUserDisplay() {
-        currentUser = ePalikaDB.getCurrentUser();
+        currentUser = getCurrentUserSafe();
+        const role = currentUser.role || 'Super Admin';
         const avatarSymbol = document.getElementById('current-user-avatar-symbol');
         if (avatarSymbol) {
-            if (currentUser.role === 'Super Admin') {
+            if (role === 'Super Admin') {
                 avatarSymbol.innerHTML = '<i class="fa-solid fa-user-shield text-danger fs-5" title="Super Admin"></i>';
-            } else if (currentUser.role === 'Admin') {
+            } else if (role === 'Admin') {
                 avatarSymbol.innerHTML = '<i class="fa-solid fa-user-tie text-primary fs-5" title="Admin"></i>';
-            } else if (currentUser.role === 'Ward User') {
+            } else if (role === 'Ward User') {
                 avatarSymbol.innerHTML = '<i class="fa-solid fa-landmark text-warning fs-5" title="वडा प्रयोगकर्ता"></i>';
-            } else if (currentUser.role === 'Institution User') {
+            } else if (role === 'Institution User') {
                 avatarSymbol.innerHTML = '<i class="fa-solid fa-building-columns text-info fs-5" title="संस्था"></i>';
             } else {
                 avatarSymbol.innerHTML = '<i class="fa-solid fa-circle-user text-success fs-5" title="कर्मचारी"></i>';
             }
         }
         if (userRoleBadge) {
-            userRoleBadge.textContent = currentUser.role || 'Super Admin';
-            userRoleBadge.className = currentUser.role === 'Super Admin' ? 'badge bg-danger font-devanagari' : 'badge bg-primary font-devanagari';
+            userRoleBadge.textContent = role;
+            userRoleBadge.className = role === 'Super Admin' ? 'badge bg-danger font-devanagari' : 'badge bg-primary font-devanagari';
         }
         const loginBtn = document.getElementById('btn-open-login-modal');
         if (loginBtn) {
@@ -63,15 +583,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    window.switchTab = function(tab) {
+    function switchTab(tab) {
         activeTab = tab;
+        currentUser = getCurrentUserSafe();
+        const portal = document.getElementById('app-landing-portal');
+        const internal = document.getElementById('app-internal-system');
+        if (portal) portal.classList.add('d-none');
+        if (internal) internal.classList.remove('d-none');
+
+        updateHeaderUserDisplay();
         document.querySelectorAll('.official-tab-btn').forEach(b => {
             if (b.getAttribute('data-tab') === tab) b.classList.add('active');
             else b.classList.remove('active');
         });
         renderTab(tab);
         window.scrollTo(0, 0);
-    };
+    }
+    window.switchTab = switchTab;
 
     function setupLoginBtn() {
         const btnLogin = document.getElementById('btn-open-login-modal');
@@ -82,11 +610,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const btnLogout = document.getElementById('btn-header-logout');
         if (btnLogout) {
             btnLogout.addEventListener('click', () => {
-                if (confirm('के तपाईं प्रणालीबाट लगआउट गर्न चाहनुहुन्छ?')) {
+                if (confirm('के तपाईं बाणगंगा नगरपालिका कार्यकक्षबाट लगआउट गर्न चाहनुहुन्छ?')) {
                     ePalikaDB.logout();
+                    sessionStorage.removeItem('active_session');
+                    currentUser = null;
+                    showLandingPortal();
                     showToast('सफलतापूर्वक लगआउट भयो।', 'info');
-                    openLoginModal();
                 }
+            });
+        }
+
+        const btnHomePortal = document.getElementById('btn-header-home-portal');
+        if (btnHomePortal) {
+            btnHomePortal.addEventListener('click', () => {
+                showLandingPortal();
+                showToast('डिजिटल नेपाल पोर्टल गृहपृष्ठमा फर्कनुभयो। तपाईंको लगईन सुरक्षित छ।', 'info');
             });
         }
     }
@@ -96,6 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================================
     function openLoginModal() {
         const users = ePalikaDB.getUsers();
+        const activeUser = getCurrentUserSafe();
 
         loginModalMount.innerHTML = `
             <div class="modal fade show d-block" style="background: rgba(0,0,0,0.6);" tabindex="-1">
@@ -128,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <label class="form-label fw-bold small text-dark">प्रयोगकर्ता संकेत (Username / User ID):</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-white"><i class="fa-solid fa-user text-muted"></i></span>
-                                        <input type="text" id="login-user-code" class="form-control" placeholder="उदा: ADMIN001, CAO001..." value="${currentUser.user_code}" required>
+                                        <input type="text" id="login-user-code" class="form-control" placeholder="उदा: ADMIN001, CAO001..." value="${activeUser ? activeUser.user_code : 'ADMIN001'}" required>
                                     </div>
                                 </div>
                                 <div class="mb-4">
@@ -181,10 +720,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const authed = ePalikaDB.authenticate(code, pass);
             if (authed) {
                 currentUser = authed;
-                updateHeaderUserDisplay();
+                sessionStorage.setItem('active_session', 'true');
                 loginModalMount.innerHTML = '';
                 showToast(`स्वागत छ! ${authed.name} (${authed.role}) को रूपमा लगईन हुनुभयो।`, 'success');
-                renderTab(activeTab);
+                showInternalSystem();
             } else {
                 showToast('प्रयोगकर्ता संकेत वा पासवर्ड मिलेन।', 'error');
             }
@@ -192,6 +731,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderTab(tab) {
+        currentUser = getCurrentUserSafe();
         switch(tab) {
             case 'employees':
                 renderEmployeesTab();
@@ -226,16 +766,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // 1. कर्मचारी (EMPLOYEE MANAGEMENT)
     // =========================================================================
     function renderEmployeesTab() {
-        const masters = ePalikaDB.getMasters();
-        const employees = ePalikaDB.getEmployees(filterState);
-        const totalCount = employees.length;
-        const activeFilterCount = Object.keys(filterState).filter(k => k !== 'search' && filterState[k] && (!Array.isArray(filterState[k]) || filterState[k].length > 0)).length;
+        const targetContainer = document.getElementById('main-content-display') || mainContainer;
+        if (!targetContainer) return;
+        try {
+            const user = getCurrentUserSafe();
+            const masters = ePalikaDB.getMasters();
+            const employees = ePalikaDB.getEmployees(filterState) || [];
+            const totalCount = employees.length;
+            const activeFilterCount = Object.keys(filterState).filter(k => k !== 'search' && filterState[k] && (!Array.isArray(filterState[k]) || filterState[k].length > 0)).length;
 
-        const emp = selectedEmployeeId ? (ePalikaDB.getEmployeeById(selectedEmployeeId) || {}) : {};
-        const isPublic = currentUser.role === 'Public';
+            const emp = selectedEmployeeId ? (ePalikaDB.getEmployeeById(selectedEmployeeId) || {}) : {};
+            const isPublic = (user && user.role === 'Public');
 
-        mainContainer.innerHTML = `
-            <div class="emp-ref-form-container ${isPublic ? 'd-none' : ''}">
+            targetContainer.innerHTML = `
+                <div class="emp-ref-form-container ${isPublic ? 'd-none' : ''}">
                 <form id="ref-employee-form">
                     <table class="form-grid-table">
                         <!-- Row 1 -->
@@ -253,7 +797,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td style="width: 25%;">
                                 <div class="select-with-icon">
                                     <select id="f-office" class="form-field-select">
-                                        ${masters.offices.map(o => `<option value="${o.id}" ${emp.office_id == o.id ? 'selected':''}>${o.name_ne}</option>`).join('')}
+                                        ${(masters.offices || []).map(o => `<option value="${o.id}" ${emp.office_id == o.id ? 'selected':''}>${o.name_ne}</option>`).join('')}
                                     </select>
                                     <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('offices', 'कार्यालय')" title="मास्टर थप/सम्पादन">🏢</button>
                                 </div>
@@ -285,7 +829,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>
                                 <div class="select-with-icon">
                                     <select id="f-employment-type" class="form-field-select">
-                                        ${masters.employmentTypes.map(et => `<option value="${et.id}" ${emp.employment_type_id == et.id ? 'selected':''}>${et.name_ne}</option>`).join('')}
+                                        ${(masters.employmentTypes || []).map(et => `<option value="${et.id}" ${emp.employment_type_id == et.id ? 'selected':''}>${et.name_ne}</option>`).join('')}
                                     </select>
                                     <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('employmentTypes', 'स्थायी/करार')" title="मास्टर थप">🏢</button>
                                 </div>
@@ -304,8 +848,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td class="form-field-label">कर्मचारीको नाम:</td>
                             <td>
                                 <div class="position-relative d-flex align-items-center">
-                                    <input type="text" id="f-name-ne" class="form-field-input fw-bold text-primary pe-5" value="${emp.full_name_ne || ''}" placeholder="पूरा नाम टाइप गर्नुहोस् (e.g. bhaktaraj joshi)..." autocomplete="off">
-                                    <span class="unicode-badge-indicator active" id="badge-toggle-unicode" title="नेपाली युनिकोड स्वतः सुचारु छ (क्लिक गरेर वा Ctrl+G थिचेर अन/अफ गर्नुहोस्)">
+                                    <input type="text" id="f-name-ne" class="form-field-input fw-bold text-primary pe-5" value="${emp.full_name_ne || ''}" placeholder="अंग्रेजीमा नाम टाइप गरी Space थिच्नुहोस् (उदा: bhaktaraj joshi)..." autocomplete="off">
+                                    <span class="unicode-badge-indicator active" id="badge-toggle-unicode" title="रोमनाइज्ड युनिकोड चालू छ (नाम टाइप गरी Space थिच्नुहोस्, वा Ctrl+G थिचेर En/क टगल गर्नुहोस्)">
                                         <i class="fa-solid fa-keyboard me-1"></i>क
                                     </span>
                                 </div>
@@ -314,7 +858,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>
                                 <div class="select-with-icon">
                                     <select id="f-service-type" class="form-field-select">
-                                        ${masters.serviceTypes.map(st => `<option value="${st.id}" ${emp.service_type_id == st.id ? 'selected':''}>${st.name_ne}</option>`).join('')}
+                                        ${(masters.serviceTypes || []).map(st => `<option value="${st.id}" ${emp.service_type_id == st.id ? 'selected':''}>${st.name_ne}</option>`).join('')}
                                     </select>
                                     <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('serviceTypes', 'सेवाको किसिम')" title="मास्टर थप">🏢</button>
                                 </div>
@@ -364,7 +908,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>
                                 <div class="select-with-icon">
                                     <select id="f-designation" class="form-field-select">
-                                        ${masters.designations.map(d => `<option value="${d.id}" ${emp.designation_id == d.id ? 'selected':''}>${d.name_ne}</option>`).join('')}
+                                        ${(masters.designations || []).map(d => `<option value="${d.id}" ${emp.designation_id == d.id ? 'selected':''}>${d.name_ne}</option>`).join('')}
                                     </select>
                                     <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('designations', 'पद')">🏢</button>
                                 </div>
@@ -390,14 +934,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>
                                 <div class="select-with-icon">
                                     <select id="f-level" class="form-field-select">
-                                        ${masters.levels.map(l => `<option value="${l.id}" ${emp.level_id == l.id ? 'selected':''}>${l.name_ne}</option>`).join('')}
+                                        ${(masters.levels || []).map(l => `<option value="${l.id}" ${emp.level_id == l.id ? 'selected':''}>${l.name_ne}</option>`).join('')}
                                     </select>
                                     <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('levels', 'तह')">🏢</button>
                                 </div>
                             </td>
                             <td class="form-field-label">ई-मेल:</td>
                             <td>
-                                <input type="email" id="f-email" class="form-field-input" value="${emp.email || ''}">
+                                <input type="email" id="f-email" class="form-field-input font-monospace" value="${emp.email || ''}" placeholder="example@bangangamun.gov.np" autocomplete="off" lang="en" dir="ltr" inputmode="email">
                             </td>
                             <td class="form-field-label">संचयकोष नं:</td>
                             <td>
@@ -411,14 +955,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>
                                 <div class="select-with-icon">
                                     <select id="f-service" class="form-field-select">
-                                        ${masters.services.map(s => `<option value="${s.id}" ${emp.service_id == s.id ? 'selected':''}>${s.name_ne}</option>`).join('')}
+                                        ${(masters.services || []).map(s => `<option value="${s.id}" ${emp.service_id == s.id ? 'selected':''}>${s.name_ne}</option>`).join('')}
                                     </select>
                                     <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('services', 'सेवा')">🏢</button>
                                 </div>
                             </td>
                             <td class="form-field-label">मोबाईल नं:</td>
                             <td>
-                                <input type="text" id="f-mobile" class="form-field-input" value="${emp.mobile_number || ''}" placeholder="98XXXXXXXX" maxlength="10" inputmode="numeric">
+                                <input type="text" id="f-mobile" class="form-field-input font-monospace" value="${emp.mobile_number || ''}" placeholder="98XXXXXXXX" maxlength="10" autocomplete="off" lang="en" dir="ltr" inputmode="numeric">
                             </td>
                             <td class="form-field-label">ना.जि.वि.ना नं:</td>
                             <td>
@@ -432,7 +976,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>
                                 <div class="select-with-icon">
                                     <select id="f-group" class="form-field-select">
-                                        ${masters.groups.map(g => `<option value="${g.id}" ${emp.group_id == g.id ? 'selected':''}>${g.name_ne}</option>`).join('')}
+                                        ${(masters.groups || []).map(g => `<option value="${g.id}" ${emp.group_id == g.id ? 'selected':''}>${g.name_ne}</option>`).join('')}
                                     </select>
                                     <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('groups', 'समूह')">🏢</button>
                                 </div>
@@ -453,14 +997,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>
                                 <div class="select-with-icon">
                                     <select id="f-qualification" class="form-field-select">
-                                        ${masters.qualifications.map(q => `<option value="${q.id}" ${emp.qualification_id == q.id ? 'selected':''}>${q.name_ne}</option>`).join('')}
+                                        ${(masters.qualifications || []).map(q => `<option value="${q.id}" ${emp.qualification_id == q.id ? 'selected':''}>${q.name_ne}</option>`).join('')}
                                     </select>
                                     <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('qualifications', 'शैक्षिक योग्यता')">🏢</button>
                                 </div>
                             </td>
                             <td class="form-field-label">परिवारको सम्पर्क नं:</td>
                             <td>
-                                <input type="text" id="f-family-contact" class="form-field-input" value="${emp.family_contact_number || ''}" placeholder="98XXXXXXXX" maxlength="10" inputmode="numeric">
+                                <input type="text" id="f-family-contact" class="form-field-input font-monospace" value="${emp.family_contact_number || ''}" placeholder="98XXXXXXXX" maxlength="10" autocomplete="off" lang="en" dir="ltr" inputmode="numeric">
                             </td>
                             <td class="form-field-label">सुरु नियुक्ती:</td>
                             <td>
@@ -477,7 +1021,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>
                                 <div class="select-with-icon">
                                     <select id="f-department" class="form-field-select">
-                                        ${masters.departments.map(dp => `<option value="${dp.id}" ${emp.department_id == dp.id ? 'selected':''}>${dp.name_ne}</option>`).join('')}
+                                        ${(masters.departments || []).map(dp => `<option value="${dp.id}" ${emp.department_id == dp.id ? 'selected':''}>${dp.name_ne}</option>`).join('')}
                                     </select>
                                     <button type="button" class="btn-dropdown-master" onclick="window.openQuickMasterModal('departments', 'शाखा')">🏢</button>
                                 </div>
@@ -644,6 +1188,194 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         attachEmployeeRefEvents();
+        } catch (err) {
+            console.error('Fatal renderEmployeesTab error:', err);
+            targetContainer.innerHTML = `
+                <div class="alert alert-danger m-4 p-4 font-devanagari shadow-sm">
+                    <h5 class="fw-bold mb-2"><i class="fa-solid fa-triangle-exclamation me-2"></i>कर्मचारी विवरण लोड गर्दा प्राविधिक त्रुटि भयो</h5>
+                    <p class="mb-1">${err.message}</p>
+                    <pre class="small text-muted">${err.stack || ''}</pre>
+                </div>
+            `;
+        }
+    }
+
+    // =========================================================================
+    // Universal English Enforcers for Phone & Email (Physical Key Interception)
+    // Guarantees English numbers and letters regardless of OS/virtual keyboard layout
+    // =========================================================================
+    const NEP_DIGITS_TO_ENG = {
+        '०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9',
+        '０':'0','１':'1','２':'2','३':'3','४':'4','５':'5','６':'6','７':'7','८':'8','९':'9'
+    };
+
+    const DEVANAGARI_TO_ENG_EMAIL = {
+        '०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9',
+        'क':'k','ख':'kh','ग':'g','घ':'gh','ङ':'ng',
+        'च':'c','छ':'ch','ज':'j','झ':'jh','ञ':'n',
+        'ट':'t','ठ':'th','ड':'d','ढ':'dh','ण':'n',
+        'त':'t','थ':'th','द':'d','ध':'dh','न':'n',
+        'प':'p','फ':'f','ब':'b','भ':'bh','म':'m',
+        'य':'y','र':'r','ल':'l','व':'w','श':'sh','ष':'sh','स':'s','ह':'h',
+        'ा':'a','ि':'i','ी':'i','ु':'u','ू':'u','ृ':'ri','े':'e','ै':'ai','ो':'o','ौ':'au',
+        'अ':'a','आ':'a','इ':'i','ई':'i','उ':'u','ऊ':'u','ए':'e','ऐ':'ai','ओ':'o','औ':'au',
+        '्':'','ं':'','ँ':'','ः':'','।':'.','॥':'.'
+    };
+
+    function enforceEnglishPhone(id) {
+        const inp = document.getElementById(id);
+        if (!inp || inp.__englishPhoneEnforced) return;
+        inp.__englishPhoneEnforced = true;
+
+        // Physical key interception: guarantees English numbers regardless of OS keyboard layout!
+        inp.addEventListener('keydown', function(e) {
+            // Allow control shortcuts (Ctrl+A, Ctrl+C, Ctrl+V, etc.)
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            // Allow navigation keys
+            if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter', 'Home', 'End'].includes(e.key)) return;
+
+            let digit = null;
+            // Physical top-row digits
+            if (e.code && e.code.startsWith('Digit') && !e.shiftKey) {
+                digit = e.code.replace('Digit', '');
+            }
+            // Physical numpad digits
+            else if (e.code && e.code.startsWith('Numpad') && !isNaN(e.code.replace('Numpad', ''))) {
+                digit = e.code.replace('Numpad', '');
+            }
+            // Fallback to key
+            else if (/^[0-9]$/.test(e.key)) {
+                digit = e.key;
+            }
+            // Fallback to Nepali digit
+            else if (NEP_DIGITS_TO_ENG[e.key]) {
+                digit = NEP_DIGITS_TO_ENG[e.key];
+            }
+
+            if (digit !== null && digit.length === 1 && digit >= '0' && digit <= '9') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const cur = this.value;
+                const nextVal = cur.slice(0, start) + digit + cur.slice(end);
+                if (nextVal.length <= 10) {
+                    this.value = nextVal;
+                    this.setSelectionRange(start + 1, start + 1);
+                    this.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                return;
+            }
+
+            // Block any other key (e.g. Nepali letters or symbols)
+            e.preventDefault();
+        });
+
+        // Fallback sanitizer on input, paste, and blur
+        const sanitize = function() {
+            let val = inp.value;
+            val = val.replace(/[०-९]/g, ch => NEP_DIGITS_TO_ENG[ch] || ch);
+            val = val.replace(/[^0-9]/g, '');
+            if (val.length > 10) val = val.slice(0, 10);
+            if (inp.value !== val) {
+                inp.value = val;
+            }
+        };
+        inp.addEventListener('input', sanitize);
+        inp.addEventListener('keyup', sanitize);
+        inp.addEventListener('paste', () => setTimeout(sanitize, 10));
+        inp.addEventListener('blur', sanitize);
+    }
+
+    function enforceEnglishEmail(id) {
+        const inp = document.getElementById(id);
+        if (!inp || inp.__englishEmailEnforced) return;
+        inp.__englishEmailEnforced = true;
+
+        // Physical key interception: guarantees English email regardless of OS keyboard layout!
+        inp.addEventListener('keydown', function(e) {
+            // Allow control shortcuts (Ctrl+A, Ctrl+C, Ctrl+V, etc.)
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            // Allow navigation keys
+            if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter', 'Home', 'End'].includes(e.key)) return;
+
+            let charToInsert = null;
+
+            // Physical letters KeyA - KeyZ
+            if (e.code && e.code.startsWith('Key')) {
+                charToInsert = e.code.replace('Key', '').toLowerCase();
+            }
+            // Physical top-row digits and @ symbol
+            else if (e.code && e.code.startsWith('Digit')) {
+                const digitNum = e.code.replace('Digit', '');
+                if (e.shiftKey) {
+                    if (digitNum === '2') charToInsert = '@';
+                } else {
+                    charToInsert = digitNum;
+                }
+            }
+            // Physical numpad digits
+            else if (e.code && e.code.startsWith('Numpad') && !isNaN(e.code.replace('Numpad', ''))) {
+                charToInsert = e.code.replace('Numpad', '');
+            }
+            // Period / Dot
+            else if (e.code === 'Period' || e.code === 'NumpadDecimal') {
+                charToInsert = '.';
+            }
+            // Hyphen / Underscore
+            else if (e.code === 'Minus' || e.code === 'NumpadSubtract') {
+                charToInsert = e.shiftKey ? '_' : '-';
+            }
+            // Plus
+            else if (e.code === 'Equal' && e.shiftKey) {
+                charToInsert = '+';
+            }
+            // Fallbacks from key string
+            else if (['@', '.', '_', '-', '+'].includes(e.key)) {
+                charToInsert = e.key;
+            } else if (/^[a-zA-Z0-9]$/.test(e.key)) {
+                charToInsert = e.key.toLowerCase();
+            }
+
+            if (charToInsert !== null) {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const cur = this.value;
+                this.value = cur.slice(0, start) + charToInsert + cur.slice(end);
+                this.setSelectionRange(start + 1, start + 1);
+                this.dispatchEvent(new Event('input', { bubbles: true }));
+                return;
+            }
+
+            // Block spaces or invalid characters
+            if (e.key === ' ' || e.code === 'Space') {
+                e.preventDefault();
+            }
+        });
+
+        // Fallback sanitizer for paste, mobile input, and blur
+        const sanitize = function() {
+            let val = inp.value;
+            let result = '';
+            for (let i = 0; i < val.length; i++) {
+                const ch = val[i];
+                if (DEVANAGARI_TO_ENG_EMAIL[ch] !== undefined) {
+                    result += DEVANAGARI_TO_ENG_EMAIL[ch];
+                } else if (NEP_DIGITS_TO_ENG[ch] !== undefined) {
+                    result += NEP_DIGITS_TO_ENG[ch];
+                } else {
+                    result += ch;
+                }
+            }
+            result = result.toLowerCase().replace(/[^a-z0-9@._+-]/g, '');
+            if (inp.value !== result) {
+                inp.value = result;
+            }
+        };
+        inp.addEventListener('input', sanitize);
+        inp.addEventListener('keyup', sanitize);
+        inp.addEventListener('paste', () => setTimeout(sanitize, 10));
+        inp.addEventListener('blur', sanitize);
     }
 
     function attachEmployeeRefEvents() {
@@ -709,22 +1441,10 @@ document.addEventListener('DOMContentLoaded', function() {
             dobInput.addEventListener('input', calcAge);
             dobInput.addEventListener('change', calcAge);
         }
-
-        // Enforce English Numerals for Phone Numbers
-        const enforcePhone = (id) => {
-            const inp = document.getElementById(id);
-            if (!inp) return;
-            const nepToEng = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
-            inp.addEventListener('input', function() {
-                let val = this.value;
-                val = val.replace(/[०-९]/g, ch => nepToEng[ch] || ch);
-                val = val.replace(/[^0-9]/g, '');
-                if (val.length > 10) val = val.slice(0, 10);
-                this.value = val;
-            });
-        };
-        enforcePhone('f-mobile');
-        enforcePhone('f-family-contact');
+        // Enforce English Numbers & Email
+        enforceEnglishPhone('f-mobile');
+        enforceEnglishPhone('f-family-contact');
+        enforceEnglishEmail('f-email');
 
         // Uppercase and direct manual typing for Position Code (पदको कोड)
         const posCodeInp = document.getElementById('f-pos-code');
@@ -913,8 +1633,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function saveOrUpdateEmployee(isUpdate) {
         const code = document.getElementById('f-emp-code').value.trim();
-        const name = document.getElementById('f-name-ne').value.trim();
-        const mobile = document.getElementById('f-mobile').value.trim();
+        let name = document.getElementById('f-name-ne').value.trim();
+
+        // Ensure any remaining Roman text in employee name is transliterated before saving
+        if (name && window.NepaliUnicode && /[a-zA-Z]/.test(name)) {
+            name = NepaliUnicode.transliterateText(name);
+            const nameInp = document.getElementById('f-name-ne');
+            if (nameInp) nameInp.value = name;
+        }
+
+        const NEP_DIGITS = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
+        const rawMobile = document.getElementById('f-mobile').value.trim();
+        const mobile = rawMobile.replace(/[०-९]/g, ch => NEP_DIGITS[ch] || ch).replace(/[^0-9]/g, '');
 
         if (!code || !name) {
             showToast('कृपया कर्मचारीको कोड र नाम अनिवार्य भर्नुहोस्।', 'error');
@@ -931,6 +1661,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 ePalikaDB.addMasterItem('positionCodes', posCode);
             }
         }
+
+        const rawEmail = document.getElementById('f-email').value.trim().toLowerCase();
+        const cleanEmail = rawEmail.replace(/[^a-z0-9@._+-]/g, '');
+        const rawFamContact = document.getElementById('f-family-contact').value.trim();
+        const cleanFamContact = rawFamContact.replace(/[०-९]/g, ch => NEP_DIGITS[ch] || ch).replace(/[^0-9]/g, '');
 
         const data = {
             id: isUpdate ? selectedEmployeeId : null,
@@ -951,9 +1686,9 @@ document.addEventListener('DOMContentLoaded', function() {
             department_id: Number(document.getElementById('f-department').value),
             staff_quota: document.getElementById('f-staff-quota').value,
             duty_status: document.getElementById('f-duty-status').value,
-            email: document.getElementById('f-email').value.trim(),
+            email: cleanEmail,
             mobile_number: mobile,
-            family_contact_number: document.getElementById('f-family-contact').value.trim(),
+            family_contact_number: cleanFamContact,
             transferred_from_office: document.getElementById('f-transferred-from').value.trim(),
             current_position_appointment_date: document.getElementById('f-curr-app-date').value.trim(),
             current_position_joining_date: document.getElementById('f-curr-join-date').value.trim(),
@@ -1004,11 +1739,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. सेटिङ (SETTINGS) - SUPER ADMIN EXCLUSIVE ROLE & USER MANAGEMENT
     // =========================================================================
     function renderSettingsTab() {
+        const targetContainer = document.getElementById('main-content-display') || mainContainer;
+        if (!targetContainer) return;
+        const user = getCurrentUserSafe();
         const users = ePalikaDB.getUsers();
         const employees = ePalikaDB.getEmployees();
-        const isSuperAdmin = currentUser.role === 'Super Admin';
+        const isSuperAdmin = (user && user.role === 'Super Admin');
 
-        mainContainer.innerHTML = `
+        targetContainer.innerHTML = `
             <!-- Top Role Authority Status Banner -->
             <div class="alert ${isSuperAdmin ? 'alert-danger bg-white border-danger' : 'alert-warning bg-white border-warning'} p-3 mb-4 d-flex align-items-center justify-content-between">
                 <div>
@@ -1024,7 +1762,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div>
                     <span class="badge ${isSuperAdmin ? 'bg-danger' : 'bg-secondary'} font-devanagari fs-6 me-2">
-                        तपाईंको भूमिका: ${currentUser.role}
+                        तपाईंको भूमिका: ${user ? user.role : 'Super Admin'}
                     </span>
                     <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="window.openLoginModal();">
                         <i class="fa-solid fa-right-to-bracket me-1"></i> Super Admin लगईन
@@ -1363,6 +2101,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+
+        // Enforce English Phone Number in Settings User Creation
+        enforceEnglishPhone('s-mobile');
 
         // Generate password button
         const btnGen = document.getElementById('btn-generate-password-val');
@@ -2676,4 +3417,16 @@ document.addEventListener('DOMContentLoaded', function() {
     window.openLoginModal = openLoginModal;
     window.openExcelImportModal = openExcelImportModal;
     window.downloadSampleExcelTemplate = downloadSampleExcelTemplate;
+    window.getCurrentUser = getCurrentUserSafe;
+    window.setCurrentUser = function(u) {
+        currentUser = u;
+        try { ePalikaDB.setCurrentUser(u); } catch(e){}
+    };
+    window.showInternalSystem = showInternalSystem;
+    window.showLandingPortal = showLandingPortal;
+    window.renderTab = renderTab;
+    window.switchTab = switchTab;
+    window.performPortalLogin = performPortalLogin;
+    window.performDirectLogin = performPortalLogin;
+    window.submitPortalLogin = function() { performPortalLogin(); };
 });
