@@ -24,16 +24,6 @@
             b.innerHTML = '<strong>प्रणाली सूचना:</strong> ' + errMsg + loc;
         });
     </script>
-    <script>
-        // Instant Workspace Switcher if Admin Login or Internal View is requested
-        (function() {
-            try {
-                if (window.location.search.indexOf('view=banganga_internal') !== -1) {
-                    document.write('<style>#app-landing-portal { display: none !important; } #app-internal-system { display: block !important; }</style>');
-                }
-            } catch(e) {}
-        })();
-    </script>
 </head>
 <body>
 
@@ -468,9 +458,9 @@
                                 </select>
                             </div>
 
-                            <!-- Login Button (Anyone Can Login! Goes to dashboard.html) -->
+                            <!-- Login Button: handled by the server-authenticated app controller -->
                             <div class="text-center pt-2 mb-3">
-                                <button type="button" class="btn btn-portal-login-pill font-devanagari fw-bold" id="btn-portal-login" onclick="window.submitNewPortalLogin();">
+                                <button type="button" class="btn btn-portal-login-pill font-devanagari fw-bold" id="btn-portal-login">
                                     Login
                                 </button>
                             </div>
@@ -710,54 +700,7 @@
 
         window.updatePalikas = window.handleProvinceChange;
 
-        // 3. New Portal Login Submission
-        window.submitNewPortalLogin = function() {
-            var provSel = document.getElementById('portal-select-province');
-            var distSel = document.getElementById('portal-select-district');
-            var palikaSel = document.getElementById('portal-select-palika');
-
-            var provKey = provSel ? provSel.value : 'lumbini';
-            var palikaName = (palikaSel ? palikaSel.value : '').trim();
-            var distName = (distSel ? distSel.value : '').trim();
-
-            if (!provKey) provKey = 'lumbini';
-
-            if (!palikaName || palikaName.indexOf('छान्नुहोस्') !== -1) {
-                if (palikaSel && palikaSel.options.length > 1) {
-                    palikaName = palikaSel.options[1].value;
-                    palikaSel.selectedIndex = 1;
-                } else {
-                    palikaName = 'बाणगंगा नगरपालिका, कपिलवस्तु';
-                }
-            }
-
-            // Always accurately extract the district from the selected palika string if available
-            if (palikaName && palikaName.indexOf(',') !== -1) {
-                var pParts = palikaName.split(',');
-                if (pParts.length > 1 && pParts[1].trim()) {
-                    distName = pParts[1].trim();
-                }
-            }
-            if (!distName) distName = 'कपिलवस्तु';
-
-            var provName = 'लुम्बिनी प्रदेश';
-            if (window.NEPAL_PALIKAS_DATA && window.NEPAL_PALIKAS_DATA.provinces) {
-                var pObj = window.NEPAL_PALIKAS_DATA.provinces.find(function(p) { return p.id === provKey; });
-                if (pObj) provName = pObj.name;
-            }
-
-            try {
-                localStorage.setItem('selected_province_id', provKey);
-                localStorage.setItem('selected_province_name', provName);
-                localStorage.setItem('selected_district_name', distName);
-                localStorage.setItem('selected_palika_name', palikaName);
-                sessionStorage.setItem('active_session', 'true');
-            } catch (e) {
-                console.warn(e);
-            }
-
-            window.location.href = 'dashboard.html';
-        };
+        // Login and municipality submission are handled by the server-authenticated app controller.
 
         // Auto-attach listeners to map paths and pills
         document.addEventListener('DOMContentLoaded', function() {
@@ -804,105 +747,7 @@
         });
     </script>
 
-    <!-- Global Bulletproof Direct Login Engine -->
-    <script>
-        window.performDirectLogin = function(code, pass, targetTab) {
-            if (typeof window.performPortalLogin === 'function') {
-                window.performPortalLogin(code, pass, targetTab);
-                return;
-            }
-            var userCode = (code || document.getElementById('portal-input-code')?.value || 'ADMIN001').trim();
-            var password = (pass || document.getElementById('portal-input-pass')?.value || 'password123').trim();
-            
-            try {
-                sessionStorage.setItem('active_session', 'true');
-                if (window.ePalikaDB) {
-                    var authed = window.ePalikaDB.authenticate(userCode, password);
-                    if (!authed) {
-                        var users = window.ePalikaDB.getUsers();
-                        authed = users.find(function(u) { return u.user_code && u.user_code.toUpperCase() === userCode.toUpperCase(); }) || users[0];
-                        window.ePalikaDB.setCurrentUser(authed);
-                        if (typeof window.setCurrentUser === 'function') window.setCurrentUser(authed);
-                    }
-                }
-            } catch (err) {
-                console.warn(err);
-            }
-            
-            var portal = document.getElementById('app-landing-portal');
-            var internal = document.getElementById('app-internal-system');
-            if (portal) portal.classList.add('d-none');
-            if (internal) internal.classList.remove('d-none');
-            
-            if (typeof window.showInternalSystem === 'function') {
-                window.showInternalSystem();
-                if (targetTab && typeof window.switchTab === 'function') {
-                    window.switchTab(targetTab);
-                }
-            } else if (typeof window.switchTab === 'function') {
-                window.switchTab(targetTab || 'employees');
-            } else if (typeof window.renderTab === 'function') {
-                window.renderTab(targetTab || 'employees');
-            }
-            window.scrollTo(0, 0);
-        };
-
-        window.submitPortalLogin = function() {
-            var codeInp = document.getElementById('portal-input-code');
-            var passInp = document.getElementById('portal-input-pass');
-            var code = codeInp ? codeInp.value : 'ADMIN001';
-            var pass = passInp ? passInp.value : 'password123';
-            window.performDirectLogin(code, pass);
-        };
-
-        window.submitNewPortalLogin = function() {
-            var provSel = document.getElementById('portal-select-province');
-            var distSel = document.getElementById('portal-select-district');
-            var palikaSel = document.getElementById('portal-select-palika');
-
-            var provKey = provSel ? provSel.value : 'lumbini';
-            var palikaName = (palikaSel ? palikaSel.value : '').trim();
-            var distName = (distSel ? distSel.value : '').trim();
-
-            if (!provKey) provKey = 'lumbini';
-
-            if (!palikaName || palikaName.indexOf('छान्नुहोस्') !== -1) {
-                if (palikaSel && palikaSel.options.length > 1) {
-                    palikaName = palikaSel.options[1].value;
-                    palikaSel.selectedIndex = 1;
-                } else {
-                    palikaName = 'बाणगंगा नगरपालिका, कपिलवस्तु';
-                }
-            }
-
-            // Always accurately extract the district from the selected palika string if available
-            if (palikaName && palikaName.indexOf(',') !== -1) {
-                var pParts = palikaName.split(',');
-                if (pParts.length > 1 && pParts[1].trim()) {
-                    distName = pParts[1].trim();
-                }
-            }
-            if (!distName) distName = 'कपिलवस्तु';
-
-            var provName = 'लुम्बिनी प्रदेश';
-            if (window.NEPAL_PALIKAS_DATA && window.NEPAL_PALIKAS_DATA.provinces) {
-                var pObj = window.NEPAL_PALIKAS_DATA.provinces.find(function(p) { return p.id === provKey; });
-                if (pObj) provName = pObj.name;
-            }
-
-            try {
-                localStorage.setItem('selected_province_id', provKey);
-                localStorage.setItem('selected_province_name', provName);
-                localStorage.setItem('selected_district_name', distName);
-                localStorage.setItem('selected_palika_name', palikaName);
-                sessionStorage.setItem('active_session', 'true');
-            } catch (e) {
-                console.warn(e);
-            }
-
-            window.location.href = 'dashboard.html';
-        };
-    </script>
+    <!-- Authentication is exclusively handled by epalika-app-v3.js via the Cloudflare Worker. -->
 
     <!-- Core Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -911,32 +756,7 @@
     <script src="js/epalika-nepali-date.js"></script>
     <script src="js/epalika-db.js"></script>
     <script src="js/epalika-app-v3.js"></script>
-    <script>
-        // Automatic Safety Fallback: Always renders employee view if internal system is visible
-        window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                var isInternalParam = window.location.search.indexOf('view=banganga_internal') !== -1;
-                var portal = document.getElementById('app-landing-portal');
-                var internal = document.getElementById('app-internal-system');
-                if (isInternalParam) {
-                    if (portal) portal.classList.add('d-none');
-                    if (internal) internal.classList.remove('d-none');
-                    if (typeof window.showInternalSystem === 'function') {
-                        window.showInternalSystem();
-                    }
-                }
-                var main = document.getElementById('main-content-display');
-                if (internal && !internal.classList.contains('d-none')) {
-                    if (!main || !main.innerHTML.trim()) {
-                        if (typeof window.renderTab === 'function') {
-                            window.renderTab('employees');
-                        } else if (typeof window.switchTab === 'function') {
-                            window.switchTab('employees');
-                        }
-                    }
-                }
-            }, 60);
-        });
-    </script>
+    
+        
 </body>
 </html>
