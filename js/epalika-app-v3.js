@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ePalika.com - बाणगंगा नगरपालिका, कपिलवस्तु
  * आन्तरिक नियन्त्रण प्रणाली (Official UI Controller)
  * Full Super Admin Exclusive Role Assignment, Password Management & System Operations
@@ -10,29 +10,41 @@ document.addEventListener('DOMContentLoaded', function() {
     let filterState = {};
     let selectedEmployeeId = null;
     let performPortalLogin = null;
+    let isApiAuthenticated = false;
 
     function getCurrentUserSafe() {
-        if (!currentUser) {
-            currentUser = ePalikaDB.getCurrentUser();
-        }
-        if (!currentUser) {
-            const users = ePalikaDB.getUsers();
-            currentUser = (users && users.length > 0) ? users[0] : {
-                id: 1,
-                name: 'प्रणाली प्रशासक',
-                user_code: 'ADMIN001',
-                role: 'Super Admin',
-                office: 'बाणगंगा नगर कार्यपालिकाको कार्यालय'
-            };
-            try {
-                ePalikaDB.setCurrentUser(currentUser);
-            } catch(e) {}
-        }
-        return currentUser;
+        // Never create a local/demo user when no server session exists.
+        return isApiAuthenticated ? currentUser : null;
     }
 
-    // Initialize safe active user immediately
-    currentUser = getCurrentUserSafe();
+    async function restoreServerSession() {
+        try {
+            const result = await ePalikaDB.verifyServerSession();
+            if (result && result.success && result.user) {
+                currentUser = mapApiUser(result.user);
+                isApiAuthenticated = true;
+                showInternalSystem();
+                return true;
+            }
+        } catch (error) {
+            console.warn('Session verification failed:', error);
+        }
+        ePalikaDB.clearServerSession();
+        currentUser = null;
+        isApiAuthenticated = false;
+        showLandingPortal();
+        return false;
+    }
+
+    function mapApiUser(user) {
+        return {
+            id: user.id,
+            name: user.fullName || user.username,
+            user_code: user.username,
+            role: String(user.role || '').toLowerCase() === 'admin' ? 'Super Admin' : user.role,
+            office: 'बाणगंगा नगर कार्यपालिकाको कार्यालय'
+        };
+    }
 
     const mainContainer = document.getElementById('main-content-display');
     const toastMount = document.getElementById('toast-mount');
@@ -176,30 +188,9 @@ document.addEventListener('DOMContentLoaded', function() {
         setupLoginBtn();
         setupLandingPortal();
 
-        // Check if query parameter requests direct internal administrative view
-        let isDirectInternal = false;
-        try {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('view') === 'banganga_internal') {
-                isDirectInternal = true;
-                const targetUser = urlParams.get('user') || 'admin';
-                const authPass = (targetUser.toLowerCase() === 'admin') ? 'admin123' : 'password123';
-                if (typeof performPortalLogin === 'function') {
-                    performPortalLogin(targetUser, authPass);
-                }
-            }
-        } catch(e) {
-            console.warn('URL parameter parse warning:', e);
-        }
-
-        // Only open internal system directly if explicitly requested by URL query parameter (?view=banganga_internal)
-        if (isDirectInternal) {
-            getCurrentUserSafe();
-            showInternalSystem();
-        } else {
-            // Default: Always show Front Landing Portal (7 Provinces Map, 77 Districts, 753 Palikas)
-            showLandingPortal();
-        }
+        // The internal system is opened only after the server validates a JWT.
+        showLandingPortal();
+        restoreServerSession();
     }
 
     function showLandingPortal() {
@@ -209,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (internal) internal.classList.add('d-none');
 
         // Check if a user is currently remembered
-        const user = ePalikaDB.getCurrentUser();
+        const user = isApiAuthenticated ? currentUser : null;
         const alertBox = document.getElementById('portal-session-alert');
         const alertUser = document.getElementById('portal-logged-user-name');
         if (user && alertBox && alertUser) {
@@ -223,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.scrollTo(0, 0);
     }
 
-        function syncDynamicPalikaIdentity() {
+    function syncDynamicPalikaIdentity() {
         const selPalika = localStorage.getItem('selected_palika_name');
         const selDist = localStorage.getItem('selected_district_name');
         const selProv = localStorage.getItem('selected_province_name');
@@ -237,6 +228,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     function showInternalSystem() {
+        if (!isApiAuthenticated || !currentUser) {
+            showLandingPortal();
+            return;
+        }
         syncDynamicPalikaIdentity();
         currentUser = getCurrentUserSafe();
         sessionStorage.setItem('active_session', 'true');
@@ -317,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btnPreviewNow) {
                 btnPreviewNow.addEventListener("click", function(e) {
                     e.preventDefault();
-                    performPortalLogin("ADMIN001", "password123", mod.id);
+                    openLoginModal();
                 });
             }
         }
@@ -407,49 +402,49 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        // ==============================================================
-        // Robust Universal Portal Login Function (1-Click & Form Action)
-        // ==============================================================
-        performPortalLogin = function(code, pass, targetTab) {
+        // Secure server-backed login. No demo credentials or local fallback.
+        performPortalLogin = async function(code, pass, targetTab) {
             const inputCodeEl = document.getElementById('portal-input-code');
             const inputPassEl = document.getElementById('portal-input-pass');
+            const userCode = String(code ?? (inputCodeEl ? inputCodeEl.value : '')).trim();
+            const password = String(pass ?? (inputPassEl ? inputPassEl.value : ''));
 
-            let userCode = (code || (inputCodeEl ? inputCodeEl.value : 'admin') || 'admin').trim();
-            let password = (pass || (inputPassEl ? inputPassEl.value : 'password123') || 'password123').trim();
-
+            if (!userCode || !password) {
+                showToast('Username र Password दुवै प्रविष्ट गर्नुहोस्।', 'error');
+                return false;
+            }
             if (inputCodeEl) inputCodeEl.value = userCode;
-            if (inputPassEl) inputPassEl.value = password;
+            if (inputPassEl) inputPassEl.value = '';
 
-            let authed = ePalikaDB.authenticate(userCode, password);
-            if (!authed) {
-                // If custom password fails or user isn't found, find by user code or fallback
-                const users = ePalikaDB.getUsers();
-                authed = users.find(u => u.user_code && u.user_code.toUpperCase() === userCode.toUpperCase());
-                if (!authed) {
-                    authed = users[0]; // fallback to Super Admin
+            try {
+                const result = await ePalikaDB.loginToServer(userCode, password);
+                if (!result || !result.success || !result.user || !result.token) {
+                    showToast((result && result.message) || 'लगईन असफल भयो।', 'error');
+                    return false;
                 }
-                ePalikaDB.setCurrentUser(authed);
+                currentUser = mapApiUser(result.user);
+                isApiAuthenticated = true;
+                if (targetTab) activeTab = targetTab;
+                showInternalSystem();
+                showToast(`स्वागत छ! ${currentUser.name} को रूपमा प्रवेश हुनुभयो।`, 'success');
+                return true;
+            } catch (error) {
+                console.error('Server login failed:', error);
+                showToast('सर्भरसँग सम्पर्क हुन सकेन। कृपया पुनः प्रयास गर्नुहोस्।', 'error');
+                return false;
             }
-
-            currentUser = authed;
-            sessionStorage.setItem('active_session', 'true');
-            if (targetTab) {
-                activeTab = targetTab;
-            }
-            showInternalSystem();
-            showToast(`स्वागत छ! ${authed.name} (${authed.role}) को रूपमा बाणगंगा नगरपालिका कार्यकक्षमा प्रवेश हुनुभयो।`, 'success');
-        }
+        };
 
         window.performPortalLogin = performPortalLogin;
         window.performDirectLogin = performPortalLogin;
-        window.submitPortalLogin = function() { performPortalLogin(); };
+        window.submitPortalLogin = function() { return performPortalLogin(); };
 
         // Top Hero Admin Direct Button
         const btnHeroAdmin = document.getElementById('btn-hero-admin-direct');
         if (btnHeroAdmin) {
             btnHeroAdmin.addEventListener('click', (e) => {
                 e.preventDefault();
-                performPortalLogin('ADMIN001', 'password123');
+                openLoginModal();
             });
         }
 
@@ -458,19 +453,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnPortalAdmin) {
             btnPortalAdmin.addEventListener('click', (e) => {
                 e.preventDefault();
-                performPortalLogin('ADMIN001', 'password123');
+                openLoginModal();
             });
         }
 
-        // 5. Quick 1-Click User Login buttons in Portal (IMMEDIATE LOGIN)
-        document.querySelectorAll('.btn-quick-portal-user').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const code = this.getAttribute('data-code') || 'ADMIN001';
-                const pass = this.getAttribute('data-pass') || 'password123';
-                performPortalLogin(code, pass);
-            });
-        });
+        // Quick-login demo buttons intentionally have no authentication action.
 
         // 6. Password Toggle Eye in Portal Login
         const btnTogglePass = document.getElementById('btn-toggle-portal-pass');
@@ -506,11 +493,13 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // ==============================================================
-        // New Open Portal Login -> Navigates to dashboard.html
-        // Anyone can login without password restrictions!
-        // ==============================================================
+        // Municipality selection navigates onward only after server authentication.
         window.submitNewPortalLogin = function() {
+            if (!isApiAuthenticated || !currentUser) {
+                showToast('पहिले Admin Login गर्नुहोस्।', 'error');
+                openLoginModal();
+                return;
+            }
             const provSel = document.getElementById('portal-select-province');
             const palikaSel = document.getElementById('portal-select-palika');
 
@@ -541,9 +530,8 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('selected_province_id', provKey);
             localStorage.setItem('selected_province_name', provName);
             localStorage.setItem('selected_palika_name', palikaName);
-            sessionStorage.setItem('active_session', 'true');
 
-            // Navigate to new page
+            // Navigate only after server-authenticated session
             window.location.href = 'dashboard.html';
         };
 
@@ -555,24 +543,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Direct Banganga internal system view check via query parameter (?view=banganga_internal)
-        try {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('view') === 'banganga_internal') {
-                const targetUser = urlParams.get('user') || 'admin';
-                const authPass = (targetUser.toLowerCase() === 'admin') ? 'admin123' : 'password123';
-                performPortalLogin(targetUser, authPass);
-            }
-        } catch (err) {
-            console.warn('URL parameter parse warning:', err);
-        }
+        // URL parameters can no longer grant access to the internal system.
 
         // 8. Direct Enter Button (if already logged in)
         const btnEnterDirect = document.getElementById('btn-portal-enter-direct');
         if (btnEnterDirect) {
             btnEnterDirect.addEventListener('click', () => {
-                sessionStorage.setItem('active_session', 'true');
-                showInternalSystem();
+                if (!isApiAuthenticated) openLoginModal();
+                else showInternalSystem();
             });
         }
     }
@@ -616,6 +594,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function switchTab(tab) {
+        if (!isApiAuthenticated || !currentUser) {
+            openLoginModal();
+            return;
+        }
         activeTab = tab;
         currentUser = getCurrentUserSafe();
         const portal = document.getElementById('app-landing-portal');
@@ -643,9 +625,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnLogout) {
             btnLogout.addEventListener('click', () => {
                 if (confirm('के तपाईं बाणगंगा नगरपालिका कार्यकक्षबाट लगआउट गर्न चाहनुहुन्छ?')) {
+                    ePalikaDB.clearServerSession();
                     ePalikaDB.logout();
                     sessionStorage.removeItem('active_session');
                     currentUser = null;
+                    isApiAuthenticated = false;
                     showLandingPortal();
                     showToast('सफलतापूर्वक लगआउट भयो।', 'info');
                 }
@@ -665,104 +649,74 @@ document.addEventListener('DOMContentLoaded', function() {
     // LOGIN & ACCOUNT SWITCHING MODAL
     // =========================================================================
     function openLoginModal() {
-        const users = ePalikaDB.getUsers();
         const activeUser = getCurrentUserSafe();
-
         loginModalMount.innerHTML = `
             <div class="modal fade show d-block" style="background: rgba(0,0,0,0.6);" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content border-0 shadow-lg">
                         <div class="modal-header bg-navy text-white" style="background: #0f3460;">
                             <h5 class="modal-title font-devanagari text-white">
-                                <i class="fa-solid fa-lock me-2"></i> प्रयोगकर्ता लगईन तथा खाता छनोट
+                                <i class="fa-solid fa-lock me-2"></i> सुरक्षित Admin Login
                             </h5>
                             <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('login-modal-mount').innerHTML='';"></button>
                         </div>
                         <div class="modal-body p-4 bg-light">
-                            <!-- Quick Switch Buttons -->
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold text-muted mb-2">⚡ १-क्लिक द्रुत लगईन (Quick Switch):</label>
-                                <div class="d-flex flex-wrap gap-1">
-                                    ${users.map(u => `
-                                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 btn-quick-login" data-code="${u.user_code}" data-pass="${u.password || 'password123'}">
-                                            <strong>${u.user_code}</strong> (${u.role})
-                                        </button>
-                                    `).join('')}
-                                </div>
-                            </div>
-
-                            <hr class="my-3">
-
-                            <!-- Standard Username & Password Form -->
-                            <form id="login-form">
+                            <form id="login-form" autocomplete="on">
                                 <div class="mb-3">
-                                    <label class="form-label fw-bold small text-dark">प्रयोगकर्ता संकेत (Username / User ID):</label>
+                                    <label class="form-label fw-bold small text-dark">प्रयोगकर्ता संकेत (Username):</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-white"><i class="fa-solid fa-user text-muted"></i></span>
-                                        <input type="text" id="login-user-code" class="form-control" placeholder="उदा: ADMIN001, CAO001..." value="${activeUser ? activeUser.user_code : 'ADMIN001'}" required>
+                                        <input type="text" id="login-user-code" class="form-control" placeholder="Admin Username" value="${activeUser ? activeUser.user_code : ''}" autocomplete="username" required>
                                     </div>
                                 </div>
                                 <div class="mb-4">
                                     <label class="form-label fw-bold small text-dark">पासवर्ड (Password):</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-white"><i class="fa-solid fa-key text-muted"></i></span>
-                                        <input type="password" id="login-password" class="form-control" placeholder="पासवर्ड प्रविष्ट गर्नुहोस्..." value="password123" required>
-                                        <button class="btn btn-outline-secondary" type="button" id="btn-toggle-login-pass">
-                                            <i class="fa-solid fa-eye"></i>
-                                        </button>
+                                        <input type="password" id="login-password" class="form-control" placeholder="आफ्नो Password प्रविष्ट गर्नुहोस्" autocomplete="current-password" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="btn-toggle-login-pass"><i class="fa-solid fa-eye"></i></button>
                                     </div>
-                                    <div class="small text-muted mt-1">पूर्वनिर्धारित पासवर्ड: <code>password123</code></div>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold font-devanagari">
+                                <button type="submit" id="btn-secure-login-submit" class="btn btn-primary w-100 py-2 fw-bold font-devanagari">
                                     <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> प्रणालीमा लगईन गर्नुहोस्
                                 </button>
                             </form>
+                            <p class="small text-muted mt-3 mb-0">Login विवरण Cloudflare Worker API मार्फत प्रमाणित हुन्छ।</p>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
 
-        document.getElementById('btn-toggle-login-pass').addEventListener('click', function() {
+        const toggle = document.getElementById('btn-toggle-login-pass');
+        toggle.addEventListener('click', function() {
             const input = document.getElementById('login-password');
-            if (input.type === 'password') {
-                input.type = 'text';
-                this.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-            } else {
-                input.type = 'password';
-                this.innerHTML = '<i class="fa-solid fa-eye"></i>';
-            }
+            input.type = input.type === 'password' ? 'text' : 'password';
+            this.innerHTML = input.type === 'password' ? '<i class="fa-solid fa-eye"></i>' : '<i class="fa-solid fa-eye-slash"></i>';
         });
 
-        document.querySelectorAll('.btn-quick-login').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const code = this.getAttribute('data-code');
-                const pass = this.getAttribute('data-pass');
-                document.getElementById('login-user-code').value = code;
-                document.getElementById('login-password').value = pass;
-                document.getElementById('login-form').dispatchEvent(new Event('submit'));
-            });
-        });
-
-        document.getElementById('login-form').addEventListener('submit', function(e) {
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const code = document.getElementById('login-user-code').value.trim();
-            const pass = document.getElementById('login-password').value.trim();
-
-            const authed = ePalikaDB.authenticate(code, pass);
-            if (authed) {
-                currentUser = authed;
-                sessionStorage.setItem('active_session', 'true');
-                loginModalMount.innerHTML = '';
-                showToast(`स्वागत छ! ${authed.name} (${authed.role}) को रूपमा लगईन हुनुभयो।`, 'success');
-                showInternalSystem();
-            } else {
-                showToast('प्रयोगकर्ता संकेत वा पासवर्ड मिलेन।', 'error');
+            const passInput = document.getElementById('login-password');
+            const pass = passInput.value;
+            const submit = document.getElementById('btn-secure-login-submit');
+            submit.disabled = true;
+            submit.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> जाँच हुँदैछ...';
+            const ok = await performPortalLogin(code, pass);
+            passInput.value = '';
+            if (ok) loginModalMount.innerHTML = '';
+            else {
+                submit.disabled = false;
+                submit.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket me-1"></i> प्रणालीमा लगईन गर्नुहोस्';
             }
         });
     }
 
     function renderTab(tab) {
+        if (!isApiAuthenticated || !currentUser) {
+            showLandingPortal();
+            return;
+        }
         currentUser = getCurrentUserSafe();
         switch(tab) {
             case 'employees':
@@ -1953,7 +1907,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     </button>
 
                                                     <!-- SMS Re-dispatch -->
-                                                    <button class="btn btn-outline-success btn-sm btn-resend-pass" data-name="${u.name}" data-code="${u.user_code}" data-phone="${u.mobile_number}" data-pass="${u.password || 'password123'}" title="SMS मार्फत पठाउनुहोस्">
+                                                    <button class="btn btn-outline-success btn-sm btn-resend-pass" data-name="${u.name}" data-code="${u.user_code}" data-phone="${u.mobile_number}"  title="SMS मार्फत पठाउनुहोस्">
                                                         <i class="fa-solid fa-paper-plane"></i>
                                                     </button>
 
@@ -2203,7 +2157,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const name = this.getAttribute('data-name');
                 const code = this.getAttribute('data-code');
 
-                const newPass = prompt(`प्रयोगकर्ता '${name}' (${code}) को लागि नयाँ पासवर्ड प्रविष्ट गर्नुहोस्:`, 'password123');
+                const newPass = prompt(`प्रयोगकर्ता '${name}' (${code}) को लागि नयाँ पासवर्ड प्रविष्ट गर्नुहोस्:`);
                 if (newPass && newPass.trim()) {
                     ePalikaDB.updateUserPassword(uid, newPass.trim());
                     showToast(`प्रयोगकर्ता '${name}' को नयाँ पासवर्ड सेट भयो!`, 'success');
@@ -3450,9 +3404,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.openExcelImportModal = openExcelImportModal;
     window.downloadSampleExcelTemplate = downloadSampleExcelTemplate;
     window.getCurrentUser = getCurrentUserSafe;
-    window.setCurrentUser = function(u) {
-        currentUser = u;
-        try { ePalikaDB.setCurrentUser(u); } catch(e){}
+    window.setCurrentUser = function() {
+        console.warn('Client-side user assignment is disabled; authenticate through the server API.');
     };
     window.showInternalSystem = showInternalSystem;
     window.showLandingPortal = showLandingPortal;
