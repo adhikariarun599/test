@@ -284,101 +284,169 @@
     <!-- Bootstrap JS & App Logic -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        window.submitDashUserLogin = function() {
-            var codeInp = document.getElementById('dash-login-code');
-            var passInp = document.getElementById('dash-login-pass');
-            var code = (codeInp ? codeInp.value : 'admin').trim();
-            var pass = (passInp ? passInp.value : 'admin123').trim();
+        (function () {
+            'use strict';
 
-            if (!code) {
-                alert('कृपया प्रयोगकर्ता कोड (User ID) प्रविष्टि गर्नुहोस्।');
-                return;
+            var API_BASE = 'https://epalika-api.info-arunadhikari2053.workers.dev';
+            var TOKEN_KEY = 'epalika_jwt_token';
+
+            function getToken() {
+                try { return sessionStorage.getItem(TOKEN_KEY); }
+                catch (error) { return null; }
             }
 
-            var alertEl = document.getElementById('dash-login-alert');
-            if (alertEl) {
-                alertEl.className = 'mt-3 font-devanagari alert alert-info py-2 px-3 d-flex align-items-center gap-2';
-                alertEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> प्रमाणीकरण हुँदैछ (' + code + ')...';
+            function clearSession() {
+                try {
+                    sessionStorage.removeItem(TOKEN_KEY);
+                    sessionStorage.removeItem('active_session');
+                    sessionStorage.removeItem('auth_user_code');
+                    localStorage.removeItem('currentUserCode');
+                } catch (error) {
+                    console.warn('Session cleanup failed:', error);
+                }
+            }
+
+            function showLoginMessage(message, type) {
+                var alertEl = document.getElementById('dash-login-alert');
+                if (!alertEl) return;
+                alertEl.className = 'mt-3 small font-devanagari alert alert-' +
+                    (type || 'danger') + ' py-2 px-3 d-flex align-items-center gap-2';
+                alertEl.textContent = message;
                 alertEl.classList.remove('d-none');
             }
 
-            try {
-                sessionStorage.setItem('active_session', 'true');
-                sessionStorage.setItem('auth_user_code', code);
-                sessionStorage.setItem('auth_password', pass);
-                localStorage.setItem('currentUserCode', code);
-            } catch(e) {
-                console.warn(e);
+            function setBusy(isBusy) {
+                var button = document.getElementById('btn-dash-login-submit');
+                if (!button) return;
+                button.disabled = isBusy;
+                button.innerHTML = isBusy
+                    ? '<i class="fa-solid fa-spinner fa-spin me-1"></i> प्रमाणीकरण हुँदैछ...'
+                    : '<i class="fa-solid fa-arrow-right-to-bracket me-1"></i> लगईन (Login)';
             }
 
-            var codeUpper = code.toUpperCase();
-            var roleLabel = 'प्रशासकीय प्यानल (Super Admin)';
-            if (codeUpper === 'CAO' || codeUpper.startsWith('CAO')) {
-                roleLabel = 'प्रमुख प्रशासकीय अधिकृत (CAO)';
-            } else if (codeUpper.startsWith('WARD')) {
-                roleLabel = 'वडा कार्यालय (Ward User)';
-            } else if (codeUpper.startsWith('EMP')) {
-                roleLabel = 'कर्मचारी (Employee)';
+            function goToInternal(username) {
+                window.location.href = 'index.html?view=banganga_internal&user=' +
+                    encodeURIComponent(username || '');
             }
 
-            setTimeout(function() {
-                if (alertEl) {
-                    alertEl.className = 'mt-3 font-devanagari alert alert-success py-2 px-3 d-flex align-items-center gap-2';
-                    alertEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> सफल लगईन! ' + roleLabel + ' कार्यकक्ष खुल्दैछ...';
+            async function verifySession() {
+                var token = getToken();
+                if (!token) return null;
+                try {
+                    var response = await fetch(API_BASE + '/api/auth/me', {
+                        method: 'GET',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    var data = await response.json().catch(function () { return {}; });
+                    if (!response.ok || !data.success || !data.user) {
+                        clearSession();
+                        return null;
+                    }
+                    var user = data.user;
+                    var label = document.getElementById('dash-user-label');
+                    if (label) label.textContent = user.fullName || user.username || 'प्रमाणित प्रयोगकर्ता';
+                    return user;
+                } catch (error) {
+                    console.warn('Server session verification failed:', error);
+                    return null;
                 }
-                setTimeout(function() {
-                    window.location.href = 'index.html?view=banganga_internal&user=' + encodeURIComponent(code);
-                }, 350);
-            }, 250);
-        };
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Read selected Palika, District and Province from localStorage
-            var palikaName = localStorage.getItem('selected_palika_name') || 'बाणगंगा नगरपालिका, कपिलवस्तु';
-            var districtName = localStorage.getItem('selected_district_name') || '';
-
-            // Dynamic extraction: if palikaName has comma (e.g. 'शीतगंगा नगरपालिका, अर्घाखाँची'), extract exact district
-            if (palikaName && palikaName.indexOf(',') !== -1) {
-                var dPart = palikaName.split(',')[1].trim();
-                if (dPart) districtName = dPart;
-            }
-            if (!districtName) districtName = 'कपिलवस्तु';
-
-            var provinceName = localStorage.getItem('selected_province_name') || 'लुम्बिनी प्रदेश';
-            if (provinceName.indexOf('नेपाल') === -1) {
-                provinceName += ' नेपाल';
             }
 
-            var elPalika = document.getElementById('dash-palika-name');
-            var elHeroPalika = document.getElementById('dash-hero-palika');
-            var elProvince = document.getElementById('dash-province-name');
-            var elInternalPalika = document.getElementById('dash-internal-palika-name');
+            window.submitDashUserLogin = async function () {
+                var codeInp = document.getElementById('dash-login-code');
+                var passInp = document.getElementById('dash-login-pass');
+                var username = codeInp ? codeInp.value.trim() : '';
+                var password = passInp ? passInp.value : '';
+                if (!username || !password) {
+                    showLoginMessage('कृपया Username र Password दुवै प्रविष्ट गर्नुहोस्।', 'warning');
+                    return;
+                }
 
-            if (elPalika) elPalika.textContent = palikaName;
-            if (elHeroPalika) elHeroPalika.textContent = palikaName;
-            if (elProvince) elProvince.textContent = 'जिल्ला: ' + districtName + ' • ' + provinceName;
-            if (elInternalPalika) elInternalPalika.textContent = palikaName;
+                setBusy(true);
+                var alertEl = document.getElementById('dash-login-alert');
+                if (alertEl) {
+                    alertEl.className = 'mt-3 small font-devanagari alert alert-info py-2 px-3';
+                    alertEl.textContent = 'सर्भरबाट प्रमाणीकरण हुँदैछ...';
+                    alertEl.classList.remove('d-none');
+                }
 
-            // Page title update
-            document.title = palikaName + " | स्थानीय तह कार्य सरलीकरण प्रणाली";
+                try {
+                    var response = await fetch(API_BASE + '/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username, password: password })
+                    });
+                    var data = await response.json().catch(function () { return {}; });
+                    if (!response.ok || !data.success || !data.token || !data.user) {
+                        showLoginMessage(data.message || 'Username वा Password मिलेन। पुनः प्रयास गर्नुहोस्।', 'danger');
+                        return;
+                    }
+                    try {
+                        sessionStorage.setItem(TOKEN_KEY, data.token);
+                        sessionStorage.setItem('auth_user_code', data.user.username || username);
+                    } catch (storageError) {
+                        showLoginMessage('सुरक्षित Session राख्न सकिएन। Browser settings जाँच गर्नुहोस्।', 'danger');
+                        return;
+                    }
+                    showLoginMessage('प्रमाणीकरण सफल भयो। कार्यकक्ष खोलिँदैछ...', 'success');
+                    goToInternal(data.user.username || username);
+                } catch (error) {
+                    console.error('Login request failed:', error);
+                    showLoginMessage('सर्भरसँग सम्पर्क हुन सकेन। इन्टरनेट वा API सेवा जाँच गर्नुहोस्।', 'danger');
+                } finally {
+                    setBusy(false);
+                }
+            };
 
-            // Auto-focus User ID when login modal opens
-            var loginModal = document.getElementById('dash-login-modal');
-            if (loginModal) {
-                loginModal.addEventListener('shown.bs.modal', function () {
-                    var inp = document.getElementById('dash-login-code');
-                    if (inp) inp.focus();
+            document.addEventListener('DOMContentLoaded', async function () {
+                var palikaName = localStorage.getItem('selected_palika_name') || 'बाणगंगा नगरपालिका, कपिलवस्तु';
+                var districtName = localStorage.getItem('selected_district_name') || '';
+                if (palikaName && palikaName.indexOf(',') !== -1) {
+                    var dPart = palikaName.split(',')[1].trim();
+                    if (dPart) districtName = dPart;
+                }
+                if (!districtName) districtName = 'कपिलवस्तु';
+                var provinceName = localStorage.getItem('selected_province_name') || 'लुम्बिनी प्रदेश';
+                if (provinceName.indexOf('नेपाल') === -1) provinceName += ' नेपाल';
+
+                var elPalika = document.getElementById('dash-palika-name');
+                var elHeroPalika = document.getElementById('dash-hero-palika');
+                var elProvince = document.getElementById('dash-province-name');
+                var elInternalPalika = document.getElementById('dash-internal-palika-name');
+                if (elPalika) elPalika.textContent = palikaName;
+                if (elHeroPalika) elHeroPalika.textContent = palikaName;
+                if (elProvince) elProvince.textContent = 'जिल्ला: ' + districtName + ' • ' + provinceName;
+                if (elInternalPalika) elInternalPalika.textContent = palikaName;
+                document.title = palikaName + ' | स्थानीय तह कार्य सरलीकरण प्रणाली';
+
+                var loginModal = document.getElementById('dash-login-modal');
+                if (loginModal) {
+                    loginModal.addEventListener('shown.bs.modal', function () {
+                        var input = document.getElementById('dash-login-code');
+                        if (input) input.focus();
+                    });
+                }
+
+                document.querySelectorAll('a[href*="view=banganga_internal"]').forEach(function (link) {
+                    link.addEventListener('click', async function (event) {
+                        event.preventDefault();
+                        var user = await verifySession();
+                        if (user) {
+                            goToInternal(user.username || '');
+                            return;
+                        }
+                        var modalElement = document.getElementById('dash-login-modal');
+                        if (modalElement && window.bootstrap) {
+                            window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+                        }
+                    });
                 });
-            }
 
-            // Logout Handler
-            var btnLogout = document.getElementById('btn-dash-logout');
-            if (btnLogout) {
-                btnLogout.addEventListener('click', function(e) {
-                    sessionStorage.removeItem('active_session');
-                });
-            }
-        });
+                var btnLogout = document.getElementById('btn-dash-logout');
+                if (btnLogout) btnLogout.addEventListener('click', clearSession);
+                await verifySession();
+            });
+        })();
     </script>
     <!-- Compact Login Modal (Opens only when clicking 'Login') -->
     <div class="modal fade font-devanagari" id="dash-login-modal" tabindex="-1" aria-labelledby="dashLoginModalLabel" aria-hidden="true">
@@ -400,13 +468,13 @@
                             <label for="dash-login-code" class="form-label fw-bold small text-dark mb-1">
                                 <i class="fa-solid fa-id-badge text-primary me-1"></i> प्रयोगकर्ता कोड (User ID):
                             </label>
-                            <input type="text" class="form-control" id="dash-login-code" value="admin" placeholder="admin" style="height: 42px; font-weight: 600;" required autofocus>
+                            <input type="text" class="form-control" id="dash-login-code" placeholder="Username" autocomplete="username" style="height: 42px; font-weight: 600;" required autofocus>
                         </div>
                         <div class="mb-3">
                             <label for="dash-login-pass" class="form-label fw-bold small text-dark mb-1">
                                 <i class="fa-solid fa-key text-primary me-1"></i> पासवर्ड (Password):
                             </label>
-                            <input type="password" class="form-control" id="dash-login-pass" value="admin123" placeholder="admin123" style="height: 42px;" required>
+                            <input type="password" class="form-control" id="dash-login-pass" placeholder="Password" autocomplete="current-password" style="height: 42px;" required>
                         </div>
                         <div class="d-grid pt-1">
                             <button type="submit" class="btn btn-primary fw-bold py-2 shadow-sm" id="btn-dash-login-submit">
