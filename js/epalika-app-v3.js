@@ -18,8 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function restoreServerSession() {
+        let result = null;
         try {
-            const result = await ePalikaDB.verifyServerSession();
+            result = await ePalikaDB.verifyServerSession();
             if (result && result.success && result.user) {
                 currentUser = mapApiUser(result.user);
                 isApiAuthenticated = true;
@@ -27,9 +28,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return true;
             }
         } catch (error) {
-            console.warn('Session verification failed:', error);
+            // Keep the token during unexpected/transient failures; the API helper clears it only on 401/403.
+            console.warn('Session verification could not be completed.');
         }
-        ePalikaDB.clearServerSession();
+
+        if (result && result.sessionInvalid) {
+            ePalikaDB.clearServerSession();
+        }
         currentUser = null;
         isApiAuthenticated = false;
         showLandingPortal();
@@ -615,6 +620,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.switchTab = switchTab;
 
+    function completePortalLogout() {
+        ePalikaDB.logout();
+        sessionStorage.removeItem('active_session');
+        currentUser = null;
+        isApiAuthenticated = false;
+        showLandingPortal();
+        showToast('सफलतापूर्वक लगआउट भयो।', 'info');
+    }
+
+    function requestPortalLogout() {
+        if (confirm('के तपाईं बाणगंगा नगरपालिका कार्यकक्षबाट लगआउट गर्न चाहनुहुन्छ?')) {
+            completePortalLogout();
+        }
+    }
+
+    window.performPortalLogout = requestPortalLogout;
+
     function setupLoginBtn() {
         const btnLogin = document.getElementById('btn-open-login-modal');
         if (btnLogin) {
@@ -623,17 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const btnLogout = document.getElementById('btn-header-logout');
         if (btnLogout) {
-            btnLogout.addEventListener('click', () => {
-                if (confirm('के तपाईं बाणगंगा नगरपालिका कार्यकक्षबाट लगआउट गर्न चाहनुहुन्छ?')) {
-                    ePalikaDB.clearServerSession();
-                    ePalikaDB.logout();
-                    sessionStorage.removeItem('active_session');
-                    currentUser = null;
-                    isApiAuthenticated = false;
-                    showLandingPortal();
-                    showToast('सफलतापूर्वक लगआउट भयो।', 'info');
-                }
-            });
+            btnLogout.addEventListener('click', requestPortalLogout);
         }
 
         const btnHomePortal = document.getElementById('btn-header-home-portal');
@@ -927,7 +939,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </td>
                             <td class="form-field-label">ई-मेल:</td>
                             <td>
-                                <input type="email" id="f-email" class="form-field-input font-monospace" value="${emp.email || ''}" placeholder="example@bangangamun.gov.np" autocomplete="off" lang="en" dir="ltr" inputmode="email">
+                                <input type="text" id="f-email" class="form-field-input font-monospace" value="${emp.email || ''}" placeholder="example@bangangamun.gov.np" autocomplete="email" lang="en" dir="ltr" inputmode="email" pattern="[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" title="कृपया सही Email Address राख्नुहोस्।">
                             </td>
                             <td class="form-field-label">संचयकोष नं:</td>
                             <td>
@@ -1274,13 +1286,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function enforceEnglishEmail(id) {
         const inp = document.getElementById(id);
-        if (!inp || inp.__englishEmailEnforced) return;
-                // Use text input for custom email keyboard handling
+        if (!inp) return;
+
+        // Selection APIs are not supported by input[type="email"] in all browsers.
+        // Keep this field as text so the custom keyboard can safely use selectionStart
+        // and setSelectionRange, while inputMode and pattern preserve email guidance.
         inp.type = 'text';
         inp.inputMode = 'email';
         inp.autocomplete = 'email';
         inp.pattern = '[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}';
         inp.title = 'कृपया सही Email Address राख्नुहोस्।';
+
+        if (inp.__englishEmailEnforced) return;
         inp.__englishEmailEnforced = true;
 
         // Physical key interception: guarantees English email regardless of OS keyboard layout!
@@ -1773,7 +1790,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="settings-btn-box" onclick="alert('पासवर्ड वितरण सूची दायाँपट्टि उपलब्ध छ।');">
                                 पासवर्ड वितरण
                             </div>
-                            <div class="settings-btn-box" onclick="if(confirm('लगआउट गर्न चाहनुहुन्छ?')) ePalikaDB.logout(); window.openLoginModal();">
+                            <div class="settings-btn-box" onclick="window.performPortalLogout();">
                                 बाहिर
                             </div>
                         </div>
@@ -2108,37 +2125,13 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Save User & Distribute Password Handler
-        document.getElementById('btn-trigger-password-sms').addEventListener('click', () => {
-            const name = document.getElementById('s-name').value.trim();
-            const code = document.getElementById('s-user-code').value.trim().toUpperCase();
-            const role = isSuperAdmin ? document.getElementById('s-role').value : 'Employee';
-            const cat = document.getElementById('s-category').value;
-            const mobile = document.getElementById('s-mobile').value.trim();
-            let pass = document.getElementById('s-password').value.trim();
-
-            if (!name || !code || !mobile) {
-                showToast('कृपया नाम, प्रयोगकर्ता संकेत (Username) र मोबाईल नम्बर अनिवार्य भर्नुहोस्।', 'error');
-                return;
-            }
-
-            if (!pass) {
-                pass = 'Pass@' + Math.floor(1000 + Math.random() * 9000);
-            }
-
-            ePalikaDB.saveUser({
-                name: name,
-                user_code: code,
-                category: cat,
-                role: role,
-                mobile_number: mobile,
-                password: pass,
-                is_internal: document.getElementById('s-internal').value === '1'
+        // User creation is intentionally unavailable until a server-side admin-users API exists.
+        const btnCreateUser = document.getElementById('btn-trigger-password-sms');
+        if (btnCreateUser) {
+            btnCreateUser.addEventListener('click', () => {
+                showToast('नयाँ प्रयोगकर्ता सिर्जना गर्ने सुविधा सुरक्षित Server API जडान भएपछि मात्र खुल्नेछ। अहिले कुनै खाता वा Password सुरक्षित गरिएको छैन।', 'error');
             });
-
-            showPasswordSMSModal(name, code, mobile, pass);
-            renderSettingsTab();
-        });
+        }
 
         // Super Admin Exclusive Role Changer Modal Trigger
         document.querySelectorAll('.btn-assign-role').forEach(btn => {
@@ -2156,30 +2149,17 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        // Change Password Button
+        // Password changes remain disabled until the authenticated Worker endpoint is implemented.
         document.querySelectorAll('.btn-change-user-pass').forEach(btn => {
             btn.addEventListener('click', function() {
-                const uid = Number(this.getAttribute('data-id'));
-                const name = this.getAttribute('data-name');
-                const code = this.getAttribute('data-code');
-
-                const newPass = prompt(`प्रयोगकर्ता '${name}' (${code}) को लागि नयाँ पासवर्ड प्रविष्ट गर्नुहोस्:`);
-                if (newPass && newPass.trim()) {
-                    ePalikaDB.updateUserPassword(uid, newPass.trim());
-                    showToast(`प्रयोगकर्ता '${name}' को नयाँ पासवर्ड सेट भयो!`, 'success');
-                    renderSettingsTab();
-                }
+                showToast('Password परिवर्तन Server API जडान भएपछि मात्र उपलब्ध हुनेछ। Browser मा Password सुरक्षित गरिँदैन।', 'error');
             });
         });
 
-        // Resend SMS Button
+        // SMS delivery is disabled until a real, server-side SMS integration exists.
         document.querySelectorAll('.btn-resend-pass').forEach(btn => {
             btn.addEventListener('click', function() {
-                const name = this.getAttribute('data-name');
-                const code = this.getAttribute('data-code');
-                const phone = this.getAttribute('data-phone');
-                const pass = this.getAttribute('data-pass');
-                showPasswordSMSModal(name, code, phone, pass);
+                showToast('SMS सेवा जडान गरिएको छैन। कुनै SMS पठाइएको छैन र Password देखाइएको छैन।', 'error');
             });
         });
 
@@ -2276,40 +2256,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function showPasswordSMSModal(name, code, phone, pass) {
-        const mount = document.getElementById('master-quick-modal-mount');
-        mount.innerHTML = `
-            <div class="modal fade show d-block" style="background:rgba(0,0,0,0.6);" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow-lg">
-                        <div class="modal-header bg-success text-white">
-                            <h5 class="modal-title font-devanagari text-white"><i class="fa-solid fa-paper-plane me-2"></i> पासवर्ड वितरण सम्पन्न (SMS Delivered)</h5>
-                            <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('master-quick-modal-mount').innerHTML='';"></button>
-                        </div>
-                        <div class="modal-body p-4 text-center">
-                            <h5 class="fw-bold mb-1">${name}</h5>
-                            <div class="text-muted small mb-3">मोबाईल नं.: <strong>${phone}</strong></div>
-                            
-                            <div class="p-3 bg-light border rounded text-start mb-3">
-                                <div class="mb-2"><strong>प्रयोगकर्ता संकेत (Username):</strong> <code class="fs-6 text-primary">${code}</code></div>
-                                <div><strong>पासवर्ड (Password):</strong> <code class="fs-6 text-danger">${pass}</code></div>
-                            </div>
-
-                            <p class="small text-muted mb-3">
-                                📱 सम्बन्धित मोबाईल नम्बरमा User ID र Password को SMS पठाइएको छ।
-                            </p>
-
-                            <button class="btn btn-outline-primary btn-sm w-100" onclick="document.getElementById('master-quick-modal-mount').innerHTML=''; window.openLoginModal();">
-                                <i class="fa-solid fa-right-to-bracket me-1"></i> यो खाताबाट तुरुन्त लगईन गर्नुहोस्
-                            </button>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('master-quick-modal-mount').innerHTML='';">बन्द गर्नुहोस्</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+    function showPasswordSMSModal() {
+        showToast('SMS सेवा जडान गरिएको छैन। Password browser मा वितरण गरिँदैन।', 'error');
     }
 
     // =========================================================================
@@ -3401,7 +3349,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function showToast(msg, type = 'info') {
         const div = document.createElement('div');
         div.className = 'toast-notice';
-        div.innerHTML = `<strong>${type==='error'?'त्रुटि':'सूचना'}:</strong> ${msg}`;
+        const label = document.createElement('strong');
+        label.textContent = type === 'error' ? 'त्रुटि:' : 'सूचना:';
+        div.appendChild(label);
+        div.appendChild(document.createTextNode(` ${String(msg ?? '')}`));
         toastMount.appendChild(div);
         setTimeout(() => div.remove(), 3500);
     }
