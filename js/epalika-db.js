@@ -326,3 +326,852 @@ const ePalikaDB = (function() {
                 investment_fund_no: 'INV-4410',
                 status: 'active'
             },
+                    ],
+        institutions: [
+            {
+                id: 1,
+                category: 'cooperative',
+                reg_number: 'COOP-014',
+                name_ne: 'मुक्तिनाथ बचत तथा ऋण सहकारी संस्था लि.',
+                ward_id: 4,
+                address: 'बाणगंगा-४, जीतपुर',
+                contact_person: 'रामप्रसाद घिमिरे',
+                contact_phone: '९८५७०८८१०१',
+                registration_date: '2016-04-10',
+                members_count: 1450,
+                capital_investment: 45000000.00,
+                status: 'active'
+            },
+            {
+                id: 2,
+                category: 'drinking_water',
+                reg_number: 'DW-003',
+                name_ne: 'बाणगंगा बृहत् खानेपानी तथा सरसफाइ उपभोक्ता समिति',
+                ward_id: 4,
+                address: 'बाणगंगा-४, जीतपुर',
+                contact_person: 'हरिहर खनाल',
+                contact_phone: '९८५७०८८१०३',
+                registration_date: '2012-02-18',
+                members_count: 5200,
+                capital_investment: 120000000.00,
+                status: 'active'
+            },
+            {
+                id: 3,
+                category: 'forest',
+                reg_number: 'CF-009',
+                name_ne: 'सिद्धबाबा सामुदायिक वन उपभोक्ता समूह',
+                ward_id: 1,
+                address: 'बाणगंगा-१, उत्तमनगर',
+                contact_person: 'धनबहादुर पुन',
+                contact_phone: '९८५७०८८१०५',
+                registration_date: '2005-06-11',
+                members_count: 640,
+                capital_investment: 8500000.00,
+                status: 'active'
+            },
+            {
+                id: 4,
+                category: 'organization',
+                reg_number: 'NGO-004',
+                name_ne: 'बाणगंगा युवा सरोकार मञ्च',
+                ward_id: 4,
+                address: 'बाणगंगा-४, जीतपुर',
+                contact_person: 'अशोक क्षेत्री',
+                contact_phone: '९८५७०८८१०७',
+                registration_date: '2019-01-12',
+                members_count: 120,
+                capital_investment: 1500000.00,
+                status: 'active'
+            }
+        ],
+        // Demo users retained only for legacy display; not used for login
+        users: [],
+        auditLogs: [
+            {
+                id: 1,
+                user_name: 'प्रणाली प्रशासक',
+                action: 'SYSTEM_BOOT',
+                module: 'system',
+                details: 'बाणगंगा नगरपालिका आन्तरिक प्रशासन प्रणाली सफलतापूर्वक सञ्चालन भयो।',
+                timestamp: new Date().toLocaleString('ne-NP')
+            }
+        ]
+    };
+
+    function parseSerialNumber(val) {
+        if (!val && val !== 0) return 999999;
+        const nepToEng = {
+            '०':'0','१':'1','२':'2','३':'3','४':'4',
+            '५':'5','६':'6','७':'7','८':'8','९':'9'
+        };
+        const clean = String(val)
+            .replace(/[०-९]/g, ch => nepToEng[ch] || ch)
+            .replace(/[^0-9]/g, '');
+        const num = parseInt(clean, 10);
+        return isNaN(num) ? 999999 : num;
+    }
+
+    function calculateBsAge(dob) {
+        if (!dob) return 0;
+        const nepToEng = {
+            '०':'0','१':'1','२':'2','३':'3','४':'4',
+            '५':'5','६':'6','७':'7','८':'8','९':'9'
+        };
+        const clean = String(dob).replace(/[०-९]/g, ch => nepToEng[ch] || ch);
+        const parts = clean.split(/[-/]/);
+        const yr = parseInt(parts[0], 10);
+        const currentBsYear = 2083;
+
+        if (yr >= 1990 && yr <= 2095) {
+            const age = currentBsYear - yr;
+            return age > 0 ? age : 0;
+        }
+        return 0;
+    }
+
+    function normalizeEmployeeData(data) {
+        if (!data) return data;
+
+        const nepToEng = {
+            '०':'0','१':'1','२':'2','३':'3','४':'4',
+            '५':'5','६':'6','७':'7','८':'8','९':'9'
+        };
+
+        if (!data.positionCodes || !Array.isArray(data.positionCodes) || data.positionCodes.length === 0) {
+            data.positionCodes = [
+                { id: 1, name_ne: 'POS-001' },
+                { id: 2, name_ne: 'POS-002' },
+                { id: 3, name_ne: 'POS-003' },
+                { id: 4, name_ne: 'POS-004' },
+                { id: 5, name_ne: 'POS-005' },
+                { id: 6, name_ne: 'POS-006' }
+            ];
+        }
+
+        if (data.employees && Array.isArray(data.employees)) {
+            const seenCodes = new Set();
+            const uniqueEmployees = [];
+
+            data.employees.forEach(emp => {
+                const code = (emp.employee_code || '').trim().toUpperCase();
+
+                if (code && seenCodes.has(code)) return;
+                if (code) seenCodes.add(code);
+
+                if (emp.mobile_number) {
+                    emp.mobile_number = String(emp.mobile_number)
+                        .replace(/[०-९]/g, ch => nepToEng[ch] || ch)
+                        .replace(/[^0-9]/g, '');
+                }
+
+                if (emp.family_contact_number) {
+                    emp.family_contact_number = String(emp.family_contact_number)
+                        .replace(/[०-९]/g, ch => nepToEng[ch] || ch)
+                        .replace(/[^0-9]/g, '');
+                }
+
+                if (emp.dob && emp.dob.startsWith('19')) {
+                    emp.dob = '2039-01-31';
+                }
+
+                const calcAge = calculateBsAge(emp.dob);
+                if (calcAge > 0) {
+                    emp.age = calcAge;
+                } else if (!emp.age || emp.age <= 0) {
+                    emp.age = 35;
+                }
+
+                if (!emp.position_code) {
+                    emp.position_code = 'POS-001';
+                }
+
+                if (emp.initial_appointment_date && emp.initial_appointment_date.startsWith('2008')) emp.initial_appointment_date = '2064-12-30';
+                if (emp.current_position_appointment_date && emp.current_position_appointment_date.startsWith('2021')) emp.current_position_appointment_date = '2078-03-01';
+                if (emp.current_position_joining_date && emp.current_position_joining_date.startsWith('2021')) emp.current_position_joining_date = '2078-03-06';
+                if (emp.current_office_joining_date && emp.current_office_joining_date.startsWith('2022')) emp.current_office_joining_date = '2078-09-26';
+                if (emp.transfer_release_date && emp.transfer_release_date.startsWith('2022')) emp.transfer_release_date = '2078-09-21';
+                if (emp.staff_quota === 'स्वीकृत' || !emp.staff_quota) emp.staff_quota = 'हो';
+
+                uniqueEmployees.push(emp);
+            });
+
+            data.employees = uniqueEmployees;
+        }
+
+        return data;
+    }
+
+    function getStore() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+
+        if (!raw) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+            return JSON.parse(JSON.stringify(initialData));
+        }
+
+        try {
+            return normalizeEmployeeData(JSON.parse(raw));
+        } catch (e) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+            return JSON.parse(JSON.stringify(initialData));
+        }
+    }
+
+    function saveStore(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    return {
+        getMunicipality: function() {
+            return getStore().municipality;
+        },
+
+        updateMunicipality: function(u) {
+            const store = getStore();
+            store.municipality = { ...store.municipality, ...u };
+            saveStore(store);
+            return store.municipality;
+        },
+                getEmployees: function(filters = {}) {
+            const store = getStore();
+
+            if (!store.employees || !Array.isArray(store.employees) || store.employees.length === 0) {
+                store.employees = JSON.parse(JSON.stringify(initialData.employees));
+                saveStore(store);
+            }
+
+            let list = [...store.employees];
+
+            if (filters.search) {
+                const s = filters.search.toLowerCase();
+                list = list.filter(e =>
+                    (e.full_name_ne && e.full_name_ne.toLowerCase().includes(s)) ||
+                    (e.employee_code && e.employee_code.toLowerCase().includes(s)) ||
+                    (e.mobile_number && e.mobile_number.includes(s))
+                );
+            }
+
+            if (filters.office_id && filters.office_id.length > 0) {
+                const d = filters.office_id.map(Number);
+                list = list.filter(e => d.includes(Number(e.office_id)));
+            }
+
+            if (filters.department_id && filters.department_id.length > 0) {
+                const d = filters.department_id.map(Number);
+                list = list.filter(e => d.includes(Number(e.department_id)));
+            }
+
+            if (filters.designation_id && filters.designation_id.length > 0) {
+                const d = filters.designation_id.map(Number);
+                list = list.filter(e => d.includes(Number(e.designation_id)));
+            }
+
+            if (filters.level_id && filters.level_id.length > 0) {
+                const d = filters.level_id.map(Number);
+                list = list.filter(e => d.includes(Number(e.level_id)));
+            }
+
+            if (filters.employment_type_id && filters.employment_type_id.length > 0) {
+                const d = filters.employment_type_id.map(Number);
+                list = list.filter(e => d.includes(Number(e.employment_type_id)));
+            }
+
+            if (filters.gender) {
+                list = list.filter(e => e.gender === filters.gender);
+            }
+
+            if (filters.age_range) {
+                list = list.filter(e => {
+                    const age = Number(e.age) || calculateBsAge(e.dob);
+                    if (filters.age_range === '20-30') return age >= 20 && age <= 30;
+                    if (filters.age_range === '30-40') return age >= 30 && age <= 40;
+                    if (filters.age_range === '40-50') return age >= 40 && age <= 50;
+                    if (filters.age_range === '50-57') return age >= 50 && age <= 57;
+                    if (filters.age_range === '57+') return age >= 57;
+                    return true;
+                });
+            }
+
+            list.sort((a, b) => {
+                const snA = parseSerialNumber(a.serial_number);
+                const snB = parseSerialNumber(b.serial_number);
+                if (snA !== snB) return snA - snB;
+                return a.id - b.id;
+            });
+
+            return list.map(emp => ({
+                ...emp,
+                age: Number(emp.age) > 0 ? Number(emp.age) : calculateBsAge(emp.dob),
+                designation_name: store.designations.find(d => d.id == emp.designation_id)?.name_ne || '-',
+                level_name: store.levels.find(l => l.id == emp.level_id)?.name_ne || '-',
+                department_name: store.departments.find(dp => dp.id == emp.department_id)?.name_ne || '-',
+                office_name: store.offices.find(o => o.id == emp.office_id)?.name_ne || '-',
+                employment_type_name: store.employmentTypes.find(et => et.id == emp.employment_type_id)?.name_ne || '-',
+                service_name: store.services.find(s => s.id == emp.service_id)?.name_ne || '-',
+                group_name: store.groups.find(g => g.id == emp.group_id)?.name_ne || '-',
+                qualification_name: store.qualifications.find(q => q.id == emp.qualification_id)?.name_ne || '-',
+                service_type_name: store.serviceTypes.find(st => st.id == emp.service_type_id)?.name_ne || '-'
+            }));
+        },
+
+        getEmployeeById: function(id) {
+            return this.getEmployees().find(e => e.id == id);
+        },
+
+        saveEmployee: function(data) {
+            const store = getStore();
+            const cleanCode = (data.employee_code || '').trim().toUpperCase();
+
+            const existingByCodeIdx = store.employees.findIndex(
+                e => (e.employee_code || '').trim().toUpperCase() === cleanCode
+            );
+
+            if (data.id) {
+                const idx = store.employees.findIndex(e => e.id == data.id);
+
+                if (idx !== -1) {
+                    if (existingByCodeIdx !== -1 && existingByCodeIdx !== idx) {
+                        return {
+                            success: false,
+                            duplicate: true,
+                            message: `त्रुटि: कर्मचारी कोड '${data.employee_code}' पहिले नै अर्को कर्मचारी (${store.employees[existingByCodeIdx].full_name_ne}) को लागि सुरक्षित छ।`
+                        };
+                    }
+
+                    store.employees[idx] = { ...store.employees[idx], ...data };
+                    this.addAuditLog('EMPLOYEE_UPDATE', 'employees', `कर्मचारी '${data.full_name_ne}' (${data.employee_code}) को विवरण अद्यावधिक गरियो।`);
+                    saveStore(store);
+                    return { success: true, updated: true, isDuplicatePrevented: false, id: data.id };
+                }
+            }
+
+            if (existingByCodeIdx !== -1) {
+                const targetId = store.employees[existingByCodeIdx].id;
+                store.employees[existingByCodeIdx] = {
+                    ...store.employees[existingByCodeIdx],
+                    ...data,
+                    id: targetId
+                };
+
+                this.addAuditLog('EMPLOYEE_AUTO_UPDATE', 'employees', `कर्मचारी कोड '${data.employee_code}' को रेकर्ड अद्यावधिक गरियो।`);
+                saveStore(store);
+                return { success: true, updated: true, isDuplicatePrevented: true, id: targetId };
+            }
+
+            const newId = store.employees.length > 0
+                ? Math.max(...store.employees.map(e => e.id)) + 1 : 1;
+
+            const newRecord = { ...data, id: newId, status: 'active' };
+            store.employees.push(newRecord);
+
+            this.addAuditLog('EMPLOYEE_CREATE', 'employees', `नयाँ कर्मचारी '${data.full_name_ne}' (${data.employee_code}) दर्ता गरियो।`);
+            saveStore(store);
+
+            return { success: true, updated: false, isDuplicatePrevented: false, id: newId };
+        },
+
+        deleteEmployee: function(id, reason = 'अन्य') {
+            const store = getStore();
+            const emp = store.employees.find(e => e.id == id);
+
+            if (!emp) return false;
+
+            store.employees = store.employees.filter(e => e.id != id);
+            this.addAuditLog('EMPLOYEE_DELETE', 'employees', `कर्मचारी '${emp.full_name_ne}' (${emp.employee_code}) को रेकर्ड मेटाइयो। कारण: ${reason}`);
+            saveStore(store);
+
+            return true;
+        },
+                importEmployees: function(records, options = { overwrite: true }) {
+            const store = getStore();
+            const nepToEng = {
+                '०':'0','१':'1','२':'2','३':'3','४':'4',
+                '५':'5','६':'6','७':'7','८':'8','९':'9'
+            };
+
+            function findOrCreateMaster(listKey, rawName) {
+                if (!rawName) return null;
+                const cleanName = String(rawName).trim();
+                if (!cleanName || cleanName === '-') return null;
+
+                if (!store[listKey]) store[listKey] = [];
+
+                const found = store[listKey].find(item =>
+                    (item.name_ne || '').trim().toLowerCase() === cleanName.toLowerCase()
+                );
+
+                if (found) return found.id;
+
+                const newId = store[listKey].length > 0
+                    ? Math.max(...store[listKey].map(x => x.id)) + 1 : 1;
+
+                store[listKey].push({ id: newId, name_ne: cleanName });
+                return newId;
+            }
+
+            let importedCount = 0;
+            let updatedCount = 0;
+            let skippedCount = 0;
+            const errors = [];
+
+            records.forEach((row, idx) => {
+                try {
+                    const getVal = (...keys) => {
+                        for (const k of keys) {
+                            if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+                                return String(row[k]).trim();
+                            }
+                        }
+                        return '';
+                    };
+
+                    const name = getVal('नाम', 'कर्मचारीको नाम', 'कर्मचारी नाम', 'पूरा नाम', 'name', 'full name', 'full_name', 'full_name_ne', 'employee name');
+                    if (!name) return;
+
+                    let code = getVal('कर्मचारी कोड', 'कर्मचारीको कोड', 'कोड', 'code', 'employee code', 'employee_code', 'emp_code', 'emp code').toUpperCase();
+
+                    if (!code) {
+                        const existingMax = store.employees.reduce((max, e) => {
+                            const match = (e.employee_code || '').match(/EMP-(\d+)/i);
+                            return match ? Math.max(max, parseInt(match[1], 10)) : max;
+                        }, 0);
+
+                        code = `EMP-${String(existingMax + importedCount + 1).padStart(3, '0')}`;
+                    }
+
+                    let mobile = getVal('मोबाईल नं', 'मोबाईल नं.', 'मोबाईल', 'मोबाइल', 'सम्पर्क नं', 'mobile', 'phone', 'mobile number', 'mobile_number');
+
+                    if (mobile) {
+                        mobile = mobile.replace(/[०-९]/g, ch => nepToEng[ch] || ch).replace(/[^0-9]/g, '');
+                    }
+
+                    let familyContact = getVal('परिवारको सम्पर्क नं', 'परिवार सम्पर्क', 'घरको सम्पर्क', 'family contact', 'family contact number', 'family_contact_number');
+
+                    if (familyContact) {
+                        familyContact = familyContact.replace(/[०-९]/g, ch => nepToEng[ch] || ch).replace(/[^0-9]/g, '');
+                    }
+
+                    const dob = getVal('जन्म मिति', 'जन्ममिति', 'dob', 'date of birth').replace(/[०-९]/g, ch => nepToEng[ch] || ch);
+                    let age = parseInt(getVal('उमेर', 'उमेर (वर्ष)', 'age').replace(/[०-९]/g, ch => nepToEng[ch] || ch), 10);
+
+                    if (isNaN(age) || age <= 0) age = calculateBsAge(dob);
+
+                    let posCode = getVal('पदको कोड', 'पद कोड', 'position code', 'pos code', 'pos_code', 'position_code').toUpperCase();
+                    if (!posCode) posCode = 'POS-001';
+                    findOrCreateMaster('positionCodes', posCode);
+
+                    const designation_id = findOrCreateMaster('designations', getVal('पद', 'पदको नाम', 'designation', 'post', 'designation_name'));
+                    const level_id = findOrCreateMaster('levels', getVal('तह', 'श्रेणी', 'तह/श्रेणी', 'level', 'rank', 'level_name'));
+                    const department_id = findOrCreateMaster('departments', getVal('शाखा', 'शाखा/वडा', 'विभाग', 'department', 'branch', 'section', 'department_name'));
+                    const office_id = findOrCreateMaster('offices', getVal('कार्यालय', 'कार्यालयको नाम', 'office', 'office_name'));
+                    const employment_type_id = findOrCreateMaster('employmentTypes', getVal('स्थायी/करार', 'रोजगार प्रकार', 'स्थायी करार', 'employment type', 'employment_type', 'type'));
+                    const service_type_id = findOrCreateMaster('serviceTypes', getVal('सेवाको किसिम', 'सेवा प्रकार', 'service type', 'service_type', 'service_type_name'));
+                    const service_id = findOrCreateMaster('services', getVal('सेवा', 'सेवाको नाम', 'service', 'service_name'));
+                    const group_id = findOrCreateMaster('groups', getVal('समूह', 'समुह', 'group', 'group_name'));
+                    const qualification_id = findOrCreateMaster('qualifications', getVal('शैक्षिक योग्यता', 'योग्यता', 'qualification', 'education', 'qualification_name'));
+
+                    let staffQuota = getVal('दरबन्दी', 'दरबन्दी स्वीकृत', 'quota', 'staff quota', 'staff_quota');
+                    if (!staffQuota || staffQuota === 'स्वीकृत' || staffQuota === 'हो') staffQuota = 'हो';
+                    else if (staffQuota === 'होइन' || staffQuota === 'अस्वीकृत') staffQuota = 'होइन';
+
+                    let dutyStatus = getVal('बहाल विदा वा अन्य', 'बहाल स्थिति', 'हाजिरी स्थिति', 'duty status', 'duty_status');
+                    if (!dutyStatus) dutyStatus = 'कार्यरत';
+
+                    let gender = getVal('लिङ्ग', 'लिंग', 'gender', 'sex');
+                    if (!gender) gender = 'पुरुष';
+
+                    const serial_number = getVal('क्र.सं.', 'क्र.सं', 'क्र सं', 'सि.नं.', 'सि.नं', 'sn', 's.n.', 's.n', 'serial number', 'serial_number') || String(importedCount + 1);
+
+                    const empRecord = {
+                        employee_code: code,
+                        serial_number,
+                        full_name_ne: name,
+                        gender,
+                        dob,
+                        age: age || 35,
+                        position_code: posCode,
+                        office_id: office_id || 1,
+                        employment_type_id: employment_type_id || 1,
+                        service_type_id: service_type_id || 1,
+                        designation_id: designation_id || 1,
+                        level_id: level_id || 1,
+                        service_id: service_id || 1,
+                        group_id: group_id || 1,
+                        qualification_id: qualification_id || 1,
+                        department_id: department_id || 1,
+                        staff_quota: staffQuota,
+                        duty_status: dutyStatus,
+                        email: getVal('ई-मेल', 'इमेल', 'इ-मेल', 'email', 'e-mail', 'mail'),
+                        mobile_number: mobile,
+                        family_contact_number: familyContact,
+                        transferred_from_office: getVal('यस कार्यालयमा आएको कार्यालय', 'आएको कार्यालय', 'transferred from', 'transferred_from_office'),
+                        current_position_appointment_date: getVal('हालको पदमा नियुक्ति', 'हालको पदमा नियुक्ती', 'हालको पदमा नियुक्ती मिति', 'current position appointment date', 'current_position_appointment_date'),
+                        current_position_joining_date: getVal('हालको पदमा हाजिर', 'हालको पदमा हाजिर मिति', 'current position joining date', 'current_position_joining_date'),
+                        current_office_joining_date: getVal('यस कार्यालयमा हाजिर', 'यस कार्यालयमा हाजिर मिति', 'कार्यालयमा हाजिर', 'current office joining date', 'current_office_joining_date'),
+                        transfer_release_date: getVal('रमानाभई आएको मिति', 'रमाना मिति', 'transfer release date', 'transfer_release_date'),
+                        initial_appointment_date: getVal('सुरु नियुक्ती', 'सुरु नियुक्ती मिति', 'शुरु नियुक्ती', 'शुरु नियुक्ती मिति', 'initial appointment date', 'initial_appointment_date'),
+                        personnel_sheet_roll_no: getVal('कर्मचारी संकेत नं', 'कर्मचारी संकेत नं.', 'संकेत नं', 'sheet roll no', 'sheet roll', 'personnel_sheet_roll_no'),
+                        provident_fund_no: getVal('संचयकोष नं', 'संचय कोष नं', 'कर्मचारी संचयकोष', 'pf no', 'provident fund', 'provident_fund_no'),
+                        cit_insurance_no: getVal('सा.जि.विमा नं', 'ना.जि.वि.ना नं', 'बीमा नं', 'cit no', 'cit insurance', 'cit_insurance_no'),
+                        investment_fund_no: getVal('लगानीकोष नं', 'नागरिक लगानी कोष', 'लगानी कोष नं', 'inv no', 'investment fund', 'investment_fund_no'),
+                        status: 'active'
+                    };
+
+                    const existingIdx = store.employees.findIndex(e =>
+                        (e.employee_code || '').trim().toUpperCase() === code
+                    );
+
+                    if (existingIdx !== -1) {
+                        if (options.overwrite) {
+                            store.employees[existingIdx] = {
+                                ...store.employees[existingIdx],
+                                ...empRecord,
+                                id: store.employees[existingIdx].id
+                            };
+                            updatedCount++;
+                        } else {
+                            skippedCount++;
+                        }
+                    } else {
+                        const newId = store.employees.length > 0
+                            ? Math.max(...store.employees.map(e => e.id)) + 1 : 1;
+
+                        store.employees.push({ ...empRecord, id: newId });
+                        importedCount++;
+                    }
+                } catch (e) {
+                    errors.push(`पङ्क्ति ${idx + 1}: ${e.message}`);
+                }
+            });
+
+            saveStore(store);
+            this.addAuditLog('EXCEL_IMPORT', 'employees', `एक्सेलबाट ${importedCount + updatedCount} वटा कर्मचारी अभिलेख इम्पोर्ट गरियो।`);
+
+            return {
+                success: true,
+                importedCount,
+                updatedCount,
+                skippedCount,
+                errors
+            };
+        },
+
+        getWards: function() {
+            const store = getStore();
+            return store.wards.map(w => ({
+                ...w,
+                employees_count: store.employees.filter(e => e.ward_id == w.id).length
+            }));
+        },
+
+        getWardById: function(id) {
+            const store = getStore();
+            const w = store.wards.find(x => x.id == id);
+            if (!w) return null;
+
+            return {
+                ...w,
+                employees_count: store.employees.filter(e => e.ward_id == w.id).length
+            };
+        },
+
+        saveWard: function(wardData) {
+            const store = getStore();
+
+            if (wardData.id) {
+                const idx = store.wards.findIndex(w => w.id == wardData.id);
+
+                if (idx !== -1) {
+                    store.wards[idx] = {
+                        ...store.wards[idx],
+                        ...wardData,
+                        ward_number: Number(wardData.ward_number) || store.wards[idx].ward_number,
+                        population: Number(wardData.population) || store.wards[idx].population
+                    };
+
+                    this.addAuditLog('WARD_UPDATE', 'wards', `वडा नं. ${store.wards[idx].ward_number} (${store.wards[idx].office_name_ne}) को विवरण सम्पादन गरियो।`);
+                }
+            } else {
+                const newId = store.wards.length > 0
+                    ? Math.max(...store.wards.map(w => w.id)) + 1 : 1;
+
+                const newWardNumber = Number(wardData.ward_number) ||
+                    (store.wards.length > 0 ? Math.max(...store.wards.map(w => w.ward_number)) + 1 : 1);
+
+                const newWard = {
+                    ...wardData,
+                    id: newId,
+                    ward_number: newWardNumber,
+                    population: Number(wardData.population) || 0
+                };
+
+                store.wards.push(newWard);
+                store.wards.sort((a, b) => a.ward_number - b.ward_number);
+                this.addAuditLog('WARD_CREATE', 'wards', `नयाँ वडा नं. ${newWard.ward_number} (${newWard.office_name_ne || ''}) थप गरियो।`);
+            }
+
+            saveStore(store);
+            return true;
+        },
+
+        deleteWard: function(id) {
+            const store = getStore();
+            const w = store.wards.find(x => x.id == id);
+
+            if (w) {
+                const wNum = w.ward_number;
+                store.wards = store.wards.filter(x => x.id != id);
+                this.addAuditLog('WARD_DELETE', 'wards', `वडा नं. ${wNum} को अभिलेख हटाइयो।`);
+                saveStore(store);
+                return true;
+            }
+
+            return false;
+        },
+
+        getInstitutions: function(category) {
+            const store = getStore();
+            return store.institutions.filter(i => i.category === category);
+        },
+
+        getMasters: function() {
+            const store = getStore();
+
+            return {
+                positionCodes: store.positionCodes || [],
+                designations: store.designations || [],
+                levels: store.levels || [],
+                services: store.services || [],
+                groups: store.groups || [],
+                qualifications: store.qualifications || [],
+                offices: store.offices || [],
+                departments: store.departments || [],
+                employmentTypes: store.employmentTypes || [],
+                serviceTypes: store.serviceTypes || []
+            };
+        },
+
+        addMasterItem: function(type, name) {
+            const store = getStore();
+            if (!store[type]) store[type] = [];
+
+            const newId = store[type].length > 0
+                ? Math.max(...store[type].map(x => x.id)) + 1 : 1;
+
+            store[type].push({ id: newId, name_ne: name });
+            saveStore(store);
+            return true;
+        },
+
+        deleteMasterItem: function(type, id) {
+            const store = getStore();
+            if (!store[type]) return false;
+
+            store[type] = store[type].filter(x => x.id != id);
+            saveStore(store);
+            return true;
+        },
+                getUsers: function() {
+            const store = getStore();
+            return store.users || [];
+        },
+
+        getUserById: function(id) {
+            const store = getStore();
+            return (store.users || []).find(u => u.id == id) || null;
+        },
+
+        saveUser: function(userData) {
+            const store = getStore();
+            if (!store.users) store.users = [];
+
+            if (userData.id) {
+                const idx = store.users.findIndex(u => u.id == userData.id);
+                if (idx !== -1) {
+                    store.users[idx] = { ...store.users[idx], ...userData };
+                }
+            } else {
+                const newId = store.users.length
+                    ? Math.max(...store.users.map(u => Number(u.id) || 0)) + 1 : 1;
+                store.users.push({ ...userData, id: newId });
+            }
+
+            saveStore(store);
+            return true;
+        },
+
+        deleteUser: function(id) {
+            const store = getStore();
+            store.users = (store.users || []).filter(u => u.id != id);
+            saveStore(store);
+            return true;
+        },
+
+        authenticate: function() {
+            // पुरानो local/demo password login बन्द गरिएको छ।
+            return null;
+        },
+
+        getCurrentUser: function() {
+            try {
+                const raw = localStorage.getItem('epalika_current_user');
+                return raw ? JSON.parse(raw) : null;
+            } catch (error) {
+                return null;
+            }
+        },
+
+        setCurrentUser: function(user) {
+            if (!user) {
+                localStorage.removeItem('epalika_current_user');
+                return false;
+            }
+
+            localStorage.setItem('epalika_current_user', JSON.stringify(user));
+            return true;
+        },
+
+        authApiBase: 'https://epalika-api.info-arunadhikari2053.workers.dev',
+
+        loginToServer: async function(username, password) {
+            try {
+                const response = await fetch(`${this.authApiBase}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success || !result.token || !result.user) {
+                    return {
+                        success: false,
+                        message: result.message || 'लगइन असफल भयो।'
+                    };
+                }
+
+                sessionStorage.setItem('epalika_jwt_token', result.token);
+
+                const user = {
+                    id: result.user.id,
+                    fullName: result.user.fullName,
+                    username: result.user.username,
+                    role: result.user.role
+                };
+
+                this.setCurrentUser(user);
+
+                return {
+                    success: true,
+                    user,
+                    token: result.token
+                };
+
+            } catch (error) {
+                console.error('Server login error:', error);
+
+                return {
+                    success: false,
+                    message: 'Server Connection Failed'
+                };
+            }
+        },
+
+        verifyServerSession: async function() {
+            try {
+                const token = sessionStorage.getItem('epalika_jwt_token');
+                if (!token) return null;
+
+                const response = await fetch(`${this.authApiBase}/api/auth/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    this.clearServerSession();
+                    return null;
+                }
+
+                const result = await response.json();
+
+                if (!result.success || !result.user) {
+                    this.clearServerSession();
+                    return null;
+                }
+
+                const user = {
+                    id: result.user.id,
+                    fullName: result.user.fullName,
+                    username: result.user.username,
+                    role: result.user.role
+                };
+
+                this.setCurrentUser(user);
+                return user;
+
+            } catch (error) {
+                console.error('Session verification error:', error);
+                this.clearServerSession();
+                return null;
+            }
+        },
+
+        clearServerSession: function() {
+            sessionStorage.removeItem('epalika_jwt_token');
+            localStorage.removeItem('epalika_current_user');
+            return true;
+        },
+
+        logout: function() {
+            this.clearServerSession();
+            localStorage.removeItem('epalika_current_user');
+            localStorage.removeItem('epalika_auth');
+            return true;
+        },
+
+        addAuditLog: function(action, module, details) {
+            const store = getStore();
+            if (!store.auditLogs) store.auditLogs = [];
+
+            const currentUser = this.getCurrentUser();
+
+            const log = {
+                id: store.auditLogs.length
+                    ? Math.max(...store.auditLogs.map(x => Number(x.id) || 0)) + 1 : 1,
+                action,
+                module,
+                details,
+                user: currentUser ? currentUser.username : 'system',
+                timestamp: new Date().toISOString()
+            };
+
+            store.auditLogs.unshift(log);
+
+            if (store.auditLogs.length > 1000) {
+                store.auditLogs = store.auditLogs.slice(0, 1000);
+            }
+
+            saveStore(store);
+            return true;
+        },
+
+        getAuditLogs: function(limit = 100) {
+            const store = getStore();
+            return (store.auditLogs || []).slice(0, limit);
+        },
+
+        clearAuditLogs: function() {
+            const store = getStore();
+            store.auditLogs = [];
+            saveStore(store);
+            return true;
+        }
+
+    };
+})();
