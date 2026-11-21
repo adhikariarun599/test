@@ -2125,13 +2125,74 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // User creation is intentionally unavailable until a server-side admin-users API exists.
+       
+        // SECURE SERVER-SIDE ADMIN ACCOUNT CREATION
         const btnCreateUser = document.getElementById('btn-trigger-password-sms');
+
         if (btnCreateUser) {
-            btnCreateUser.addEventListener('click', () => {
-                showToast('नयाँ प्रयोगकर्ता सिर्जना गर्ने सुविधा सुरक्षित Server API जडान भएपछि मात्र खुल्नेछ। अहिले कुनै खाता वा Password सुरक्षित गरिएको छैन।', 'error');
+            btnCreateUser.addEventListener('click', async () => {
+                const fullName = document.getElementById('s-name').value.trim();
+                const username = document.getElementById('s-user-code').value.trim().toLowerCase();
+                const password = document.getElementById('s-password').value;
+                const token = sessionStorage.getItem('epalika_jwt_token');
+
+                if (!token) {
+                    showToast('पहिले Admin बाट Login गर्नुहोस्।', 'error');
+                    return;
+                }
+
+                if (fullName !== 'Project Manager' || username !== 'admin') {
+                    showToast('नाम Project Manager र Username admin राख्नुहोस्।', 'error');
+                    return;
+                }
+
+                if (password.length < 12 || password.length > 128) {
+                    showToast('Password 12 देखि 128 अक्षरको हुनुपर्छ।', 'error');
+                    return;
+                }
+
+                btnCreateUser.disabled = true;
+
+                try {
+                    const response = await fetch(
+                        'https://epalika-api.info-arunadhikari2053.workers.dev/api/admin-users',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                fullName,
+                                username,
+                                password
+                            })
+                        }
+                    );
+
+                    const result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                        showToast(result.message || 'Account सिर्जना असफल भयो।', 'error');
+                        return;
+                    }
+
+                    document.getElementById('s-password').value = '';
+
+                    showToast(
+                        'Project Manager Admin Account सफलतापूर्वक सिर्जना भयो।',
+                        'success'
+                    );
+
+                } catch (error) {
+                    console.error('Admin creation error:', error);
+                    showToast('Server Connection Failed।', 'error');
+                } finally {
+                    btnCreateUser.disabled = false;
+                }
             });
         }
+
 
         // Super Admin Exclusive Role Changer Modal Trigger
         document.querySelectorAll('.btn-assign-role').forEach(btn => {
