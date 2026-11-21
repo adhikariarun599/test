@@ -1,98 +1,328 @@
+/**
+ * ePalika.com - Database Engine & Initial Reference State
+ * Fully relational local client-side database replicating MySQL schema
+ */
 
-        // Server-based Authentication
-        // Local password authentication is disabled.
-        authenticate: function() {
-            console.warn('Local authentication disabled. Use loginToServer().');
-            return null;
+const ePalikaDB = (function() {
+    const STORAGE_KEY = 'epalika_production_database_v5';
+    const AUTH_KEY = 'epalika_current_active_user';
+
+    // Initial Database Seed matching reference PDF exactly
+    const initialData = {
+        municipality: {
+            id: 1,
+            name_ne: 'बाणगंगा नगरपालिका',
+            name_en: 'Banganga Municipality',
+            district_ne: 'कपिलवस्तु',
+            district_en: 'Kapilvastu',
+            province_ne: 'लुम्बिनी प्रदेश नेपाल',
+            province_en: 'Lumbini Province Nepal',
+            address_ne: 'जीतपुर, कपिलवस्तु',
+            phone: '०७६-५५००११, ०७६-५५००१२',
+            email: 'info@bangangamun.gov.np',
+            website: 'https://bangangamun.gov.np',
+            logo_path: '',
+            mayor_name: 'चक्रपाणि अर्याल',
+            mayor_phone: '९८५७०३११११',
+            deputy_mayor_name: 'रिता कुमारी थारु',
+            deputy_mayor_phone: '९८५७०३२२२२',
+            chief_officer_name: 'भक्तराज जोशी',
+            chief_officer_phone: '९८५७०३३३३३',
+            information_officer_name: 'सुरेश पोखरेल',
+            information_officer_phone: '९८५७०३४४४४',
+            profile_summary: 'बाणगंगा नगरपालिका कपिलवस्तु जिल्लाको प्रमुख समृद्ध, ऐतिहासिक तथा पर्यटकीय सम्भावना बोकेको नगरपालिका हो। यस नगरपालिकामा १४ वटा वडाहरू रहेका छन्।'
         },
-
-        // Cloudflare Worker API
-        authApiBase: 'https://epalika-api.info-arunadhikari2053.workers.dev',
-
-        // Admin Login
-        loginToServer: async function(username, password) {
-            try {
-                const response = await fetch(
-                    `${this.authApiBase}/api/auth/login`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            username: username,
-                            password: password
-                        })
-                    }
-                );
-
-                const data = await response.json().catch(() => ({}));
-
-                if (!response.ok || !data.success || !data.token || !data.user) {
-                    return {
-                        success: false,
-                        message: data.message || 'Login failed'
-                    };
-                }
-
-                sessionStorage.setItem('epalika_jwt_token', data.token);
-
-                return data;
-
-            } catch (error) {
-                console.error('Server Login Error:', error);
-
-                return {
-                    success: false,
-                    message: 'सर्भरसँग सम्पर्क हुन सकेन। कृपया पुनः प्रयास गर्नुहोस्।'
-                };
-            }
-        },
-
-        // Verify Existing Server Session
-        verifyServerSession: async function() {
-            try {
-                const token = sessionStorage.getItem('epalika_jwt_token');
-
-                if (!token) {
-                    return { success: false };
-                }
-
-                const response = await fetch(
-                    `${this.authApiBase}/api/auth/me`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    }
-                );
-
-                const data = await response.json().catch(() => ({}));
-
-                if (!response.ok || !data.success || !data.user) {
-                    this.clearServerSession();
-
-                    return {
-                        success: false,
-                        message: data.message || 'Session expired'
-                    };
-                }
-
-                return data;
-
-            } catch (error) {
-                console.error('Session Verification Error:', error);
-
-                return {
-                    success: false,
-                    networkError: true,
-                    message: 'Server connection failed'
-                };
-            }
-        },
-
-        // Clear Server Session
-        clearServerSession: function() {
-            sessionStorage.removeItem('epalika_jwt_token');
-        },
+        wards: [
+            { id: 1, ward_number: 1, office_name_ne: 'वडा नं. १ कार्यालय', chairperson_name: 'संजु थारु', chairperson_phone: '९८५७०१०००१', secretary_name: 'रामचन्द्र भुसाल', secretary_phone: '९८५७०२०००१', address: 'उत्तमनगर', contact_number: '०७६-५५१००१', population: 6850 },
+            { id: 2, ward_number: 2, office_name_ne: 'वडा नं. २ कार्यालय', chairperson_name: 'विष्णुप्रसाद पोखरेल', chairperson_phone: '९८५७०१०००२', secretary_name: 'कमल भट्टराई', secretary_phone: '९८५७०२०००२', address: 'पिपेरा', contact_number: '०७६-५५१००२', population: 7420 },
+            { id: 3, ward_number: 3, office_name_ne: 'वडा नं. ३ कार्यालय', chairperson_name: 'टेकबहादुर वि.क.', chairperson_phone: '९८५७०१०००३', secretary_name: 'सुमन गैरे', secretary_phone: '९८५७०२०००३', address: 'राजापानी', contact_number: '०७६-५५१००३', population: 8150 },
+            { id: 4, ward_number: 4, office_name_ne: 'वडा नं. ४ कार्यालय', chairperson_name: 'गणेशप्रसाद खनाल', chairperson_phone: '९८५७०१०००४', secretary_name: 'प्रकाश आचार्य', secretary_phone: '९८५७०२०००४', address: 'ठाकुरपुर (जीतपुर)', contact_number: '०७६-५५१००४', population: 9200 },
+            { id: 5, ward_number: 5, office_name_ne: 'वडा नं. ५ कार्यालय', chairperson_name: 'झविन्द्रप्रसाद मरासिनी', chairperson_phone: '९८५७०१०००५', secretary_name: 'दिपक बेल्बासे', secretary_phone: '९८५७०२०००५', address: 'कोपवा', contact_number: '०७६-५५१००५', population: 6900 },
+            { id: 6, ward_number: 6, office_name_ne: 'वडा नं. ६ कार्यालय', chairperson_name: 'डिल्लीराज भट्टराई', chairperson_phone: '९८५७०१०००६', secretary_name: 'सन्तोष ज्ञवाली', secretary_phone: '९८५७०२०००६', address: 'लक्ष्मणघाट', contact_number: '०७६-५५१००६', population: 7100 },
+            { id: 7, ward_number: 7, office_name_ne: 'वडा नं. ७ कार्यालय', chairperson_name: 'बाबुराम न्यौपाने', chairperson_phone: '९८५७०१०००७', secretary_name: 'गोपाल शर्मा', secretary_phone: '९८५७०२०००७', address: 'बनगाई', contact_number: '०७६-५५१००७', population: 8340 },
+            { id: 8, ward_number: 8, office_name_ne: 'वडा नं. ८ कार्यालय', chairperson_name: 'खिमप्रसाद पाण्डे', chairperson_phone: '९८५७०१०००८', secretary_name: 'सुवास क्षेत्री', secretary_phone: '९८५७०२०००८', address: 'धोबाहा', contact_number: '०७६-५५१००८', population: 5920 },
+            { id: 9, ward_number: 9, office_name_ne: 'वडा नं. ९ कार्यालय', chairperson_name: 'कमल पौडेल', chairperson_phone: '९८५७०१०००९', secretary_name: 'नवराज अर्याल', secretary_phone: '९८५७०२०००९', address: 'भलवाड', contact_number: '०७६-५५१००९', population: 6430 },
+            { id: 10, ward_number: 10, office_name_ne: 'वडा नं. १० कार्यालय', chairperson_name: 'धर्मराज ज्ञवाली', chairperson_phone: '९८५७०१०११०', secretary_name: 'जीवन थापा', secretary_phone: '९८५७०२०११०', address: 'पटना', contact_number: '०७६-५५१०१०', population: 7890 },
+            { id: 11, ward_number: 11, office_name_ne: 'वडा नं. ११ कार्यालय', chairperson_name: 'राजेन्द्र यादव', chairperson_phone: '९८५७०१०१११', secretary_name: 'सुरेन्द्र पाण्डे', secretary_phone: '९८५७०२०१११', address: 'ओदारी', contact_number: '०७६-५५१०११', population: 8120 }
+        ],
+        positionCodes: [
+            { id: 1, name_ne: 'POS-001' },
+            { id: 2, name_ne: 'POS-002' },
+            { id: 3, name_ne: 'POS-003' },
+            { id: 4, name_ne: 'POS-004' },
+            { id: 5, name_ne: 'POS-005' },
+            { id: 6, name_ne: 'POS-006' }
+        ],
+        designations: [
+            { id: 1, name_ne: 'प्रमुख प्रशासकीय अधिकृत' },
+            { id: 2, name_ne: 'प्रशासकीय अधिकृत' },
+            { id: 3, name_ne: 'अ.न.मी.' },
+            { id: 4, name_ne: 'अ.हे.व.' },
+            { id: 5, name_ne: 'अमिन' },
+            { id: 6, name_ne: 'अस्पताल नर्सिङ निरीक्षक' },
+            { id: 7, name_ne: 'असिस्टेन्ट सब इन्जिनियर' },
+            { id: 8, name_ne: 'असिस्टेन्ट सब-इन्जिनियर' },
+            { id: 9, name_ne: 'इन्जिनियर' },
+            { id: 10, name_ne: 'उद्यम विकास सहजकर्ता' },
+            { id: 11, name_ne: 'ऋण सहजकर्ता' },
+            { id: 12, name_ne: 'एम. आई. एस. अपरेटर' },
+            { id: 13, name_ne: 'एम.एस. जनरल सर्जन' },
+            { id: 14, name_ne: 'एम्बुलेन्स चालक' },
+            { id: 15, name_ne: 'कृषि अर्थ अधिकृत' },
+            { id: 16, name_ne: 'कृषि प्रसार अधिकृत' },
+            { id: 17, name_ne: 'कृषि प्राविधिक' },
+            { id: 18, name_ne: 'कृषि विकास अधिकृत' },
+            { id: 19, name_ne: 'कार्यालय सहयोगी' },
+            { id: 20, name_ne: 'खा.पा.स.टे.' },
+            { id: 21, name_ne: 'ग्रेडर चालक' },
+            { id: 22, name_ne: 'जन स्वास्थ्य अधिकृत (पदनाम)' },
+            { id: 23, name_ne: 'जन स्वास्थ्य निरीक्षक' },
+            { id: 24, name_ne: 'जनस्वास्थ्य निरीक्षक' },
+            { id: 25, name_ne: 'जवान' },
+            { id: 26, name_ne: 'दमकल चालक' },
+            { id: 27, name_ne: 'प्राविधिक अधिकृत' },
+            { id: 28, name_ne: 'प्राविधिक सहायक' },
+            { id: 29, name_ne: 'पशु चिकित्सक' }
+        ],
+        levels: [
+            { id: 1, name_ne: 'उपसचिव', rank: 1 },
+            { id: 2, name_ne: 'नवौं', rank: 2 },
+            { id: 3, name_ne: 'आठौं', rank: 3 },
+            { id: 4, name_ne: 'सातौं', rank: 4 },
+            { id: 5, name_ne: 'छैटौं', rank: 5 },
+            { id: 6, name_ne: 'पाँचौं', rank: 6 },
+            { id: 7, name_ne: 'चौथो', rank: 7 },
+            { id: 8, name_ne: 'रा.प.अनं.', rank: 8 },
+            { id: 9, name_ne: 'विहिन', rank: 9 }
+        ],
+        services: [
+            { id: 1, name_ne: 'इन्जिनियरिङ्ग' },
+            { id: 2, name_ne: 'कृषि' },
+            { id: 3, name_ne: 'प्रशासन' },
+            { id: 4, name_ne: 'विविध' },
+            { id: 5, name_ne: 'शिक्षा' },
+            { id: 6, name_ne: 'स्थानीय इन्जिनियरिङ्ग' },
+            { id: 7, name_ne: 'स्थानीय कृषि' },
+            { id: 8, name_ne: 'स्थानीय प्रशासन' },
+            { id: 9, name_ne: 'स्थानीय शिक्षा' },
+            { id: 10, name_ne: 'स्थानीय स्वास्थ्य' },
+            { id: 11, name_ne: 'स्वास्थ्य' }
+        ],
+        groups: [
+            { id: 1, name_ne: 'सामान्य प्रशासन' },
+            { id: 2, name_ne: 'लेखा' },
+            { id: 3, name_ne: 'राजस्व' },
+            { id: 4, name_ne: 'सिभिल' },
+            { id: 5, name_ne: 'कम्युनिटी नर्सिङ' },
+            { id: 6, name_ne: 'जनरल हेल्थ' },
+            { id: 7, name_ne: 'सूचना प्रविधि' }
+        ],
+        qualifications: [
+            { id: 1, name_ne: '+2' },
+            { id: 2, name_ne: 'B.Sc. Nursing' },
+            { id: 3, name_ne: 'स्नातक' },
+            { id: 4, name_ne: 'स्नातकोत्तर' },
+            { id: 5, name_ne: 'सि.टि.ई.भि.टि.' }
+        ],
+        offices: [
+            { id: 1, name_ne: 'नगरपालिकाको कार्यालय' },
+            { id: 2, name_ne: 'वडा कार्यालय' },
+            { id: 3, name_ne: 'स्वास्थ्य संस्था' }
+        ],
+        departments: [
+            { id: 1, name_ne: 'आन्तरिक लेखा परीक्षण इकाई शाखा' },
+            { id: 2, name_ne: 'आर्थिक प्रशासन शाखा' },
+            { id: 3, name_ne: 'आयुर्वेद औषधालय' },
+            { id: 4, name_ne: 'उद्यम विकास शाखा' },
+            { id: 5, name_ne: 'कृषि विकास शाखा' },
+            { id: 6, name_ne: 'कोपवा स्वास्थ्य चौकी' },
+            { id: 7, name_ne: 'खानेपानी तथा सरसफाइ इकाई' },
+            { id: 8, name_ne: 'गजेहडा स्वास्थ्य चौकी' },
+            { id: 9, name_ne: 'जिन्सी शाखा' },
+            { id: 10, name_ne: 'नगर प्रहरी' },
+            { id: 11, name_ne: 'नगरपालिकाको कार्यालय' },
+            { id: 12, name_ne: 'पटना स्वा.चौकी' },
+            { id: 13, name_ne: 'पूर्वाधार विकास शाखा' },
+            { id: 14, name_ne: 'प्रशासन शाखा' },
+            { id: 15, name_ne: 'पशु सेवा शाखा' },
+            { id: 16, name_ne: 'पिपरा अस्पताल' },
+            { id: 17, name_ne: 'बहुक्षेत्रीय पोषण' },
+            { id: 18, name_ne: 'भलवाड स्वास्थ्य चौकी' },
+            { id: 19, name_ne: 'भवन तथा सहरी विकास शाखा' },
+            { id: 20, name_ne: 'महिला तथा बालबालिका' },
+            { id: 21, name_ne: 'मोतिपुर स्वास्थ्य चौकी' },
+            { id: 22, name_ne: 'योजना शाखा' },
+            { id: 23, name_ne: 'राजस्व शाखा' },
+            { id: 24, name_ne: 'वडा नं. ०१' },
+            { id: 25, name_ne: 'वडा नं. ०२' },
+            { id: 26, name_ne: 'वडा नं. ०३' },
+            { id: 27, name_ne: 'वडा नं. ०४' },
+            { id: 28, name_ne: 'वडा नं. ०५' }
+        ],
+        employmentTypes: [
+            { id: 1, name_ne: 'स्थायी' },
+            { id: 2, name_ne: 'करार' },
+            { id: 3, name_ne: 'ज्यालादारी' }
+        ],
+        serviceTypes: [
+            { id: 1, name_ne: 'निजामती' },
+            { id: 2, name_ne: 'स्थानीय' },
+            { id: 3, name_ne: 'स्थानीय निजामती' },
+            { id: 4, name_ne: 'प्रदेश विशेष कार्यक्रम' },
+            { id: 5, name_ne: 'संघीय विशेष कार्यक्रम' },
+            { id: 6, name_ne: 'अन्यसेवा' },
+            { id: 7, name_ne: 'आन्तरिक' }
+        ],
+        employees: [
+            {
+                id: 1,
+                employee_code: 'EMP-001',
+                serial_number: '१',
+                full_name_ne: 'भक्तराज जोशी',
+                gender: 'पुरुष',
+                dob: '2039-01-31',
+                age: 44,
+                position_code_id: 1,
+                designation_id: 1,
+                level_id: 1,
+                service_id: 3,
+                group_id: 1,
+                qualification_id: 4,
+                department_id: 11,
+                office_id: 1,
+                ward_id: null,
+                employment_type_id: 1,
+                service_type_id: 1,
+                staff_quota: 'हो',
+                duty_status: 'कार्यरत',
+                email: 'cao@bangangamun.gov.np',
+                mobile_number: '9857033333',
+                family_contact_number: '9847012345',
+                permanent_address: 'कपिलवस्तु, तौलिहवा',
+                current_address: 'जीतपुर, कपिलवस्तु',
+                initial_appointment_date: '2064-12-30',
+                current_position_appointment_date: '2078-03-01',
+                current_position_joining_date: '2078-03-06',
+                current_office_joining_date: '2078-09-26',
+                transfer_release_date: '2078-09-21',
+                transferred_from_office: 'संघीय मामिला तथा सामान्य प्रशासन मन्त्रालय',
+                personnel_sheet_roll_no: 'SKN-88412',
+                provident_fund_no: 'PF-49120',
+                cit_insurance_no: 'CIT-99231',
+                investment_fund_no: 'INV-5510',
+                status: 'active'
+            },
+            {
+                id: 2,
+                employee_code: 'EMP-002',
+                serial_number: '२',
+                full_name_ne: 'सुरेश पोखरेल',
+                gender: 'पुरुष',
+                dob: '2045-08-05',
+                age: 38,
+                position_code_id: 2,
+                designation_id: 2,
+                level_id: 4,
+                service_id: 3,
+                group_id: 1,
+                qualification_id: 3,
+                department_id: 14,
+                office_id: 1,
+                ward_id: null,
+                employment_type_id: 1,
+                service_type_id: 1,
+                staff_quota: 'हो',
+                duty_status: 'कार्यरत',
+                email: 'suresh@bangangamun.gov.np',
+                mobile_number: '9857034444',
+                family_contact_number: '9847112233',
+                permanent_address: 'बाणगंगा-४, कपिलवस्तु',
+                current_address: 'जीतपुर, कपिलवस्तु',
+                initial_appointment_date: '2071-04-16',
+                current_position_appointment_date: '2076-11-27',
+                current_position_joining_date: '2076-12-02',
+                current_office_joining_date: '2076-12-18',
+                transfer_release_date: '2076-12-15',
+                transferred_from_office: 'जिल्ला प्रशासन कार्यालय, कपिलवस्तु',
+                personnel_sheet_roll_no: 'SKN-90231',
+                provident_fund_no: 'PF-50212',
+                cit_insurance_no: 'CIT-98334',
+                investment_fund_no: 'INV-5522',
+                status: 'active'
+            },
+            {
+                id: 3,
+                employee_code: 'EMP-003',
+                serial_number: '३',
+                full_name_ne: 'अनिता खनाल',
+                gender: 'महिला',
+                dob: '2048-11-06',
+                age: 34,
+                position_code_id: 3,
+                designation_id: 9,
+                level_id: 4,
+                service_id: 1,
+                group_id: 4,
+                qualification_id: 3,
+                department_id: 13,
+                office_id: 1,
+                ward_id: null,
+                employment_type_id: 1,
+                service_type_id: 2,
+                staff_quota: 'हो',
+                duty_status: 'कार्यरत',
+                email: 'anita.eng@bangangamun.gov.np',
+                mobile_number: '9857055112',
+                family_contact_number: '9847223344',
+                permanent_address: 'बाणगंगा-२, कपिलवस्तु',
+                current_address: 'जीतपुर, कपिलवस्तु',
+                initial_appointment_date: '2074-11-03',
+                current_position_appointment_date: '2079-05-16',
+                current_position_joining_date: '2079-05-20',
+                current_office_joining_date: '2079-05-20',
+                transfer_release_date: '2079-05-20',
+                transferred_from_office: 'शितगंगा नगरपालिका',
+                personnel_sheet_roll_no: 'SKN-94110',
+                provident_fund_no: 'PF-61023',
+                cit_insurance_no: 'CIT-10293',
+                investment_fund_no: 'INV-5540',
+                status: 'active'
+            },
+            {
+                id: 4,
+                employee_code: 'EMP-004',
+                serial_number: '४',
+                full_name_ne: 'रामप्रसाद शर्मा',
+                gender: 'पुरुष',
+                dob: '2026-04-10',
+                age: 57,
+                position_code_id: 2,
+                designation_id: 2,
+                level_id: 2,
+                service_id: 3,
+                group_id: 1,
+                qualification_id: 4,
+                department_id: 11,
+                office_id: 1,
+                ward_id: null,
+                employment_type_id: 1,
+                service_type_id: 1,
+                staff_quota: 'हो',
+                duty_status: 'कार्यरत',
+                email: 'ramprasad.sharma@bangangamun.gov.np',
+                mobile_number: '9857011223',
+                family_contact_number: '9847556677',
+                permanent_address: 'बाणगंगा-१, कपिलवस्तु',
+                current_address: 'जीतपुर, कपिलवस्तु',
+                initial_appointment_date: '2052-01-15',
+                current_position_appointment_date: '2072-04-01',
+                current_position_joining_date: '2072-04-05',
+                current_office_joining_date: '2075-01-10',
+                transfer_release_date: '2075-01-05',
+                transferred_from_office: 'जिल्ला प्रशासन कार्यालय, कपिलवस्तु',
+                personnel_sheet_roll_no: 'SKN-70112',
+                provident_fund_no: 'PF-30112',
+                cit_insurance_no: 'CIT-77123',
+                investment_fund_no: 'INV-4410',
+                status: 'active'
+            },
