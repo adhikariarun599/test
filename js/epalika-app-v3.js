@@ -1275,6 +1275,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function enforceEnglishEmail(id) {
         const inp = document.getElementById(id);
         if (!inp || inp.__englishEmailEnforced) return;
+                // Use text input for custom email keyboard handling
+        inp.type = 'text';
+        inp.inputMode = 'email';
+        inp.autocomplete = 'email';
+        inp.pattern = '[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}';
+        inp.title = 'कृपया सही Email Address राख्नुहोस्।';
         inp.__englishEmailEnforced = true;
 
         // Physical key interception: guarantees English email regardless of OS keyboard layout!
